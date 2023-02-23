@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\TheGoodFramework.CA.Presentation\TheGoodFramework.CA.Presentation.csproj" />
     <ProjectReference Include="..\TheGoodFramework.Common.Logging\TheGoodFramework.Common.Logging.csproj" />
   </ItemGroup>
 
