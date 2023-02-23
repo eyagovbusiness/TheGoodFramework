@@ -18,7 +18,7 @@ namespace TheGoodFramework.Extensions
         public static string TrySerialize8<T>(this T aJsonObject)
              where T : class, new()
         {
-                return Utf8Json.JsonSerializer.ToJsonString(aJsonObject);
+            return Utf8Json.JsonSerializer.ToJsonString(aJsonObject);
         }
 
         /// <summary>
