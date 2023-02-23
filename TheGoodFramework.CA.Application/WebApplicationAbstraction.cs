@@ -31,7 +31,7 @@ namespace TheGoodFramework.CA.Application
 
         }
 
-        public static void Run(this WebApplication aWebApplication)
+        public static void CustomRun(this WebApplication aWebApplication)
         {
 
             if (aWebApplication.Environment.IsDevelopment())
