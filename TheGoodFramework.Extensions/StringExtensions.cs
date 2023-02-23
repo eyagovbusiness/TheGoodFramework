@@ -1,4 +1,4 @@
-﻿namespace TheGoodFramework.Extensions
+﻿namespace TheGoodFramework.Common.Extensions
 {
     public static class StringExtensions
     {

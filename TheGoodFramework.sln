@@ -7,13 +7,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGoodFramework.Model", "T
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TheGoodFramework", "TheGoodFramework", "{4B37E92C-1DF6-438C-9425-9CD42E69700A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGoodFramework.Extensions", "TheGoodFramework.Extensions\TheGoodFramework.Extensions.csproj", "{A40E4399-7B79-4B04-81A7-BE050140AB92}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGoodFramework.Common.Extensions", "TheGoodFramework.Extensions\TheGoodFramework.Common.Extensions.csproj", "{A40E4399-7B79-4B04-81A7-BE050140AB92}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CleanArchitecture", "CleanArchitecture", "{5F5AB138-6E49-41BC-B306-6D62A63E2432}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheGoodFramework.CA.Domain", "TheGoodFramework.CA.Domain\TheGoodFramework.CA.Domain.csproj", "{76693EA6-0C28-4132-A475-2B8CC42214AC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGoodFramework.CA.Domain", "TheGoodFramework.CA.Domain\TheGoodFramework.CA.Domain.csproj", "{76693EA6-0C28-4132-A475-2B8CC42214AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheGoodFramework.CA.Infrastructure", "TheGoodFramework.CA.Infrastructure\TheGoodFramework.CA.Infrastructure.csproj", "{812D590A-F5F0-4DC0-9401-68704B06EE3E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TheGoodFramework.CA.Infrastructure", "TheGoodFramework.CA.Infrastructure\TheGoodFramework.CA.Infrastructure.csproj", "{812D590A-F5F0-4DC0-9401-68704B06EE3E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheGoodFramework.CA.Application", "TheGoodFramework.CA.Application\TheGoodFramework.CA.Application.csproj", "{E57CD905-0B4E-4387-A7AD-D5C22227A66B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheGoodFramework.CA.Presentation", "TheGoodFramework.CA.Presentation\TheGoodFramework.CA.Presentation.csproj", "{3F021908-B055-4A74-BA6E-0F06D6D3452A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{5CDB722D-5B36-455F-9612-9C39498D9693}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TheGoodFramework.Common.Logging", "TheGoodFramework.Common.Logging\TheGoodFramework.Common.Logging.csproj", "{096FA537-6CCC-49C1-8CC6-0E61AE240355}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,16 +45,32 @@ Global
 		{812D590A-F5F0-4DC0-9401-68704B06EE3E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{812D590A-F5F0-4DC0-9401-68704B06EE3E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{812D590A-F5F0-4DC0-9401-68704B06EE3E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E57CD905-0B4E-4387-A7AD-D5C22227A66B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E57CD905-0B4E-4387-A7AD-D5C22227A66B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E57CD905-0B4E-4387-A7AD-D5C22227A66B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E57CD905-0B4E-4387-A7AD-D5C22227A66B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F021908-B055-4A74-BA6E-0F06D6D3452A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F021908-B055-4A74-BA6E-0F06D6D3452A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F021908-B055-4A74-BA6E-0F06D6D3452A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F021908-B055-4A74-BA6E-0F06D6D3452A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{096FA537-6CCC-49C1-8CC6-0E61AE240355}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{096FA537-6CCC-49C1-8CC6-0E61AE240355}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{096FA537-6CCC-49C1-8CC6-0E61AE240355}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{096FA537-6CCC-49C1-8CC6-0E61AE240355}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{27C7A810-7ADB-4F89-A3A8-1FA598BCF7DC} = {4B37E92C-1DF6-438C-9425-9CD42E69700A}
-		{A40E4399-7B79-4B04-81A7-BE050140AB92} = {4B37E92C-1DF6-438C-9425-9CD42E69700A}
+		{A40E4399-7B79-4B04-81A7-BE050140AB92} = {5CDB722D-5B36-455F-9612-9C39498D9693}
 		{5F5AB138-6E49-41BC-B306-6D62A63E2432} = {4B37E92C-1DF6-438C-9425-9CD42E69700A}
 		{76693EA6-0C28-4132-A475-2B8CC42214AC} = {5F5AB138-6E49-41BC-B306-6D62A63E2432}
 		{812D590A-F5F0-4DC0-9401-68704B06EE3E} = {5F5AB138-6E49-41BC-B306-6D62A63E2432}
+		{E57CD905-0B4E-4387-A7AD-D5C22227A66B} = {5F5AB138-6E49-41BC-B306-6D62A63E2432}
+		{3F021908-B055-4A74-BA6E-0F06D6D3452A} = {5F5AB138-6E49-41BC-B306-6D62A63E2432}
+		{5CDB722D-5B36-455F-9612-9C39498D9693} = {4B37E92C-1DF6-438C-9425-9CD42E69700A}
+		{096FA537-6CCC-49C1-8CC6-0E61AE240355} = {5CDB722D-5B36-455F-9612-9C39498D9693}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3A057602-2F48-48E5-A9A4-C95C82A96825}

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics;
 
-namespace TheGoodFramework.Extensions
+namespace TheGoodFramework.Common.Extensions
 {
     public static class EnumerableExtensions
     {
@@ -50,18 +50,6 @@ namespace TheGoodFramework.Extensions
         {
             foreach (T aItem in aList)
                 aAction(aItem);
-        }
-
-        /// <summary>
-        /// For each item of list executes defined Action.
-        /// </summary>
-        /// <typeparam name="T">Type of list item</typeparam>
-        /// <param name="aList">List of items</param>
-        /// <param name="aAction">Action for each item</param>
-        [DebuggerStepThrough]
-        public static void ForEach<T>(this IEnumerable<T> aList, Action<T, int> aAction)
-        {
-            aList.Select((x, i) => new { x, i }).ForEach((y) => aAction(y.x, y.i));
         }
 
         /// <summary>

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using TheGoodFramework.Extensions;
+using TheGoodFramework.Common.Extensions;
 
 namespace TheGoodFramework.Model
 {
