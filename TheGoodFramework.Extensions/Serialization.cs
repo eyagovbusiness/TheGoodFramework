@@ -1,4 +1,5 @@
 ﻿using System.Runtime.Serialization;
+using TheGoodFramework.Common.Extensions;
 
 namespace TheGoodFramework.Extensions
 {
