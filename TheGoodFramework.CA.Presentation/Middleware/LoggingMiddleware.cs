@@ -6,11 +6,11 @@ namespace TheGoodFramework.CA.Presentation.Middleware
     public class LoggingMiddleware
     {
         private readonly RequestDelegate _Next;
-        private readonly ILogger _Logger;   
-        public LoggingMiddleware(RequestDelegate aNext, ILogger aLogger) 
-        { 
+        private readonly ILogger _Logger;
+        public LoggingMiddleware(RequestDelegate aNext, ILoggerFactory aLoggerFactory)
+        {
             _Next = aNext;
-            _Logger = aLogger;
+            _Logger = aLoggerFactory.CreateLogger(typeof(LoggingMiddleware));
         }
 
         public async Task Invoke(HttpContext aHttpContext)
@@ -19,7 +19,7 @@ namespace TheGoodFramework.CA.Presentation.Middleware
             {
                 await _Next(aHttpContext);
             }
-            catch(Exception lException)
+            catch (Exception lException)
             {
                 _Logger.LogError(lException.ToString());
             }
