@@ -31,6 +31,28 @@ namespace TheGoodFramework.CA.Application
 
         }
 
+        /// <summary>
+        /// Async version of <see cref="CreateCustomWebApplication"/>, the usage of this version is very specific and it is not recommended for general purpose.
+        /// </summary>
+        /// <param name="aWebHostBuilderFunction">Custom logic to add on the WebApplicationBuilder that will be used to build the resulting <see cref="WebApplication"/>.</param>
+        /// <returns>A new customized instance of <see cref="WebApplication"/>.</returns>
+        /// <remarks>Any service added from aWebHostBuilderAction function will not be possible to be injected any dependency from the host DI container if the dependency is injected via async creation method instead of the synchronous class constructor of the service.</remarks>
+        public static async Task<WebApplication> CreateCustomWebApplicationAsync(Func<WebApplicationBuilder, Task>? aWebHostBuilderFunction = null)
+        {
+            WebApplicationBuilder lBuilder = WebApplication.CreateBuilder();
+            lBuilder.Host.ConfigureSerilog();
+            lBuilder.Services.AddControllers();
+            lBuilder.Services.AddEndpointsApiExplorer();
+            lBuilder.Services.AddSwaggerGen();
+
+            if (aWebHostBuilderFunction != null)
+                await aWebHostBuilderFunction.Invoke(lBuilder);
+
+
+            return lBuilder.Build();
+
+        }
+
         public static void CustomRun(this WebApplication aWebApplication)
         {
 
