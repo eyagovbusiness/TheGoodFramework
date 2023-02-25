@@ -63,15 +63,20 @@ namespace TheGoodFramework.Common.Extensions
         public static Task ParallelForEachAsync<T>(
             this IEnumerable<T> aSourceList,
             byte aDegreeOfParallelization,
-            Func<T, Task> aBody
-        )
+            Func<T, Task> aBody,
+            CancellationToken aCancellationToken = default
+            )
         {
             //Creates a method that rturns a task to perform from a given partition enumerator asynchronous execution of the ForEach body function.
             async Task AwaitPartition(IEnumerator<T> lPartition)
             {
                 using (lPartition)
                     while (lPartition.MoveNext())
+                    {
+                        aCancellationToken.ThrowIfCancellationRequested();
                         await aBody(lPartition.Current);
+                    }
+
 
             }
             //Creates devides the list into aDegreeOfParallelization and run in parallel AwaitPartition method awaiting for all of them to finish before returning
@@ -91,11 +96,16 @@ namespace TheGoodFramework.Common.Extensions
         {
             return Task.Run(() => aCollection.Add(aItemToAddTask.Result));
         }
-        public static Task AddRangeParallelAsync<T>(this ICollection<T> aCollection, byte aDegreeOfParallelization, IEnumerable<T> aItemListToAdd)
+        public static Task AddRangeParallelAsync<T>(
+            this ICollection<T> aCollection,
+            byte aDegreeOfParallelization, IEnumerable<T> aItemListToAdd,
+            CancellationToken aCancellationToken = default
+            )
         {
             return aItemListToAdd.ParallelForEachAsync(
                 aDegreeOfParallelization,
-                x => aCollection.AddAsync(x));
+                x => aCollection.AddAsync(x), 
+                aCancellationToken);
         }
     }
 }
