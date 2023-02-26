@@ -1,5 +1,4 @@
 ﻿using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace TheGoodFramework.Common.Extensions
 {
@@ -45,7 +44,6 @@ namespace TheGoodFramework.Common.Extensions
         /// <typeparam name="T">Type of list item</typeparam>
         /// <param name="aList">List of items</param>
         /// <param name="aAction">Action for each item</param>
-        [DebuggerStepThrough]
         public static void ForEach<T>(this IEnumerable<T> aList, Action<T> aAction)
         {
             foreach (T aItem in aList)
@@ -58,8 +56,9 @@ namespace TheGoodFramework.Common.Extensions
         /// <typeparam name="T"></typeparam>
         /// <param name="aSourceList"></param>
         /// <param name="aDegreeOfParallelization"></param>
-        /// <param name="aBody">Function</param>
-        /// <returns>Task related to this operation.</returns>
+        /// <param name="aBody">Async function to loop.</param>
+        /// <param name="aCancellationToken">Cancellation token that throws <see cref="OperationCanceledException"/> exception breaking the loop.</param>
+        /// <returns>Task related to this operation(await this method, avoid using Task.Result).</returns>
         public static Task ParallelForEachAsync<T>(
             this IEnumerable<T> aSourceList,
             byte aDegreeOfParallelization,
@@ -88,24 +87,5 @@ namespace TheGoodFramework.Common.Extensions
                         );
         }
 
-        public static Task AddAsync<T>(this ICollection<T> aCollection, T aItemToAdd)
-        {
-            return Task.Run(() => aCollection.Add(aItemToAdd));
-        }
-        public static Task GetAddTask<T>(this ICollection<T> aCollection, Task<T> aItemToAddTask)
-        {
-            return Task.Run(() => aCollection.Add(aItemToAddTask.Result));
-        }
-        public static Task AddRangeParallelAsync<T>(
-            this ICollection<T> aCollection,
-            byte aDegreeOfParallelization, IEnumerable<T> aItemListToAdd,
-            CancellationToken aCancellationToken = default
-            )
-        {
-            return aItemListToAdd.ParallelForEachAsync(
-                aDegreeOfParallelization,
-                x => aCollection.AddAsync(x), 
-                aCancellationToken);
-        }
     }
 }
