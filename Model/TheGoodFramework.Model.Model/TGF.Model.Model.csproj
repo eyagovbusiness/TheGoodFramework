@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\TheGoodFramework.Extensions\TheGoodFramework.Common.Extensions.csproj" />
+    <ProjectReference Include="..\..\Common\TheGoodFramework.Common.Extensions\TGF.Common.Extensions.csproj" />
   </ItemGroup>
 
 </Project>
