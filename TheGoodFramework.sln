@@ -5,25 +5,25 @@ VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4B37E92C-1DF6-438C-9425-9CD42E69700A}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CleanArchitecture", "CleanArchitecture", "{5F5AB138-6E49-41BC-B306-6D62A63E2432}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CleanArchitecture", "src\CleanArchitecture", "{5F5AB138-6E49-41BC-B306-6D62A63E2432}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Presentation", "CleanArchitecture\TheGoodFramework.CA.Presentation\TGF.CA.Presentation.csproj", "{3F021908-B055-4A74-BA6E-0F06D6D3452A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Presentation", "src\CleanArchitecture\TheGoodFramework.CA.Presentation\TGF.CA.Presentation.csproj", "{3F021908-B055-4A74-BA6E-0F06D6D3452A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Application", "CleanArchitecture\TheGoodFramework.CA.Application\TGF.CA.Application.csproj", "{3F4848A7-3ED3-432E-8A9D-50D4D0B12BF4}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Application", "src\CleanArchitecture\TheGoodFramework.CA.Application\TGF.CA.Application.csproj", "{3F4848A7-3ED3-432E-8A9D-50D4D0B12BF4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Infrastructure", "CleanArchitecture\TheGoodFramework.CA.Infrastructure\TGF.CA.Infrastructure.csproj", "{812D590A-F5F0-4DC0-9401-68704B06EE3E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Infrastructure", "src\CleanArchitecture\TheGoodFramework.CA.Infrastructure\TGF.CA.Infrastructure.csproj", "{812D590A-F5F0-4DC0-9401-68704B06EE3E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Domain", "CleanArchitecture\TheGoodFramework.CA.Domain\TGF.CA.Domain.csproj", "{76693EA6-0C28-4132-A475-2B8CC42214AC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Domain", "src\CleanArchitecture\TheGoodFramework.CA.Domain\TGF.CA.Domain.csproj", "{76693EA6-0C28-4132-A475-2B8CC42214AC}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{5CDB722D-5B36-455F-9612-9C39498D9693}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "src\Common", "{5CDB722D-5B36-455F-9612-9C39498D9693}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.Common.Logging", "Common\TheGoodFramework.Common.Logging\TGF.Common.Logging.csproj", "{096FA537-6CCC-49C1-8CC6-0E61AE240355}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.Common.Logging", "src\Common\TheGoodFramework.Common.Logging\TGF.Common.Logging.csproj", "{096FA537-6CCC-49C1-8CC6-0E61AE240355}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.Common.Extensions", "Common\TheGoodFramework.Common.Extensions\TGF.Common.Extensions.csproj", "{A40E4399-7B79-4B04-81A7-BE050140AB92}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.Common.Extensions", "src\Common\TheGoodFramework.Common.Extensions\TGF.Common.Extensions.csproj", "{A40E4399-7B79-4B04-81A7-BE050140AB92}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Model", "Model", "{1155623B-4CFF-4747-A8A5-3EF58EA6819A}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Model", "src\Model", "{1155623B-4CFF-4747-A8A5-3EF58EA6819A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.Model.Model", "Model\TheGoodFramework.Model.Model\TGF.Model.Model.csproj", "{27C7A810-7ADB-4F89-A3A8-1FA598BCF7DC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.Model.Model", "src\Model\TheGoodFramework.Model.Model\TGF.Model.Model.csproj", "{27C7A810-7ADB-4F89-A3A8-1FA598BCF7DC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
