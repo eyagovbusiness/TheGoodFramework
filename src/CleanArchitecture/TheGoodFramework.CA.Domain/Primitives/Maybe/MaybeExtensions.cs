@@ -1,4 +1,4 @@
-﻿namespace TheGoodFramework.CA.Domain.Primitives.Maybe
+﻿namespace TGF.CA.Domain.Primitives.Maybe
 {
     /// <summary>
     /// Contains extension methods for the maybe class.

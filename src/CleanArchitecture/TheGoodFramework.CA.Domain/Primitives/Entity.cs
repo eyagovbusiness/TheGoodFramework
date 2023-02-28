@@ -1,7 +1,7 @@
 ﻿
-using TheGoodFramework.CA.Domain.Utility;
+using TGF.CA.Domain.Utility;
 
-namespace TheGoodFramework.CA.Domain.Primitives
+namespace TGF.CA.Domain.Primitives
 {
     /// <summary>
     /// Represents the base class that all entities derive from.

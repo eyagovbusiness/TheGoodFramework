@@ -1,6 +1,6 @@
-﻿using TheGoodFramework.CA.Domain.Events;
+﻿using TGF.CA.Domain.Events;
 
-namespace TheGoodFramework.CA.Domain.Primitives
+namespace TGF.CA.Domain.Primitives
 {
     /// <summary>
     /// Represents the aggregate root.

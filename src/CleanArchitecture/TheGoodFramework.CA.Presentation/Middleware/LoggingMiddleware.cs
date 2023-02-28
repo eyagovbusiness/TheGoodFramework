@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-namespace TheGoodFramework.CA.Presentation.Middleware
+namespace TGF.CA.Presentation.Middleware
 {
     public class LoggingMiddleware
     {

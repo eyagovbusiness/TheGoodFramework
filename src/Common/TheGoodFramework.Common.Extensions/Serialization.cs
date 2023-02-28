@@ -1,7 +1,7 @@
 ﻿using System.Runtime.Serialization;
-using TheGoodFramework.Common.Extensions;
+using TGF.Common.Extensions;
 
-namespace TheGoodFramework.Extensions
+namespace TGF.Extensions
 {
     /// <summary>
     /// Static class supporting extension methods for serializeation and deserializeation

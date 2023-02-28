@@ -1,6 +1,6 @@
 ﻿
 
-namespace TheGoodFramework.CA.Domain.Primitives.Result
+namespace TGF.CA.Domain.Primitives.Result
 {
     /// <summary>
     /// Represents the result of some operation, with status information and possibly a value and an error.

@@ -1,4 +1,4 @@
-﻿namespace TheGoodFramework.Common.Extensions
+﻿namespace TGF.Common.Extensions
 {
     public static class StringExtensions
     {

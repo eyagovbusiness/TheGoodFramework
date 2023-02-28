@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
-using TheGoodFramework.Common.Logging.Loggers;
+using TGF.Common.Logging.Loggers;
 
-namespace TheGoodFramework.Common.Logging
+namespace TGF.Common.Logging
 {
     /// <summary>
     /// Class to add an extension method to IHostBuilder adding and configuring serilog for this host from its configuration.

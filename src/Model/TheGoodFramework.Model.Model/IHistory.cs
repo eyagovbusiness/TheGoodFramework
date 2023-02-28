@@ -1,4 +1,4 @@
-﻿namespace TheGoodFramework.Model
+﻿namespace TGF.Model
 {
     /// <summary>
     /// Identify entities with basic time hisotry

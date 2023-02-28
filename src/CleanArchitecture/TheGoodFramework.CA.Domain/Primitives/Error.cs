@@ -1,4 +1,4 @@
-﻿namespace TheGoodFramework.CA.Domain.Primitives
+﻿namespace TGF.CA.Domain.Primitives
 {
     /// <summary>
     /// Represents a concrete domain error.

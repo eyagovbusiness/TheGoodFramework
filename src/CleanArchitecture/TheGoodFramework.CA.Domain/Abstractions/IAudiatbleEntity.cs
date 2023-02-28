@@ -1,4 +1,4 @@
-﻿namespace TheGoodFramework.CA.Domain.Abstractions
+﻿namespace TGF.CA.Domain.Abstractions
 {
     /// <summary>
     /// Represents the marker interface for auditable entities.

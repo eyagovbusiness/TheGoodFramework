@@ -1,4 +1,4 @@
-﻿namespace TheGoodFramework.CA.Domain.Utility
+﻿namespace TGF.CA.Domain.Utility
 {
     /// <summary>
     /// Contains assertions for the most common application checks.

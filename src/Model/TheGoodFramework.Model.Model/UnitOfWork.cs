@@ -6,7 +6,7 @@ using System.Data;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace TheGoodFramework.Model
+namespace TGF.Model
 {
     public enum DisposeState
     {

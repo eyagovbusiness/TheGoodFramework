@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace TheGoodFramework.CA.Domain.Events
+namespace TGF.CA.Domain.Events
 {
     /// <summary>
     /// Represents a domain event handler interface.

@@ -1,6 +1,6 @@
-﻿using TheGoodFramework.CA.Domain.Primitives;
+﻿using TGF.CA.Domain.Primitives;
 
-namespace TheGoodFramework.CA.Domain.Core.Exceptions
+namespace TGF.CA.Domain.Core.Exceptions
 {
     /// <summary>
     /// Represents an exception that occurred in the domain.

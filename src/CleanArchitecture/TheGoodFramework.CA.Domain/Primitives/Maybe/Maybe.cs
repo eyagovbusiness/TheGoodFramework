@@ -1,4 +1,4 @@
-﻿namespace TheGoodFramework.CA.Domain.Primitives.Maybe
+﻿namespace TGF.CA.Domain.Primitives.Maybe
 {
     /// <summary>
     /// Represents a wrapper around a value that may or may not be null.

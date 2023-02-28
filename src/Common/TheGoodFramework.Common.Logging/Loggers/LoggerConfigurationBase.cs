@@ -1,6 +1,6 @@
 ﻿using Serilog.Events;
 
-namespace TheGoodFramework.Common.Logging.Loggers
+namespace TGF.Common.Logging.Loggers
 {
     /// <summary>
     /// Base class that any serilog configuration in this library should inherit.

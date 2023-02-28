@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
-using TheGoodFramework.CA.Domain.Primitives.Maybe;
+using TGF.CA.Domain.Primitives.Maybe;
 
-namespace TheGoodFramework.CA.Domain.Primitives
+namespace TGF.CA.Domain.Primitives
 {
     /// <summary>
     /// Represents an enumeration type.

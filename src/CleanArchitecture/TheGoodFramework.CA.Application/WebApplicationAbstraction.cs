@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using TheGoodFramework.CA.Presentation.Middleware;
-using TheGoodFramework.Common.Logging;
+using TGF.CA.Presentation.Middleware;
+using TGF.Common.Logging;
 
-namespace TheGoodFramework.CA.Application
+namespace TGF.CA.Application
 {
     /// <summary>
     /// Class to support logic abstraction on the WebApplication creation.

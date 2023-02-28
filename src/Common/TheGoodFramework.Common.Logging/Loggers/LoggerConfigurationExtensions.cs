@@ -1,7 +1,7 @@
 ﻿using Serilog;
 using Serilog.Sinks.Graylog;
 
-namespace TheGoodFramework.Common.Logging.Loggers
+namespace TGF.Common.Logging.Loggers
 {
     /// <summary>
     /// Class to support needed Serilog.LoggerConfiguration extensions to be configured from this library's custom serilog sink configurations.

@@ -1,4 +1,4 @@
-﻿namespace TheGoodFramework.Common.Logging.Loggers
+﻿namespace TGF.Common.Logging.Loggers
 {
     /// <summary>
     /// Class to bind json configurarion to serilog console sink.

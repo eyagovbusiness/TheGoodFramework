@@ -1,4 +1,4 @@
-﻿namespace TheGoodFramework.Model
+﻿namespace TGF.Model
 {
     public enum ConnectionProviderEnum
     {

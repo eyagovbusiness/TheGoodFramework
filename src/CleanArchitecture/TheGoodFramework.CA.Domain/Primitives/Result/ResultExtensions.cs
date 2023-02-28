@@ -1,6 +1,6 @@
 ﻿
 
-namespace TheGoodFramework.CA.Domain.Primitives.Result
+namespace TGF.CA.Domain.Primitives.Result
 {
     /// <summary>
     /// Contains extension methods for the result class.
