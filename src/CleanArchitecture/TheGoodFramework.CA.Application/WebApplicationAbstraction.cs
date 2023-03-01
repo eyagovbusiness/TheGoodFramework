@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TGF.CA.Presentation.Middleware;
@@ -11,21 +14,32 @@ namespace TGF.CA.Application
     /// </summary>
     public static class WebApplicationAbstraction
     {
+        private static Action<WebApplicationBuilder> _defaultBuildActions =>
+            (lBuilder) =>
+            {
+                lBuilder.Services.AddHealthChecks();
+                lBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck());
+                lBuilder.Services.AddHealthChecksUI().AddInMemoryStorage();
+                lBuilder.Host.ConfigureSerilog();
+                lBuilder.Services.AddControllers();
+                lBuilder.Services.AddEndpointsApiExplorer();
+                lBuilder.Services.AddSwaggerGen();
+            };
+
+
         /// <summary>
         /// Creates a new instance of <see cref="WebApplication"/> with custom serilog configuration from <see cref="LoggerConfigurator"/>. Also additional <see cref="WebApplicationBuilder"/> actions can included in the build.
         /// </summary>
         /// <param name="aWebHostBuilderAction">Custom logic to add on the WebApplicationBuilder that will be used to build the resulting <see cref="WebApplication"/>.</param>
         /// <returns>A new customized instance of <see cref="WebApplication"/>.</returns>
-        public static WebApplication CreateCustomWebApplication(Action<WebApplicationBuilder>? aWebHostBuilderAction = null)
+        public static WebApplication CreateCustomWebApplication(Action<WebApplicationBuilder>? aWebApplicationBuilder = null)
         {
             WebApplicationBuilder lBuilder = WebApplication.CreateBuilder();
-            lBuilder.Host.ConfigureSerilog();
-            lBuilder.Services.AddControllers();
-            lBuilder.Services.AddEndpointsApiExplorer();
-            lBuilder.Services.AddSwaggerGen();
 
-            if (aWebHostBuilderAction != null)
-                aWebHostBuilderAction.Invoke(lBuilder);
+            _defaultBuildActions.Invoke(lBuilder);
+
+            if (aWebApplicationBuilder != null)
+                aWebApplicationBuilder.Invoke(lBuilder);
 
             return lBuilder.Build();
 
@@ -40,19 +54,20 @@ namespace TGF.CA.Application
         public static async Task<WebApplication> CreateCustomWebApplicationAsync(Func<WebApplicationBuilder, Task>? aWebHostBuilderFunction = null)
         {
             WebApplicationBuilder lBuilder = WebApplication.CreateBuilder();
-            lBuilder.Host.ConfigureSerilog();
-            lBuilder.Services.AddControllers();
-            lBuilder.Services.AddEndpointsApiExplorer();
-            lBuilder.Services.AddSwaggerGen();
+
+            _defaultBuildActions.Invoke(lBuilder);
 
             if (aWebHostBuilderFunction != null)
                 await aWebHostBuilderFunction.Invoke(lBuilder);
-
 
             return lBuilder.Build();
 
         }
 
+        /// <summary>
+        /// Custom application run configuration.
+        /// </summary>
+        /// <param name="aWebApplication"></param>
         public static void CustomRun(this WebApplication aWebApplication)
         {
 
@@ -64,8 +79,18 @@ namespace TGF.CA.Application
             else
                 aWebApplication.UseHttpsRedirection();
 
+            aWebApplication.MapHealthChecks("/health", new HealthCheckOptions()
+            {
+                Predicate = _ => true,
+                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+            });
+            aWebApplication.UseHealthChecksUI(aConfig =>
+            {
+                aConfig.UIPath = "/health-ui";
+            });
+
             aWebApplication.UseMiddleware<LoggingMiddleware>();
-            aWebApplication.UseRouting();
+            aWebApplication.UseRouting().UseEndpoints(config => config.MapHealthChecksUI());
             aWebApplication.UseAuthorization();
             aWebApplication.MapControllers();
             aWebApplication.Run();
