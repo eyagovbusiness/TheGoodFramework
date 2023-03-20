@@ -1,44 +1,41 @@
 ﻿using log4net;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.ComponentModel.DataAnnotations;
+using System.Data.Entity;
+using System.Data.Entity.ModelConfiguration.Conventions;
 using System.Reflection;
 using TGF.Common.Extensions;
+using EntityState = System.Data.Entity.EntityState;
 
 namespace TGF.Model
 {
-    public abstract class DbContextBase : DbContext, IDisposable
+    /// <summary>
+    /// Class to provide custom DataContext from <see cref="System.Data.Entity.DbContext"/> to be used in UnitOfWork and Repository patterns.
+    /// </summary>
+    public abstract class DataContextBase : DbContext, IDisposable
     {
         private static readonly ILog mLog = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
 
         public string DefaultSchema { get; protected set; }
 
-        public DbContextBase()
+        public DataContextBase()
         { }
 
-        //This needs work
-        public DbContextBase(string aConnectionString)
-            : base()
+        public DataContextBase(string aConnectionString)
+            : base(aConnectionString)
         {
-            DbContextOptionsBuilder a = new DbContextOptionsBuilder();
-
-            a.UseSqlServer(aConnectionString);
-            this.OnConfiguring(a);
         }
 
-        protected override void ConfigureConventions(ModelConfigurationBuilder aConfigurationBuilder)
-        {
-            //aConfigurationBuilder.Conventions.Add(_ => new ..);
-            //aConfigurationBuilder.Conventions.Remove(_ => ..);
-            //aConfigurationBuilder.Conventions.Replace(...);
-
-            base.ConfigureConventions(aConfigurationBuilder);
-        }
-
-        protected override void OnModelCreating(ModelBuilder aModelBuilder)
+        /// <summary>
+        /// Override that modifies builder conventions and verifies the schema.
+        /// </summary>
+        /// <param name="aModelBuilder">.</param>
+        protected override void OnModelCreating(DbModelBuilder aModelBuilder)
         {
             if (!DefaultSchema.IsNullOrWhiteSpace())
                 aModelBuilder.HasDefaultSchema(DefaultSchema);
+
+            aModelBuilder.Conventions.Remove<PluralizingTableNameConvention>();
+            aModelBuilder.Conventions.Remove<OneToManyCascadeDeleteConvention>();
 
             base.OnModelCreating(aModelBuilder);
         }
@@ -48,7 +45,12 @@ namespace TGF.Model
             return new Dictionary<object, object>() { { "context", this } };
         }
 
-        //needs work, maybe fluent validation
+        //needs work, maybe fluent validation.
+        /// <summary>
+        /// Validates a given entity.
+        /// </summary>
+        /// <param name="aEntity">Entity to validate.</param>
+        /// <returns><see cref="ValidationResult"/>.</returns>
         public IEnumerable<ValidationResult> Validate(object aEntity)
         {
             var lValidatableObject = aEntity as IValidatableObject;
@@ -61,6 +63,10 @@ namespace TGF.Model
             return null;
         }
 
+        /// <summary>
+        /// Save changes in this DataContext.
+        /// </summary>
+        /// <returns>The number of state entries written to the underlying database.</returns>
         public override int SaveChanges()
         {
             var entities = from e in ChangeTracker.Entries()
@@ -77,4 +83,5 @@ namespace TGF.Model
         }
 
     }
+
 }
