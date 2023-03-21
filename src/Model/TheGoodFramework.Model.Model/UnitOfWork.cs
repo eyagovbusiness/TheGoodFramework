@@ -1,8 +1,8 @@
 ﻿using log4net;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 using System.ComponentModel.DataAnnotations;
 using System.Data;
+using System.Data.Entity;
+using System.Data.Entity.Infrastructure;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -36,25 +36,25 @@ namespace TGF.Model
         }
 
         public static UnitOfWork Get<T>([CallerMemberName] string aMemberName = "", [CallerFilePath] string aFileName = "", [CallerLineNumber] int aLineNumber = 0)
-            where T : DbContextBase, new()
+            where T : DataContextBase, new()
         {
-            DbContextBase lDataContext = new T();
+            DataContextBase lDataContext = new T();
             UnitOfWork lWork = UnitOfWork.Get(lDataContext);
 
             return lWork;
         }
 
-        public static UnitOfWork Get(DbContextBase aDataContext)
+        public static UnitOfWork Get(DataContextBase aDataContext)
         {
             return new UnitOfWork(() => aDataContext);
         }
         #endregion
 
         private string mOwnerThreadName;
-        private DbContextBase mDbContext;
+        private DataContextBase mDataContext;
         private UnitOfWork mParent;
 
-        private UnitOfWork(Func<DbContextBase> aDbContextFactory)
+        private UnitOfWork(Func<DataContextBase> aDbContextFactory)
         {
             if (mUnitOfWork != null && mUnitOfWork.mDisposeState != DisposeState.None)
             {
@@ -66,42 +66,42 @@ namespace TGF.Model
 
             if (mUnitOfWork == null)
             {
-                mDbContext = aDbContextFactory();
+                mDataContext = aDbContextFactory();
             }
             else
             {
-                mDbContext = mUnitOfWork.mDbContext;
+                mDataContext = mUnitOfWork.mDataContext;
                 mParent = mUnitOfWork;
             }
 
             // TO-do: Set Command Timeout for the DataContext
             //var lConnectionFact = new ConnectionFactory();
-            //var lDataContextType = mDbContext?.GetType();
+            //var lDataContextType = mDataContext?.GetType();
             //if (lDataContextType != null)
             //{
             //    var lConnectionConfig = lConnectionFact.GetConnectionConfig(lDataContextType);
             //    if (lConnectionConfig?.CommandTimeout != null)
-            //        mDbContext.Database.SetCommandTimeout(lConnectionConfig.CommandTimeout);
+            //        mDataContext.Database.SetCommandTimeout(lConnectionConfig.CommandTimeout);
             //}
 
-            //mLog.TraceFormat("UnitOfWork.ctor - {0}, {1}, {2}", this.GetHashCode(), mDbContext.GetHashCode(), mParent == null);
+            //mLog.TraceFormat("UnitOfWork.ctor - {0}, {1}, {2}", this.GetHashCode(), mDataContext.GetHashCode(), mParent == null);
             mUnitOfWork = this;
         }
 
         public IQueryable<T> Query<T>()
             where T : class
         {
-            return mDbContext.Set<T>();
+            return mDataContext.Set<T>();
         }
 
 
         public void RevertAll()
         {
-            EntityEntry[] lEntryList = mDbContext.ChangeTracker.Entries()
+            DbEntityEntry[] lEntryList = mDataContext.ChangeTracker.Entries()
                 .Where(x => x.State != EntityState.Unchanged)
                 .ToArray();
 
-            foreach (EntityEntry lEntry in lEntryList)
+            foreach (DbEntityEntry lEntry in lEntryList)
             {
                 switch (lEntry.State)
                 {
@@ -123,7 +123,7 @@ namespace TGF.Model
         {
             try
             {
-                mDbContext.SaveChanges();
+                mDataContext.SaveChanges();
             }
             catch (ValidationException lEx)
             {
@@ -137,7 +137,7 @@ namespace TGF.Model
 
         public bool IsChanged(object aEntity)
         {
-            EntityEntry aEntry = mDbContext.Entry(aEntity);
+            DbEntityEntry aEntry = mDataContext.Entry(aEntity);
             if (aEntry != null)
                 return aEntry.State != EntityState.Unchanged;
             else
@@ -163,20 +163,20 @@ namespace TGF.Model
                 else if (mUnitOfWork != null)
                     mLog.WarnFormat("Disposed UnitOfWork is not last UnitOfWork! {0} != {1}", mUnitOfWork.mOwnerThreadName, this.mOwnerThreadName);
 
-                //mLog.TraceFormat("UnitOfWork.Dispose - {0}, {1}, {2}", this.GetHashCode(), mDbContext.GetHashCode(), mParent == null);
+                //mLog.TraceFormat("UnitOfWork.Dispose - {0}, {1}, {2}", this.GetHashCode(), mDataContext.GetHashCode(), mParent == null);
 
                 if (mParent == null)
                 {
                     try // catch error if internal context is already Disposed
                     {
-                        //mDbContext.ObjectContext().ContextOptions.LazyLoadingEnabled = false;
-                        mDbContext.Dispose();
+                        //mDataContext.ObjectContext().ContextOptions.LazyLoadingEnabled = false;
+                        mDataContext.Dispose();
                     }
                     catch { }
 
                 }
 
-                mDbContext = null;
+                mDataContext = null;
 
                 mDisposeState = DisposeState.Disposed;
             }
