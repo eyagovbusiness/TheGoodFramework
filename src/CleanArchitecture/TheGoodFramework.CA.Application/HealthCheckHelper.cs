@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Net;
+using System.Net.Sockets;
 
 namespace TGF.CA.Application
 {
@@ -21,7 +22,7 @@ namespace TGF.CA.Application
                 new Dictionary<string, string?>
                 {
                     {"HealthChecksUI:HealthChecks:0:Name", "self"},
-                    {"HealthChecksUI:HealthChecks:0:Uri", $"http://{Dns.GetHostName()}/health"},
+                    {"HealthChecksUI:HealthChecks:0:Uri", $"http://localhost/health"},
                     {"HealthChecksUI:EvaluationTimeInSeconds", "60" },
                     {"HealthChecksUI:MinimumSecondsBetweenFailureNotifications", "90" }
                 });
