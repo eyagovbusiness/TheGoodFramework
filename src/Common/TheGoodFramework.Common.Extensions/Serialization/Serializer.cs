@@ -1,5 +1,5 @@
-using System.Text;
 using Newtonsoft.Json;
+using System.Text;
 using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace TGF.Common.Extensions.Serialization;
@@ -36,7 +36,7 @@ public class Serializer : ISerializer
     {
         return (DeserializeByteArrayToObject<T>(input) as T)!;
     }
-    
+
     public object DeserializeObject(byte[] input, Type type)
     {
         using var memoryStream = new MemoryStream(input, false);
@@ -44,7 +44,7 @@ public class Serializer : ISerializer
         using var reader = new JsonTextReader(streamReader);
         return _jsonSerializer.Deserialize(reader, type) ?? throw new InvalidOperationException();
     }
-    
+
     private object DeserializeByteArrayToObject<T>(byte[] input)
     {
         using var memoryStream = new MemoryStream(input, false);
@@ -52,7 +52,7 @@ public class Serializer : ISerializer
         using var reader = new JsonTextReader(streamReader);
         return _jsonSerializer.Deserialize(reader, typeof(T)) ?? throw new InvalidOperationException();
     }
-    
+
 
     public string SerializeObject<T>(T obj)
     {

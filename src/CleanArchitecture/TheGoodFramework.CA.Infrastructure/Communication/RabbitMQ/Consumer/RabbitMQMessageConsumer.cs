@@ -1,11 +1,11 @@
+using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
 using TGF.CA.Infrastructure.Communication.Consumer;
 using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
-using Microsoft.Extensions.Options;
-using RabbitMQ.Client;
 using ISerializer = TGF.Common.Extensions.Serialization.ISerializer;
 
-namespace  TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
+namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
 //CODE FROM https://github.com/ElectNewt/Distribt
 public class RabbitMQMessageConsumer<TMessage> : IMessageConsumer<TMessage>
 {
@@ -41,11 +41,11 @@ public class RabbitMQMessageConsumer<TMessage> : IMessageConsumer<TMessage>
         IModel channel = connection.CreateModel(); // #6 using (implement it correctly)
         RabbitMQMessageReceiver receiver = new RabbitMQMessageReceiver(channel, _serializer, _handleMessage);
         string queue = GetCorrectQueue();
-        
+
         channel.BasicConsume(queue, false, receiver);
-        
-       // #5 this should be here await consumer.HandleMessage();
-       return Task.CompletedTask;
+
+        // #5 this should be here await consumer.HandleMessage();
+        return Task.CompletedTask;
     }
 
     private string GetCorrectQueue()

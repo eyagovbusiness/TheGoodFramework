@@ -1,9 +1,9 @@
-namespace  TGF.CA.Infrastructure.Communication.Consumer.Manager;
+namespace TGF.CA.Infrastructure.Communication.Consumer.Manager;
 
 public class ConsumerManager<TMessage> : IConsumerManager<TMessage>
 {
     private CancellationTokenSource _cancellationTokenSource;
-    
+
     public ConsumerManager()
     {
         _cancellationTokenSource = new CancellationTokenSource();

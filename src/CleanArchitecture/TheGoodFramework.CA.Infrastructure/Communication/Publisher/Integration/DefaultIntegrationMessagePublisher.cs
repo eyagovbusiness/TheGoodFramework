@@ -1,6 +1,6 @@
 using TGF.CA.Infrastructure.Communication.Messages;
 
-namespace  TGF.CA.Infrastructure.Communication.Publisher.Integration;
+namespace TGF.CA.Infrastructure.Communication.Publisher.Integration;
 
 public interface IIntegrationMessagePublisher
 {

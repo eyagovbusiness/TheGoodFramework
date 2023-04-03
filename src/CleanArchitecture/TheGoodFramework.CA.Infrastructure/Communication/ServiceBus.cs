@@ -1,9 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using TGF.CA.Infrastructure.Communication.Consumer.Handler;
-using TGF.CA.Infrastructure.Communication.Messages;
-using TGF.CA.Infrastructure.Communication.RabbitMQ;
-//CODE FROM https://github.com/ElectNewt/Distribt
+﻿//CODE FROM https://github.com/ElectNewt/Distribt
 namespace TGF.CA.Application.Services
 {
     //public static class ServiceBus
@@ -61,7 +56,7 @@ namespace TGF.CA.Application.Services
     //            "DomainConsumer");
     //        serviceCollection.AddRabbitMqConsumer<DomainMessage>();
     //    }
-        
+
     //    public static void AddHandlersInAssembly<T>(this IServiceCollection serviceCollection)
     //    {
     //        serviceCollection.Scan(scan => scan.FromAssemblyOf<T>()

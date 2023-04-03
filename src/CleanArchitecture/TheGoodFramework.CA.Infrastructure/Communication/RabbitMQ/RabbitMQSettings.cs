@@ -1,6 +1,4 @@
-using RabbitMQ.Client;
-
-namespace  TGF.CA.Infrastructure.Communication.RabbitMQ;
+namespace TGF.CA.Infrastructure.Communication.RabbitMQ;
 //CODE FROM https://github.com/ElectNewt/Distribt
 public class RabbitMQSettings
 {
@@ -18,7 +16,7 @@ public class RabbitMQSettings
     {
         Hostname = hostname;
     }
- }
+}
 
 public record RabbitMQCredentials
 {

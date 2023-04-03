@@ -1,7 +1,7 @@
 using System.Reflection;
 using TGF.CA.Infrastructure.Communication.Messages;
 
-namespace  TGF.CA.Infrastructure.Communication.Publisher.Integration;
+namespace TGF.CA.Infrastructure.Communication.Publisher.Integration;
 
 public static class IntegrationMessageMapper
 {
@@ -14,8 +14,8 @@ public static class IntegrationMessageMapper
             nameof(ToTypedIntegrationEvent),
             BindingFlags.Static | BindingFlags.NonPublic
         );
-        
-        var buildWrapperGenericMethodInfo = buildWrapperMethodInfo?.MakeGenericMethod(new[] {message.GetType()});
+
+        var buildWrapperGenericMethodInfo = buildWrapperMethodInfo?.MakeGenericMethod(new[] { message.GetType() });
         var wrapper = buildWrapperGenericMethodInfo?.Invoke(
             null,
             new[]
@@ -26,8 +26,8 @@ public static class IntegrationMessageMapper
         );
         return (wrapper as IntegrationMessage)!;
     }
-    
-    
+
+
     private static IntegrationMessage<T> ToTypedIntegrationEvent<T>(T message, Metadata metadata)
     {
         return new IntegrationMessage<T>(Guid.NewGuid().ToString(), typeof(T).Name, message, metadata);
