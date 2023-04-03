@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using TGF.CA.Infrastructure.DataBasesDI;
+using TGF.CA.Infrastructure.Persistence.DataBasesDI;
 
-namespace TGF.CA.Infrastructure.DataBasesSetup
+namespace TGF.CA.Infrastructure.Persistence.DataBasesSetup
 {
     /// <summary>
     /// Static class to help setting up a new MySql database.
