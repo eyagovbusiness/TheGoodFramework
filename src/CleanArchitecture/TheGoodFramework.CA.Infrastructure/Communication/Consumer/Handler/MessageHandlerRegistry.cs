@@ -29,7 +29,7 @@ public class MessageHandlerRegistry : IMessageHandlerRegistry
 
         IList<IMessageHandler> handlers =
             GetMessageHandlersInternal(messageHandlerType, messageType);
-            
+
         _cachedHandlers.AddOrUpdate(key, handlers.Distinct(), (_, __) => handlers);
         if (handlers.Count == 0)
         {

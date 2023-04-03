@@ -15,7 +15,7 @@ public interface IIntegrationMessageHandler : IMessageHandler
 {
 }
 
-public interface IIntegrationMessageHandler<TMessage> 
+public interface IIntegrationMessageHandler<TMessage>
     : IMessageHandler<IntegrationMessage<TMessage>>, IIntegrationMessageHandler
 {
 }
@@ -24,7 +24,7 @@ public interface IDomainMessageHandler : IMessageHandler
 {
 }
 
-public interface IDomainMessageHandler<TMessage> 
+public interface IDomainMessageHandler<TMessage>
     : IMessageHandler<DomainMessage<TMessage>>, IDomainMessageHandler
 {
 }

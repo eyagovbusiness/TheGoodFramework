@@ -4,11 +4,11 @@ using TGF.CA.Infrastructure.Communication.Messages;
 namespace TGF.CA.Infrastructure.Communication.Consumer.Handler;
 
 public interface IHandleMessage
-{ 
+{
     Task Handle(IMessage message, CancellationToken cancellationToken = default);
 }
 
-public class HandleMessage  : IHandleMessage
+public class HandleMessage : IHandleMessage
 {
     private readonly IMessageHandlerRegistry _messageHandlerRegistry;
 
@@ -28,16 +28,16 @@ public class HandleMessage  : IHandleMessage
         foreach (IMessageHandler handler in handlers)
         {
             Type messageHandlerType = handler.GetType();
-            
+
             MethodInfo? handle = messageHandlerType.GetMethods()
                 .Where(methodInfo => methodInfo.Name == nameof(IMessageHandler<object>.Handle))
                 .FirstOrDefault(info => info.GetParameters()
                     .Select(parameter => parameter.ParameterType)
                     .Contains(message.GetType()));
-            
-            if (handle != null) 
-                return  (Task) handle.Invoke(handler, new object[] {message, cancellationToken})!;
+
+            if (handle != null)
+                return (Task)handle.Invoke(handler, new object[] { message, cancellationToken })!;
         }
-        return  Task.CompletedTask;
+        return Task.CompletedTask;
     }
 }

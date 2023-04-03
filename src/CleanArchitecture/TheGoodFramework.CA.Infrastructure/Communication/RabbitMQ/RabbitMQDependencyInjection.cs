@@ -1,16 +1,16 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
 using TGF.CA.Infrastructure.Communication.Consumer;
 using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.Publisher;
 using TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
 using TGF.CA.Infrastructure.Communication.RabbitMQ.Publisher;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Options;
-using RabbitMQ.Client;
 
-namespace  TGF.CA.Infrastructure.Communication.RabbitMQ;
+namespace TGF.CA.Infrastructure.Communication.RabbitMQ;
 //CODE FROM https://github.com/ElectNewt/Distribt
 public static class RabbitMQDependencyInjection
 {

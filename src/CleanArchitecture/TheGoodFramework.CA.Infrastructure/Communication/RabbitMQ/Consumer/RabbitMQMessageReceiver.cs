@@ -1,9 +1,9 @@
+using RabbitMQ.Client;
 using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.Common.Extensions.Serialization;
-using RabbitMQ.Client;
 
-namespace  TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
+namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
 //CODE FROM https://github.com/ElectNewt/Distribt
 public class RabbitMQMessageReceiver : DefaultBasicConsumer
 {
@@ -42,9 +42,9 @@ public class RabbitMQMessageReceiver : DefaultBasicConsumer
 
         IMessage message = (_serializer.DeserializeObject(MessageBody, MessageType) as IMessage)
                            ?? throw new ArgumentException("The message did not deserialized properly");
-        
+
         await _handleMessage.Handle(message, CancellationToken.None);
-     
+
         _channel.BasicAck(DeliveryTag, false);
     }
 }

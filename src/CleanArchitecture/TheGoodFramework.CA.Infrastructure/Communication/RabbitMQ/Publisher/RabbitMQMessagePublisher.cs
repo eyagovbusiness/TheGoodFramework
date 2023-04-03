@@ -1,11 +1,11 @@
+using Microsoft.Extensions.Options;
+using RabbitMQ.Client;
 using System.Text;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.Publisher;
 using TGF.Common.Extensions.Serialization;
-using Microsoft.Extensions.Options; 
-using RabbitMQ.Client;
 
-namespace  TGF.CA.Infrastructure.Communication.RabbitMQ.Publisher;
+namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Publisher;
 
 public class RabbitMQMessagePublisher<TMessage> : IExternalMessagePublisher<TMessage>
     where TMessage : IMessage
@@ -49,11 +49,11 @@ public class RabbitMQMessagePublisher<TMessage> : IExternalMessagePublisher<TMes
     }
 
 
-   
+
     private void PublishSingle(TMessage message, IModel model, string? routingKey)
     {
         var properties = model.CreateBasicProperties();
-        properties.Persistent = true; 
+        properties.Persistent = true;
         properties.Type = RemoveVersion(message.GetType());
 
         model.BasicPublish(exchange: GetCorrectExchange(),
@@ -64,10 +64,10 @@ public class RabbitMQMessagePublisher<TMessage> : IExternalMessagePublisher<TMes
 
     private string GetCorrectExchange()
     {
-        return (typeof(TMessage) == typeof(IntegrationMessage) 
-            ? _settings.Publisher?.IntegrationExchange 
-            : _settings.Publisher?.DomainExchange) 
-               ?? throw  new ArgumentException("please configure the Exchanges on the appsettings");
+        return (typeof(TMessage) == typeof(IntegrationMessage)
+            ? _settings.Publisher?.IntegrationExchange
+            : _settings.Publisher?.DomainExchange)
+               ?? throw new ArgumentException("please configure the Exchanges on the appsettings");
     }
 
     /// <summary>

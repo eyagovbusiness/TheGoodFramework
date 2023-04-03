@@ -1,6 +1,4 @@
 ﻿using Microsoft.Extensions.Configuration;
-using System.Net;
-using System.Net.Sockets;
 
 namespace TGF.CA.Application
 {

@@ -1,4 +1,4 @@
-namespace  TGF.CA.Infrastructure.Communication.Consumer.Manager;
+namespace TGF.CA.Infrastructure.Communication.Consumer.Manager;
 
 public interface IConsumerManager<TMessage>
 {

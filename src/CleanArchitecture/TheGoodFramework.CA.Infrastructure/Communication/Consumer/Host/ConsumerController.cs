@@ -1,6 +1,6 @@
-using TGF.CA.Infrastructure.Communication.Consumer.Manager;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using TGF.CA.Infrastructure.Communication.Consumer.Manager;
 
 namespace TGF.CA.Infrastructure.Communication.Consumer.Host;
 //CODE FROM https://github.com/ElectNewt/Distribt
@@ -12,7 +12,7 @@ public class ConsumerController<TMessage> : ControllerBase
     {
         _consumerManager = consumerManager;
     }
-    
+
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [Route("start")]

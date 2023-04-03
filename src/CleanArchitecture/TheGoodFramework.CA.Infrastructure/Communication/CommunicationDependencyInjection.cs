@@ -1,12 +1,12 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using TGF.CA.Infrastructure.Communication.Consumer.Host;
 using TGF.CA.Infrastructure.Communication.Consumer.Manager;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.Publisher.Domain;
 using TGF.CA.Infrastructure.Communication.Publisher.Integration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 
-namespace  TGF.CA.Infrastructure.Communication;
+namespace TGF.CA.Infrastructure.Communication;
 //CODE FROM https://github.com/ElectNewt/Distribt
 public static class CommunicationDependencyInjection
 {
