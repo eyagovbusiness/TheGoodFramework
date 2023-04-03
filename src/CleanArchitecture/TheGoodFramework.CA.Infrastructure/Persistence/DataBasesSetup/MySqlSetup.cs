@@ -1,9 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection.Metadata.Ecma335;
-using TGF.CA.Infrastructure.DataBasesDI;
+using TGF.CA.Infrastructure.Persistence.DataBasesDI;
 
-namespace TGF.CA.Infrastructure.DataBasesSetup
+namespace TGF.CA.Infrastructure.Persistence.DataBasesSetup
 {
     public static class MySqlSetup
     {
@@ -32,8 +31,8 @@ namespace TGF.CA.Infrastructure.DataBasesSetup
 
         private record MySqlCredentials
         {
-            public string username { get; init; } = null!;
-            public string password { get; init; } = null!;
+            public string Username { get; init; } = null!;
+            public string Password { get; init; } = null!;
         }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace TGF.CA.Infrastructure.DataBasesDI
+namespace TGF.CA.Infrastructure.Persistence.DataBasesDI
 {
     /// <summary>
     /// Static lass to support MySql within the DI framework.

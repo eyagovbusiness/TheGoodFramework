@@ -39,6 +39,16 @@
         /// </summary>
         public string Password { get; set; }
 
+        public ConnectionConfig(string aHost, int aPort, string aCatalog, string aUser, string aPassword, ConnectionConfig aRedundant)
+        {
+            Host = aHost;
+            Port = aPort;
+            Catalog = aCatalog;
+            User = aUser;
+            Password = aPassword;
+            Redundant = aRedundant;
+        }
+
         /// <summary>
         /// Type of database provider
         /// </summary>
