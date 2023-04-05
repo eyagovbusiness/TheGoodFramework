@@ -26,6 +26,15 @@ namespace TGF.Common.ROP
 
         }
 
+        public static async Task<Result<T2>> Bind<T1, T2, P1>(this Task<Result<T1>> aThisResult, Func<T1, P1, Task<Result<T2>>> aNextResult, P1 aParameter)
+        {
+            var r = await aThisResult;
+            return r.IsSuccess
+                ? await aNextResult(r.Value, aParameter)
+                : Result.Failure<T2>(r.ErrorList);
+
+        }
+
         /// <summary>
         /// Returns a Task that will execute the given Action after computing the Task that will return this Result.
         /// </summary>
