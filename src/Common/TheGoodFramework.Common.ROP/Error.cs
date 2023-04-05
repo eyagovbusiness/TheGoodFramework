@@ -9,10 +9,10 @@ namespace TGF.Common.ROP
     /// <summary>
     /// Struct representing an error with an error Code and error Message.
     /// </summary>
-    public struct Error
+    public readonly struct Error
     {
-        public string Code;
-        public string Message;
+        public string Code { get; }
+        public string Message { get; }
         public Error(string aCode, string aMessage)
         {
             Code = aCode;
