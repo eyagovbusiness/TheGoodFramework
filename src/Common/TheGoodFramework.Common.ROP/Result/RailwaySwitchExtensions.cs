@@ -1,8 +1,4 @@
-﻿using System.Collections.Immutable;
-using System.ComponentModel;
-using System.Runtime.ExceptionServices;
-
-namespace TGF.Common.ROP.Result
+﻿namespace TGF.Common.ROP.Result
 {
     /// <summary>
     /// Static class to register operations between Results like binding Results, mapping different Results or executing certain actions after the Result is generated.
