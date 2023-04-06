@@ -89,7 +89,7 @@ namespace TGF.CA.Application
                 aConfig.UIPath = "/health-ui";
             });
 
-            aWebApplication.UseMiddleware<LoggingMiddleware>();
+            aWebApplication.UseMiddleware<ExceptionHandlerMiddleware>();
             aWebApplication.UseRouting().UseEndpoints(config => config.MapHealthChecksUI());
             aWebApplication.UseAuthorization();
             aWebApplication.MapControllers();

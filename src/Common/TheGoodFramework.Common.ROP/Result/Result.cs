@@ -1,15 +1,17 @@
 ﻿using System.Collections.Immutable;
+using System.Net;
+using TGF.Common.ROP.Errors;
 
-namespace TGF.Common.ROP
+namespace TGF.Common.ROP.Result
 {
 
     /// <summary>
     /// Class that represents the unit of information while returning the result of operations in Reailway Oriented Programming.
     /// </summary>
     /// <typeparam name="T">Type of the result Value.</typeparam>
-    public class Result<T> 
+    public class Result<T>
     {
-        public T Value { get;}
+        public T Value { get; }
         public bool IsSuccess => ErrorList.Length == 0;
         public ImmutableArray<Error> ErrorList { get; }
 
@@ -18,9 +20,9 @@ namespace TGF.Common.ROP
             Value = aValue;
             ErrorList = ImmutableArray<Error>.Empty;
         }
-        public Result(ImmutableArray<Error> aErrorList) 
+        public Result(ImmutableArray<Error> aErrorList)
         {
-            Value = default(T);
+            Value = default;
             if (aErrorList.Length == 0)
                 throw new InvalidOperationException("Can't create a failure Result without errors.");
 
