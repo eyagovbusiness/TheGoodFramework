@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TGF.Common.ROP.Errors
+﻿namespace TGF.Common.ROP.Errors
 {
     /// <summary>
     /// Common iterface for Error and possible future different types of errors.
