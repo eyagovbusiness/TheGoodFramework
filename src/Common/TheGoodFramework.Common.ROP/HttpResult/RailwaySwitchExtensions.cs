@@ -1,4 +1,6 @@
-﻿namespace TGF.Common.ROP.Result
+﻿using TGF.Common.ROP.Result;
+
+namespace TGF.Common.ROP.HttpResult
 {
     /// <summary>
     /// Static class to register operations between Results like binding Results, mapping different Results or executing certain actions after the Result is generated.
@@ -7,19 +9,35 @@
     {
 
         /// <summary>
-        /// Bunds a second Result after this one (concats railways and the respective not happy paths).
+        /// Binds a second Result after this one (concats railways and the respective not happy paths).
         /// </summary>
         /// <typeparam name="T1">Type of the Value property of this Result.</typeparam>
         /// <typeparam name="T2">Type of the Value property of the next Result.</typeparam>
         /// <param name="aThisResult">This Result.</param>
         /// <param name="aNextResult">Next Result to be bound after this Result.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
-        public static async Task<IResult<T2>> Bind<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<IResult<T2>>> aNextResult)
+        public static async Task<IHttpResult<T2>> Bind<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, Task<IHttpResult<T2>>> aNextResult)
         {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
                 ? await aNextResult(lThisResult.Value)
-                : Result.Failure<T2>(lThisResult.ErrorList);
+                : Result.Result.Failure<T2>(lThisResult.ErrorList, lThisResult.StatusCode);
+
+        }
+
+        /// <summary>
+        /// Binds a second Result after this one (concats railways and the respective not happy paths).
+        /// </summary>
+        /// <typeparam name="T1">Type of the Value property of this Result.</typeparam>
+        /// <typeparam name="T2">Type of the Value property of the next Result.</typeparam>
+        /// <param name="aThisResult">This Result.</param>
+        /// <param name="aNextResult">Next Result to be bound after this Result.</param>
+        /// <returns>Asynchronous Task that returns a Result.</returns>
+        public static async Task<IHttpResult<T2>> Bind<T1, T2>(this IHttpResult<T1> aThisResult, Func<T1, Task<IHttpResult<T2>>> aNextResult)
+        {
+            return aThisResult.IsSuccess
+                ? await aNextResult(aThisResult.Value)
+                : Result.Result.Failure<T2>(aThisResult.ErrorList, aThisResult.StatusCode);
 
         }
 
@@ -30,7 +48,7 @@
         /// <param name="aThisResult">This Result.</param>
         /// <param name="aDeadEndAction">Action to perform after the Result is calculated sucessfully.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
-        public static async Task<IResult<T>> Tap<T>(this Task<IResult<T>> aThisResult, Action<T> aDeadEndAction)
+        public static async Task<IHttpResult<T>> Tap<T>(this Task<IHttpResult<T>> aThisResult, Action<T> aDeadEndAction)
         {
             var lThisResult = await aThisResult;
             if (lThisResult.IsSuccess)
@@ -48,12 +66,12 @@
         /// <param name="aThisResult">This Result.</param>
         /// <param name="aMapSuccessFunction">The mapping function to map from this Result Type to the desired Result Type.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
-        public static async Task<IResult<T2>> Map<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, T2> aMapSuccessFunction)
+        public static async Task<IHttpResult<T2>> Map<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, T2> aMapSuccessFunction)
         {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
-                ? Result.Success(aMapSuccessFunction(lThisResult.Value))
-                : Result.Failure<T2>(lThisResult.ErrorList);
+                ? Result.Result.Success(aMapSuccessFunction(lThisResult.Value), lThisResult.StatusCode)
+                : Result.Result.Failure<T2>(lThisResult.ErrorList, lThisResult.StatusCode);
 
         }
 
@@ -64,13 +82,13 @@
         /// <typeparam name="T2"></typeparam>
         /// <param name="aThisResult"></param>
         /// <param name="aMapSuccessFunction">Function that maps the path continuation fo the Sucess railway.</param>
-        /// <returns>Next <see cref="IResult{T}"/>.</returns>
-        public static async Task<IResult<T2>> Map<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction)
+        /// <returns>Next <see cref="IHttpResult{T}"/>.</returns>
+        public static async Task<IHttpResult<T2>> Map<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction)
         {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
-                ? Result.Success(await aMapSuccessFunction(lThisResult.Value))
-                : Result.Failure<T2>(lThisResult.ErrorList);
+                ? Result.Result.Success(await aMapSuccessFunction(lThisResult.Value), lThisResult.StatusCode)
+                : Result.Result.Failure<T2>(lThisResult.ErrorList, lThisResult.StatusCode);
 
         }
 
@@ -82,15 +100,15 @@
         /// <param name="aThisResult"></param>
         /// <param name="aMapSuccessFunction">Function that maps the path continuation fo the Sucess railway.</param>
         /// <param name="aMapFailureFunction">Function that maps the path continuation fo the Failure railway.</param>
-        /// <returns>Next <see cref="IResult{T}"/>.</returns>
-        public static async Task<IResult<T2>> DoubleMap<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, Task<T2>> aMapFailureFunction)
+        /// <returns>Next <see cref="IHttpResult{T}"/>.</returns>
+        public static async Task<IHttpResult<T2>> DoubleMap<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, Task<T2>> aMapFailureFunction)
         {
             var lThisResult = await aThisResult;
             if (lThisResult.IsSuccess)
-                return Result.Success(await aMapSuccessFunction(lThisResult.Value));
+                return Result.Result.Success(await aMapSuccessFunction(lThisResult.Value), lThisResult.StatusCode);
 
             await aMapFailureFunction(lThisResult.Value);
-            return Result.Failure<T2>(lThisResult.ErrorList);
+            return Result.Result.Failure<T2>(lThisResult.ErrorList, lThisResult.StatusCode);
 
         }
 
@@ -102,15 +120,15 @@
         /// <param name="aThisResult"></param>
         /// <param name="aMapSuccessFunction">Function that maps the path continuation fo the Sucess railway.</param>
         /// <param name="aMapFailureFunction">Function that maps the path continuation fo the Failure railway.</param>
-        /// <returns>Next <see cref="IResult{T}"/>.</returns>
-        public static async Task<IResult<T2>> DoubleMap<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, T2> aMapFailureFunction)
+        /// <returns>Next <see cref="IHttpResult{T}"/>.</returns>
+        public static async Task<IHttpResult<T2>> DoubleMap<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, T2> aMapFailureFunction)
         {
             var lThisResult = await aThisResult;
             if (lThisResult.IsSuccess)
-                return Result.Success(await aMapSuccessFunction(lThisResult.Value));
+                return Result.Result.Success(await aMapSuccessFunction(lThisResult.Value), lThisResult.StatusCode);
 
             aMapFailureFunction(lThisResult.Value);
-            return Result.Failure<T2>(lThisResult.ErrorList);
+            return Result.Result.Failure<T2>(lThisResult.ErrorList, lThisResult.StatusCode);
 
         }
 
