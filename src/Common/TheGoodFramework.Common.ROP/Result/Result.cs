@@ -1,4 +1,7 @@
-﻿using System.Collections.Immutable;
+﻿using MediatR;
+using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json.Linq;
+using System.Collections.Immutable;
 using System.Net;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
@@ -49,6 +52,17 @@ namespace TGF.Common.ROP.Result
         public static IResult<T> SuccessHttp<T>(T aValue, HttpStatusCode aStatusCode = HttpStatusCode.OK) => new HttpResult<T>(aValue, aStatusCode);
         public static IResult<T> Failure<T>(ImmutableArray<IError> aErrorList, HttpStatusCode aStatusCode) => new HttpResult<T>(aErrorList, aStatusCode);
         public static IResult<T> Failure<T>(IHttpError aHttpError) => new HttpResult<T>(ImmutableArray.Create(aHttpError.Error), aHttpError.StatusCode);
+        public static IResult<Unit> CancellationTokenResult(CancellationToken aCancellationToken)
+            => aCancellationToken.IsCancellationRequested
+                ? Failure<Unit>(CommonErrors.CancellationToken.Cancelled)
+                : SuccessHttp(Unit.Value);
+        public static Task<IResult<Unit>> CancellationTokenResultAsync(CancellationToken aCancellationToken)
+            => Task.FromResult(CancellationTokenResult(aCancellationToken));
+
+        public static IHttpResult<T> TryHttpResultParse<T>(this IResult<T> aResult) => aResult != null && aResult is IHttpResult<T> 
+                                                                        ? aResult as IHttpResult<T> 
+                                                                        : throw new Exception($"TryParse failed from IResult<{nameof(T)}> to  IHttpResult<{nameof(T)}>");
+
         #endregion
     }
 
