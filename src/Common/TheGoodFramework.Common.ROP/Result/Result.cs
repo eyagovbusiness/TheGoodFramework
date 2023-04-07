@@ -15,7 +15,6 @@ namespace TGF.Common.ROP.Result
     /// <typeparam name="T">Type of the result Value.</typeparam>
     public class Result<T> : IResult<T>
     {
-        public IResult<T>[] ResultCarryList { get; private set; }
         public T Value { get; }
         public bool IsSuccess => ErrorList.Length == 0;
         public ImmutableArray<IError> ErrorList { get; }
@@ -59,9 +58,11 @@ namespace TGF.Common.ROP.Result
         public static Task<IResult<Unit>> CancellationTokenResultAsync(CancellationToken aCancellationToken)
             => Task.FromResult(CancellationTokenResult(aCancellationToken));
 
+#pragma warning disable CS8603 // Possible null reference return.
         public static IHttpResult<T> TryHttpResultParse<T>(this IResult<T> aResult) => aResult != null && aResult is IHttpResult<T> 
                                                                         ? aResult as IHttpResult<T> 
                                                                         : throw new Exception($"TryParse failed from IResult<{nameof(T)}> to  IHttpResult<{nameof(T)}>");
+#pragma warning restore CS8603 // Possible null reference return.
 
         #endregion
     }
