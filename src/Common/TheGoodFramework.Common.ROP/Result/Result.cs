@@ -1,6 +1,4 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json.Linq;
 using System.Collections.Immutable;
 using System.Net;
 using TGF.Common.ROP.Errors;
@@ -10,10 +8,10 @@ namespace TGF.Common.ROP.Result
 {
 
     /// <summary>
-    /// Class that represents the unit of information while returning the result of operations in Reailway Oriented Programming.
+    /// Internal class that represents the unit of information while returning the result of operations in Reailway Oriented Programming.
     /// </summary>
     /// <typeparam name="T">Type of the result Value.</typeparam>
-    public class Result<T> : IResult<T>
+    internal class Result<T> : IResult<T>
     {
         public T Value { get; }
         public bool IsSuccess => ErrorList.Length == 0;
@@ -26,7 +24,9 @@ namespace TGF.Common.ROP.Result
         }
         public Result(ImmutableArray<IError> aErrorList)
         {
+#pragma warning disable CS8601 // Possible null reference assignment.
             Value = default(T);
+#pragma warning restore CS8601 // Possible null reference assignment.
             if (aErrorList.Length == 0)
                 throw new InvalidOperationException("Can't create a failure Result without errors.");
 
@@ -59,8 +59,8 @@ namespace TGF.Common.ROP.Result
             => Task.FromResult(CancellationTokenResult(aCancellationToken));
 
 #pragma warning disable CS8603 // Possible null reference return.
-        public static IHttpResult<T> TryHttpResultParse<T>(this IResult<T> aResult) => aResult != null && aResult is IHttpResult<T> 
-                                                                        ? aResult as IHttpResult<T> 
+        public static IHttpResult<T> TryHttpResultParse<T>(this IResult<T> aResult) => aResult != null && aResult is IHttpResult<T>
+                                                                        ? aResult as IHttpResult<T>
                                                                         : throw new Exception($"TryParse failed from IResult<{nameof(T)}> to  IHttpResult<{nameof(T)}>");
 #pragma warning restore CS8603 // Possible null reference return.
 
