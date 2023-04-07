@@ -24,6 +24,10 @@ namespace TGF.Common.ROP.Result
         {
             return (await aHttpResult).ToActionResult();
         }
+        public static async Task<IActionResult> ToActionResult<T>(this Task<IResult<T>> aHttpResult)
+        {
+            return (await aHttpResult).TryHttpResultParse().ToActionResult();
+        }
 
         private static IActionResult ToHttpStatusCode<T>(this T aHttpResult, HttpStatusCode aStatusCode)
         {

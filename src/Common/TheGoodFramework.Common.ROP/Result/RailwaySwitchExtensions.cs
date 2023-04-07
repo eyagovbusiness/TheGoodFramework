@@ -1,4 +1,7 @@
-﻿namespace TGF.Common.ROP.Result
+﻿using System.Collections.Immutable;
+using TGF.Common.ROP.Errors;
+
+namespace TGF.Common.ROP.Result
 {
     /// <summary>
     /// Static class to register operations between Results like binding Results, mapping different Results or executing certain actions after the Result is generated.
@@ -48,12 +51,43 @@
         /// <param name="aThisResult">This Result.</param>
         /// <param name="aMapFunction">The mapping function to map from this Result Type to the desired Result Type.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
-        public static async Task<IResult<T2>> Map<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, T2> aMapFunction)
+        public static async Task<IResult<T2>> Map<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, T2> aMapSuccessFunction)
         {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
-                ? Result.Success(aMapFunction(lThisResult.Value))
+                ? Result.Success(aMapSuccessFunction(lThisResult.Value))
+                :  Result.Failure<T2>(lThisResult.ErrorList);
+
+        }
+
+        public static async Task<IResult<T2>> Map<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction)
+        {
+            var lThisResult = await aThisResult;
+            return lThisResult.IsSuccess
+                ? Result.Success(await aMapSuccessFunction(lThisResult.Value))
                 : Result.Failure<T2>(lThisResult.ErrorList);
+
+        }
+
+        public static async Task<IResult<T2>> DoubleMap<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, Task<T2>> aMapFailureFunction)
+        {
+            var lThisResult = await aThisResult;
+            if (lThisResult.IsSuccess)
+                return Result.Success(await aMapSuccessFunction(lThisResult.Value));
+
+            await aMapFailureFunction(lThisResult.Value);
+            return Result.Failure<T2>(lThisResult.ErrorList);
+
+        }
+
+        public static async Task<IResult<T2>> DoubleMap<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, T2> aMapFailureFunction)
+        {
+            var lThisResult = await aThisResult;
+            if (lThisResult.IsSuccess)
+                return Result.Success(await aMapSuccessFunction(lThisResult.Value));
+
+            aMapFailureFunction(lThisResult.Value);
+            return Result.Failure<T2>(lThisResult.ErrorList);
 
         }
 
