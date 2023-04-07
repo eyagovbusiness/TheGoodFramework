@@ -22,16 +22,19 @@ namespace TGF.Common.ROP.Result
             Value = aValue;
             ErrorList = ImmutableArray<IError>.Empty;
         }
+#pragma warning disable CS8601 // Possible null reference assignment.
+#pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public Result(ImmutableArray<IError> aErrorList)
         {
-#pragma warning disable CS8601 // Possible null reference assignment.
             Value = default(T);
-#pragma warning restore CS8601 // Possible null reference assignment.
+
             if (aErrorList.Length == 0)
                 throw new InvalidOperationException("Can't create a failure Result without errors.");
 
             ErrorList = aErrorList;
         }
+#pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
+#pragma warning restore CS8601 // Possible null reference assignment.
 
     }
 
@@ -47,15 +50,17 @@ namespace TGF.Common.ROP.Result
         #endregion
 
         #region HttpResult
-        public static IResult<T> Success<T>(T aValue, HttpStatusCode aStatusCode) => new HttpResult<T>(aValue, aStatusCode);
-        public static IResult<T> SuccessHttp<T>(T aValue, HttpStatusCode aStatusCode = HttpStatusCode.OK) => new HttpResult<T>(aValue, aStatusCode);
-        public static IResult<T> Failure<T>(ImmutableArray<IError> aErrorList, HttpStatusCode aStatusCode) => new HttpResult<T>(aErrorList, aStatusCode);
-        public static IResult<T> Failure<T>(IHttpError aHttpError) => new HttpResult<T>(ImmutableArray.Create(aHttpError.Error), aHttpError.StatusCode);
-        public static IResult<Unit> CancellationTokenResult(CancellationToken aCancellationToken)
+        public static IHttpResult<T> Success<T>(T aValue, HttpStatusCode aStatusCode) => new HttpResult<T>(aValue, aStatusCode);
+        public static IHttpResult<T> SuccessHttp<T>(T aValue, HttpStatusCode aStatusCode = HttpStatusCode.OK) => new HttpResult<T>(aValue, aStatusCode);
+        public static IHttpResult<T> Failure<T>(ImmutableArray<IError> aErrorList, HttpStatusCode aStatusCode) => new HttpResult<T>(aErrorList, aStatusCode);
+        public static IHttpResult<T> Failure<T>(IHttpError aHttpError) => new HttpResult<T>(ImmutableArray.Create(aHttpError.Error), aHttpError.StatusCode);
+        public static IHttpResult<T> Failure<T>(ImmutableArray<IHttpError> aHttpErrorList) 
+            => new HttpResult<T>(aHttpErrorList.Select(e => e.Error).ToImmutableArray(), aHttpErrorList.First().StatusCode);
+        public static IHttpResult<Unit> CancellationTokenResult(CancellationToken aCancellationToken)
             => aCancellationToken.IsCancellationRequested
                 ? Failure<Unit>(CommonErrors.CancellationToken.Cancelled)
                 : SuccessHttp(Unit.Value);
-        public static Task<IResult<Unit>> CancellationTokenResultAsync(CancellationToken aCancellationToken)
+        public static Task<IHttpResult<Unit>> CancellationTokenResultAsync(CancellationToken aCancellationToken)
             => Task.FromResult(CancellationTokenResult(aCancellationToken));
 
 #pragma warning disable CS8603 // Possible null reference return.
