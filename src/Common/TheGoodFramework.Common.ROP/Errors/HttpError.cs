@@ -2,12 +2,18 @@
 
 namespace TGF.Common.ROP.Errors
 {
+    /// <summary>
+    /// Public interface of any HttpError
+    /// </summary>
     public interface IHttpError
     {
         IError Error { get; }
         HttpStatusCode StatusCode { get; }
     }
 
+    /// <summary>
+    /// Struct of an HttpError.
+    /// </summary>
     public readonly struct HttpError : IHttpError
     {
         public IError Error { get; }

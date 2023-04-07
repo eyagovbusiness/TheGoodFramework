@@ -31,7 +31,7 @@ namespace TGF.Common.ROP.Result
         /// </summary>
         /// <typeparam name="T">Type of the Value property of this Result.</typeparam>
         /// <param name="aThisResult">This Result.</param>
-        /// <param name="aAction">Action to perform after the Result is calculated sucessfully.</param>
+        /// <param name="aDeadEndAction">Action to perform after the Result is calculated sucessfully.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
         public static async Task<IResult<T>> Tap<T>(this Task<IResult<T>> aThisResult, Action<T> aDeadEndAction)
         {
@@ -49,7 +49,7 @@ namespace TGF.Common.ROP.Result
         /// <typeparam name="T1">Source Type of this Result.</typeparam>
         /// <typeparam name="T2">Target Type to map this Result.</typeparam>
         /// <param name="aThisResult">This Result.</param>
-        /// <param name="aMapFunction">The mapping function to map from this Result Type to the desired Result Type.</param>
+        /// <param name="aMapSuccessFunction">The mapping function to map from this Result Type to the desired Result Type.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
         public static async Task<IResult<T2>> Map<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, T2> aMapSuccessFunction)
         {
@@ -60,6 +60,14 @@ namespace TGF.Common.ROP.Result
 
         }
 
+        /// <summary>
+        /// Maps the Sucessful railway path continuation.
+        /// </summary>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <param name="aThisResult"></param>
+        /// <param name="aMapSuccessFunction">Function that maps the path continuation fo the Sucess railway.</param>
+        /// <returns>Next <see cref="IResult{T}"/>.</returns>
         public static async Task<IResult<T2>> Map<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction)
         {
             var lThisResult = await aThisResult;
@@ -69,6 +77,15 @@ namespace TGF.Common.ROP.Result
 
         }
 
+        /// <summary>
+        /// Maps the Sucessful railway path and the Failure railway path continuation.
+        /// </summary>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <param name="aThisResult"></param>
+        /// <param name="aMapSuccessFunction">Function that maps the path continuation fo the Sucess railway.</param>
+        /// <param name="aMapFailureFunction">Function that maps the path continuation fo the Failure railway.</param>
+        /// <returns>Next <see cref="IResult{T}"/>.</returns>
         public static async Task<IResult<T2>> DoubleMap<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, Task<T2>> aMapFailureFunction)
         {
             var lThisResult = await aThisResult;
@@ -80,6 +97,15 @@ namespace TGF.Common.ROP.Result
 
         }
 
+        /// <summary>
+        /// Maps the Sucessful railway path and the Failure railway path continuation.
+        /// </summary>
+        /// <typeparam name="T1"></typeparam>
+        /// <typeparam name="T2"></typeparam>
+        /// <param name="aThisResult"></param>
+        /// <param name="aMapSuccessFunction">Function that maps the path continuation fo the Sucess railway.</param>
+        /// <param name="aMapFailureFunction">Function that maps the path continuation fo the Failure railway.</param>
+        /// <returns>Next <see cref="IResult{T}"/>.</returns>
         public static async Task<IResult<T2>> DoubleMap<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, T2> aMapFailureFunction)
         {
             var lThisResult = await aThisResult;
