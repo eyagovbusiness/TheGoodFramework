@@ -1,7 +1,4 @@
-﻿using System.Collections.Immutable;
-using TGF.Common.ROP.Errors;
-
-namespace TGF.Common.ROP.Result
+﻿namespace TGF.Common.ROP.Result
 {
     /// <summary>
     /// Static class to register operations between Results like binding Results, mapping different Results or executing certain actions after the Result is generated.
@@ -56,7 +53,7 @@ namespace TGF.Common.ROP.Result
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
                 ? Result.Success(aMapSuccessFunction(lThisResult.Value))
-                :  Result.Failure<T2>(lThisResult.ErrorList);
+                : Result.Failure<T2>(lThisResult.ErrorList);
 
         }
 
