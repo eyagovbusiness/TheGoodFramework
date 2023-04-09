@@ -1,4 +1,7 @@
-﻿namespace TGF.Common.ROP.Result
+﻿using TGF.Common.ROP.Errors;
+using TGF.Common.ROP.HttpResult;
+
+namespace TGF.Common.ROP.Result
 {
     /// <summary>
     /// Static class to register operations between Results like binding Results, mapping different Results or executing certain actions after the Result is generated.
@@ -37,6 +40,23 @@
                 aDeadEndAction(lThisResult.Value);
 
             return lThisResult;
+
+        }
+
+        /// <summary>
+        /// Adds a "middleware" rail that verifies that this result satisfies a given condition, if true continues otherwise switches to the failure railway with the specified Error.
+        /// </summary>
+        /// <typeparam name="T">Type of the Value property of this Result.</typeparam>
+        /// <param name="aThisResult">This Result.</param>
+        /// <param name="aVerifyFunction">Function that will verify if this result will continue in the happy path or not.</param>
+        /// <param name="aError">Error that will be sate in case the verification fails.</param>
+        /// <returns>Asynchronous Task that returns a Result.</returns>
+        public static async Task<IResult<T>> Verify<T>(this Task<IResult<T>> aThisResult, Func<T, bool> aVerifyFunction, IError aError)
+        {
+            var lThisResult = await aThisResult;
+            return lThisResult.IsSuccess && aVerifyFunction(lThisResult.Value)
+                ? lThisResult
+                : Result.Failure<T>(aError);
 
         }
 

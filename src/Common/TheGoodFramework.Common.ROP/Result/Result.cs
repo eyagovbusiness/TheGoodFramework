@@ -43,33 +43,57 @@ namespace TGF.Common.ROP.Result
     /// </summary>
     public static class Result
     {
+
         #region Result
-        public static IResult<T> Success<T>(T aValue) => new Result<T>(aValue);
-        public static IResult<T> Failure<T>(ImmutableArray<IError> aErrorList) => new Result<T>(aErrorList);
-        public static IResult<T> Failure<T>(IError aError) => new Result<T>(ImmutableArray.Create(aError));
+
+        public static IResult<T> Success<T>(T aValue) 
+            => new Result<T>(aValue);
+
+        public static IResult<T> Failure<T>(ImmutableArray<IError> aErrorList)
+            => new Result<T>(aErrorList);
+
+        public static IResult<T> Failure<T>(IError aError) 
+            => new Result<T>(ImmutableArray.Create(aError));
+
         #endregion
 
         #region HttpResult
-        public static IHttpResult<T> Success<T>(T aValue, HttpStatusCode aStatusCode) => new HttpResult<T>(aValue, aStatusCode);
-        public static IHttpResult<T> SuccessHttp<T>(T aValue, HttpStatusCode aStatusCode = HttpStatusCode.OK) => new HttpResult<T>(aValue, aStatusCode);
-        public static IHttpResult<T> Failure<T>(ImmutableArray<IError> aErrorList, HttpStatusCode aStatusCode) => new HttpResult<T>(aErrorList, aStatusCode);
-        public static IHttpResult<T> Failure<T>(IHttpError aHttpError) => new HttpResult<T>(ImmutableArray.Create(aHttpError.Error), aHttpError.StatusCode);
+
+        public static IHttpResult<T> Success<T>(T aValue, HttpStatusCode aStatusCode) 
+            => new HttpResult<T>(aValue, aStatusCode);
+
+        public static IHttpResult<T> SuccessHttp<T>(T aValue, HttpStatusCode aStatusCode = HttpStatusCode.OK) 
+            => new HttpResult<T>(aValue, aStatusCode);
+
+        public static IHttpResult<T> Failure<T>(ImmutableArray<IError> aErrorList, HttpStatusCode aStatusCode) 
+            => new HttpResult<T>(aErrorList, aStatusCode);
+
+        public static IHttpResult<T> Failure<T>(IHttpError aHttpError) 
+            => new HttpResult<T>(ImmutableArray.Create(aHttpError.Error), aHttpError.StatusCode);
+
         public static IHttpResult<T> Failure<T>(ImmutableArray<IHttpError> aHttpErrorList) 
             => new HttpResult<T>(aHttpErrorList.Select(e => e.Error).ToImmutableArray(), aHttpErrorList.First().StatusCode);
+
         public static IHttpResult<Unit> CancellationTokenResult(CancellationToken aCancellationToken)
             => aCancellationToken.IsCancellationRequested
-                ? Failure<Unit>(CommonErrors.CancellationToken.Cancelled)
-                : SuccessHttp(Unit.Value);
+               ? Failure<Unit>(CommonErrors.CancellationToken.Cancelled)
+               : SuccessHttp(Unit.Value);
+
         public static Task<IHttpResult<Unit>> CancellationTokenResultAsync(CancellationToken aCancellationToken)
             => Task.FromResult(CancellationTokenResult(aCancellationToken));
 
 #pragma warning disable CS8603 // Possible null reference return.
-        public static IHttpResult<T> TryHttpResultParse<T>(this IResult<T> aResult) => aResult != null && aResult is IHttpResult<T>
-                                                                        ? aResult as IHttpResult<T>
-                                                                        : throw new Exception($"TryParse failed from IResult<{nameof(T)}> to  IHttpResult<{nameof(T)}>");
+        /// <summary>
+        /// Tries to parse an IResult into an IHttpResult, this will only work if the IResult parameter is an instance of HttpResult.
+        /// <exception cref="Exception"></exception>
+        public static IHttpResult<T> TryHttpResultParse<T>(this IResult<T> aResult) 
+            => aResult != null && aResult is IHttpResult<T>
+               ? aResult as IHttpResult<T>
+               : throw new Exception($"TryParse failed from IResult<{nameof(T)}> to IHttpResult<{nameof(T)}>");
 #pragma warning restore CS8603 // Possible null reference return.
 
         #endregion
+
     }
 
 }
