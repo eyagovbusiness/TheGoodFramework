@@ -60,6 +60,23 @@ namespace TGF.Common.ROP.HttpResult
         }
 
         /// <summary>
+        /// Returns a Task that will execute the given dead end function asynchronously over this Result and then returns this same Result(continues into this same railway)).
+        /// </summary>
+        /// <typeparam name="T">Type of the Value property of this Result.</typeparam>
+        /// <param name="aThisResult">This Result.</param>
+        /// <param name="aDeadEndAction">Action to perform after the Result is calculated sucessfully.</param>
+        /// <returns>Asynchronous Task that returns a Result.</returns>
+        public static async Task<IHttpResult<T>> Tap<T>(this Task<IHttpResult<T>> aThisResult, Func<T, Task> aDeadEndAsyncAction)
+        {
+            var lThisResult = await aThisResult;
+            if (lThisResult.IsSuccess)
+                await aDeadEndAsyncAction(lThisResult.Value);
+
+            return lThisResult;
+
+        }
+
+        /// <summary>
         /// Adds a "middleware" rail that verifies that this result satisfies a given condition, if true continues otherwise switches to the failure railway with the specified HttpError.
         /// </summary>
         /// <typeparam name="T">Type of the Value property of this Result.</typeparam>
