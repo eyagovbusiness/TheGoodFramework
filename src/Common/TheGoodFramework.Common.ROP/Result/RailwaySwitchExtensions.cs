@@ -44,6 +44,23 @@ namespace TGF.Common.ROP.Result
         }
 
         /// <summary>
+        /// Returns a Task that will execute the given dead end function asynchronously over this Result and then returns this same Result(continues into this same railway)).
+        /// </summary>
+        /// <typeparam name="T">Type of the Value property of this Result.</typeparam>
+        /// <param name="aThisResult">This Result.</param>
+        /// <param name="aDeadEndAsyncFunc">Action to perform after the Result is calculated sucessfully.</param>
+        /// <returns>Asynchronous Task that returns a Result.</returns>
+        public static async Task<IResult<T>> Tap<T>(this Task<IResult<T>> aThisResult, Func<T, Task> aDeadEndAsyncFunc)
+        {
+            var lThisResult = await aThisResult;
+            if (lThisResult.IsSuccess)
+                await aDeadEndAsyncFunc(lThisResult.Value);
+
+            return lThisResult;
+
+        }
+
+        /// <summary>
         /// Adds a "middleware" rail that verifies that this result satisfies a given condition, if true continues otherwise switches to the failure railway with the specified Error.
         /// </summary>
         /// <typeparam name="T">Type of the Value property of this Result.</typeparam>

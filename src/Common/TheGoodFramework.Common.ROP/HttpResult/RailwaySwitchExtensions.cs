@@ -64,13 +64,13 @@ namespace TGF.Common.ROP.HttpResult
         /// </summary>
         /// <typeparam name="T">Type of the Value property of this Result.</typeparam>
         /// <param name="aThisResult">This Result.</param>
-        /// <param name="aDeadEndAction">Action to perform after the Result is calculated sucessfully.</param>
+        /// <param name="aDeadEndAsyncFunc">Action to perform after the Result is calculated sucessfully.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
-        public static async Task<IHttpResult<T>> Tap<T>(this Task<IHttpResult<T>> aThisResult, Func<T, Task> aDeadEndAsyncAction)
+        public static async Task<IHttpResult<T>> Tap<T>(this Task<IHttpResult<T>> aThisResult, Func<T, Task> aDeadEndAsyncFunc)
         {
             var lThisResult = await aThisResult;
             if (lThisResult.IsSuccess)
-                await aDeadEndAsyncAction(lThisResult.Value);
+                await aDeadEndAsyncFunc(lThisResult.Value);
 
             return lThisResult;
 

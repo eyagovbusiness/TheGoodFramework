@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using System.Collections.Immutable;
 using System.Net;
+using System.Text.Json.Nodes;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
 
@@ -39,7 +40,7 @@ namespace TGF.Common.ROP.Result
     }
 
     /// <summary>
-    /// Static class to create new instances of Results with success or failure(s).
+    /// Static class to provide extension methods of Result type instances and create new instances of Results with success or failure(s).
     /// </summary>
     public static class Result
     {
@@ -92,6 +93,12 @@ namespace TGF.Common.ROP.Result
                : throw new Exception($"TryParse failed from IResult<{nameof(T)}> to IHttpResult<{nameof(T)}>");
 #pragma warning restore CS8603 // Possible null reference return.
 
+        #endregion
+
+        #region SerializationExtensions
+        public static string Serialize<T>(this IHttpResult<T> aResult) => Utf8Json.JsonSerializer.ToJsonString(aResult);
+        public static IHttpResult<T> DeserializeHttpResult<T>(string aResultSerializedString) => System.Text.Json.JsonSerializer.Deserialize<IHttpResult<T>>(aResultSerializedString) ?? default;
+        public static IResult<T> DeserializeResult<T>(string aResultSerializedString) => System.Text.Json.JsonSerializer.Deserialize<IResult<T>>(aResultSerializedString) ?? default;
         #endregion
 
     }
