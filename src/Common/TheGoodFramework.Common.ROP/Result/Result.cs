@@ -1,7 +1,6 @@
 ﻿using MediatR;
 using System.Collections.Immutable;
 using System.Net;
-using System.Text.Json.Nodes;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
 
@@ -47,32 +46,32 @@ namespace TGF.Common.ROP.Result
 
         #region Result
 
-        public static IResult<T> Success<T>(T aValue) 
+        public static IResult<T> Success<T>(T aValue)
             => new Result<T>(aValue);
 
         public static IResult<T> Failure<T>(ImmutableArray<IError> aErrorList)
             => new Result<T>(aErrorList);
 
-        public static IResult<T> Failure<T>(IError aError) 
+        public static IResult<T> Failure<T>(IError aError)
             => new Result<T>(ImmutableArray.Create(aError));
 
         #endregion
 
         #region HttpResult
 
-        public static IHttpResult<T> Success<T>(T aValue, HttpStatusCode aStatusCode) 
+        public static IHttpResult<T> Success<T>(T aValue, HttpStatusCode aStatusCode)
             => new HttpResult<T>(aValue, aStatusCode);
 
-        public static IHttpResult<T> SuccessHttp<T>(T aValue, HttpStatusCode aStatusCode = HttpStatusCode.OK) 
+        public static IHttpResult<T> SuccessHttp<T>(T aValue, HttpStatusCode aStatusCode = HttpStatusCode.OK)
             => new HttpResult<T>(aValue, aStatusCode);
 
-        public static IHttpResult<T> Failure<T>(ImmutableArray<IError> aErrorList, HttpStatusCode aStatusCode) 
+        public static IHttpResult<T> Failure<T>(ImmutableArray<IError> aErrorList, HttpStatusCode aStatusCode)
             => new HttpResult<T>(aErrorList, aStatusCode);
 
-        public static IHttpResult<T> Failure<T>(IHttpError aHttpError) 
+        public static IHttpResult<T> Failure<T>(IHttpError aHttpError)
             => new HttpResult<T>(ImmutableArray.Create(aHttpError.Error), aHttpError.StatusCode);
 
-        public static IHttpResult<T> Failure<T>(ImmutableArray<IHttpError> aHttpErrorList) 
+        public static IHttpResult<T> Failure<T>(ImmutableArray<IHttpError> aHttpErrorList)
             => new HttpResult<T>(aHttpErrorList.Select(e => e.Error).ToImmutableArray(), aHttpErrorList.First().StatusCode);
 
         public static IHttpResult<Unit> CancellationTokenResult(CancellationToken aCancellationToken)
@@ -87,7 +86,7 @@ namespace TGF.Common.ROP.Result
         /// <summary>
         /// Tries to parse an IResult into an IHttpResult, this will only work if the IResult parameter is an instance of HttpResult.
         /// <exception cref="Exception"></exception>
-        public static IHttpResult<T> TryHttpResultParse<T>(this IResult<T> aResult) 
+        public static IHttpResult<T> TryHttpResultParse<T>(this IResult<T> aResult)
             => aResult != null && aResult is IHttpResult<T>
                ? aResult as IHttpResult<T>
                : throw new Exception($"TryParse failed from IResult<{nameof(T)}> to IHttpResult<{nameof(T)}>");
