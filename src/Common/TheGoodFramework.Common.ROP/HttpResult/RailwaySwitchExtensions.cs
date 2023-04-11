@@ -1,5 +1,4 @@
 ﻿using TGF.Common.ROP.Errors;
-using TGF.Common.ROP.Result;
 
 namespace TGF.Common.ROP.HttpResult
 {
