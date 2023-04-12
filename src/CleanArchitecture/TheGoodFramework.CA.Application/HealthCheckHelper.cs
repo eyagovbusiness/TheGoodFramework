@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace TGF.CA.Application.Setup
+namespace TGF.CA.Application
 {
     /// <summary>
     /// Class to help building HealthChecksUI configuration.
