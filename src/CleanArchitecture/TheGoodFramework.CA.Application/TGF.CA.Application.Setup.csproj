@@ -19,8 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\TGF.CA.Presentation.Middleware\TGF.CA.Presentation.Middleware.csproj" />
     <ProjectReference Include="..\..\Common\TheGoodFramework.Common.Logging\TGF.Common.Logging.csproj" />
-    <ProjectReference Include="..\TheGoodFramework.CA.Presentation\TGF.CA.Presentation.csproj" />
   </ItemGroup>
 
 </Project>

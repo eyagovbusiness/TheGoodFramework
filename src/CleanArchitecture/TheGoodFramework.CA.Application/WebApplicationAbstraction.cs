@@ -7,7 +7,7 @@ using Microsoft.Extensions.Hosting;
 using TGF.CA.Presentation.Middleware;
 using TGF.Common.Logging;
 
-namespace TGF.CA.Application
+namespace TGF.CA.Application.Setup
 {
     /// <summary>
     /// Class to support logic abstraction on the WebApplication creation.
