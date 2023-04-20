@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using System.Text.Json.Serialization;
 
 namespace TGF.Common.ROP.Errors
@@ -26,6 +27,11 @@ namespace TGF.Common.ROP.Errors
         {
             Code = aCode;
             Message = aMessage;
+        }
+
+        public override string ToString()
+        {
+            return $"{Code}: {Message}";
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Newtonsoft.Json.Linq;
 using System.Collections.Immutable;
 using System.Net;
 using TGF.Common.ROP.Errors;
@@ -13,20 +14,23 @@ namespace TGF.Common.ROP.Result
     /// <typeparam name="T">Type of the result Value.</typeparam>
     internal class Result<T> : IResult<T>
     {
-        public T Value { get; }
+        private readonly T _value;
+        public T Value => IsSuccess
+                        ? _value
+                        : throw new InvalidOperationException("The Value of a failure Result can not be accessed!");
         public bool IsSuccess => ErrorList.Length == 0;
         public ImmutableArray<IError> ErrorList { get; }
 
         public Result(T aValue) : base()
         {
-            Value = aValue;
+            _value = aValue;
             ErrorList = ImmutableArray<IError>.Empty;
         }
 #pragma warning disable CS8601 // Possible null reference assignment.
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
         public Result(ImmutableArray<IError> aErrorList)
         {
-            Value = default(T);
+            _value = default(T);
 
             if (aErrorList.Length == 0)
                 throw new InvalidOperationException("Can't create a failure Result without errors.");
