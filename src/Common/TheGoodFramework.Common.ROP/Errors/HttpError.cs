@@ -28,5 +28,10 @@ namespace TGF.Common.ROP.Errors
             Error = aError;
             StatusCode = aStatusCode;
         }
+
+        public override string ToString()
+        {
+            return $"HttpErrorCode({StatusCode}) => {Error.ToString()}";
+        }
     }
 }
