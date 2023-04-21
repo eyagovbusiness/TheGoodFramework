@@ -21,5 +21,10 @@ namespace TGF.Common.ROP.HttpResult
             StatusCode = aHttpStatusCode;
         }
 
+        public override string ToString()
+        {
+            return $"HttpResult code = {StatusCode}, " + (IsSuccess ? $"Success Result: Value = {Value}" : $"Failure Result: Errors = {string.Join(", ", ErrorList)}");
+        }
+
     }
 }
