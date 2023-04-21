@@ -52,8 +52,8 @@ namespace TGF.Common.Extensions.Serialization
 
             string lJson = string.Empty;
             using (var lFileStream = File.OpenRead(aFilePathString))
-            using (var lStreamReader = new StreamReader(lFileStream, new System.Text.UTF8Encoding(false)))
-                lJson = lStreamReader.ReadToEnd();
+                using (var lStreamReader = new StreamReader(lFileStream, new System.Text.UTF8Encoding(false)))
+                    lJson = lStreamReader.ReadToEnd();
 
             return System.Text.Json.JsonSerializer.Deserialize<T>(lJson) ?? new T();//most efficient deserializer
 
@@ -76,10 +76,8 @@ namespace TGF.Common.Extensions.Serialization
             ))
                 return new T();
 
-            string lJson = string.Empty;
-            using (Stream lStream = File.OpenRead(aFilePathString))
+            using Stream lStream = File.OpenRead(aFilePathString);
                 return await System.Text.Json.JsonSerializer.DeserializeAsync<T>(lStream).ConfigureAwait(aConfigureAwait) ?? new T();//most efficient deserializer
-
 
         }
 
@@ -89,20 +87,22 @@ namespace TGF.Common.Extensions.Serialization
         /// <typeparam name="T">Serializable target type of the object to serialize.</typeparam>
         /// <param name="aJsonObject">Serializable object.</param>
         /// <param name="aFilePathString">string representing the file path.</param>
-        public static void SerializeToFile<T>(this T aJsonObject, string aFilePathString)
-             where T : class, new()
+        public static void SerializeToFile<T>(this T aJsonObject, string aFilePathString, bool aOverride = false)
+            where T : class, new()
         {
             if (!(typeof(T).IsSerializable
-              || typeof(ISerializable)
-                 .IsAssignableFrom(typeof(T))
-           ))
+                  || typeof(ISerializable)
+                     .IsAssignableFrom(typeof(T))
+               ))
                 throw new InvalidDataException("Error trying to serialize to file..");
 
-            string lJson = string.Empty;
-            using (Stream lStream = File.OpenRead(aFilePathString))
-                Utf8Json.JsonSerializer.Serialize(lStream, aJsonObject);//most efficient deserializer
+            if (File.Exists(aFilePathString) && !aOverride)
+                throw new InvalidOperationException($"File already exists at path {aFilePathString}. Use the 'aOverride' parameter to overwrite it.");
 
+            using Stream lStream = File.Open(aFilePathString, FileMode.Create);
+                Utf8Json.JsonSerializer.Serialize(lStream, aJsonObject);//most efficient deserializer
         }
+
 
         /// <summary>
         /// Uses the the best mempry/performance option to try to serialize a given json file to a given object asynchronously.
@@ -112,19 +112,15 @@ namespace TGF.Common.Extensions.Serialization
         /// <param name="aFilePathString">string representing the file path.</param>
         /// <param name="aConfigureAwait"></param>
         /// <returns>Awaitable Task</returns>
-        public static async Task SerializeToFileAsync<T>(this T aJsonObject, string aFilePathString, bool aConfigureAwait = true)
+        public static async Task SerializeToFileAsync<T>(this T aJsonObject, string aFilePathString, bool aOverride = false, bool aConfigureAwait = true)
             where T : class, new()
         {
-            if (!(typeof(T).IsSerializable
-              || typeof(ISerializable)
-                 .IsAssignableFrom(typeof(T))
-           ))
+            if (!(typeof(T).IsSerializable || typeof(ISerializable).IsAssignableFrom(typeof(T))))
                 throw new InvalidDataException("Error trying to serialize async to file..");
 
-            string lJson = string.Empty;
-            using (Stream lStream = File.OpenRead(aFilePathString))
+            FileMode fileMode = aOverride ? FileMode.Create : FileMode.CreateNew;
+            using Stream lStream = new FileStream(aFilePathString, fileMode, FileAccess.Write, FileShare.None);
                 await Utf8Json.JsonSerializer.SerializeAsync(lStream, aJsonObject).ConfigureAwait(aConfigureAwait);//most efficient deserializer
-
         }
 
         #endregion
