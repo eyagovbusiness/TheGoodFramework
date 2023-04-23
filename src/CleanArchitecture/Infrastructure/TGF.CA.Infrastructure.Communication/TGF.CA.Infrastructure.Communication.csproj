@@ -13,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\..\TGF.Common.Serialization\TGF.Common.Serialization.csproj" />
     <ProjectReference Include="..\..\..\Common\TheGoodFramework.Common.Extensions\TGF.Common.Extensions.csproj" />
     <ProjectReference Include="..\TGF.CA.Infrastructure.Secrets\TGF.CA.Infrastructure.Secrets.csproj" />
   </ItemGroup>

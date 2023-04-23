@@ -4,6 +4,7 @@ using System.Text;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.Publisher;
 using TGF.Common.Extensions.Serialization;
+using TGF.Common.Serialization;
 
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Publisher;
 

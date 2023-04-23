@@ -3,7 +3,7 @@ using RabbitMQ.Client;
 using TGF.CA.Infrastructure.Communication.Consumer;
 using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
-using ISerializer = TGF.Common.Extensions.Serialization.ISerializer;
+using ISerializer = TGF.Common.Serialization.ISerializer;
 
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
 //CODE FROM https://github.com/ElectNewt/Distribt
