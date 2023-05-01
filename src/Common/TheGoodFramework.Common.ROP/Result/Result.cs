@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using Newtonsoft.Json.Linq;
 using System.Collections.Immutable;
 using System.Net;
 using TGF.Common.ROP.Errors;

@@ -1,10 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Infrastructure.Secrets.Vault;
 
@@ -24,14 +19,14 @@ namespace TGF.CA.Infrastructure.Secrets
                 if (!string.IsNullOrWhiteSpace(aDiscoveredUrl))
                     settings.UpdateUrl(aDiscoveredUrl);
             });
-            aServiceCollection.AddSingleton<ISecretManager, SecretsManager>();
+            aServiceCollection.AddSingleton<ISecretsManager, SecretsManager>();
 
         }
 
-        public static void ConfigureDiscoveredSecretsManager(this ISecretManager aScretManager, IServiceDiscovery aServiceDiscovery)
+        public static void ConfigureDiscoveredSecretsManager(this ISecretsManager aScretsManager, IServiceDiscovery aServiceDiscovery)
         {
             string lDiscoveredUrl = GetVaultUrl(aServiceDiscovery).Result;//TO-DO:TEMPORARY SOLUTION, blocks thread(on startup is not so big problem, but not good)
-            aScretManager.UpdateUrl(lDiscoveredUrl);
+            aScretsManager.UpdateUrl(lDiscoveredUrl);
         }
 
         private static async Task<string> GetVaultUrl(IServiceDiscovery aServiceDiscovery)

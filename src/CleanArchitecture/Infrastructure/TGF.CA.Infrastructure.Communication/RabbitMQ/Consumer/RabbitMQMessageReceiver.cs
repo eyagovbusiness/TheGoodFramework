@@ -1,7 +1,6 @@
 using RabbitMQ.Client;
 using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
-using TGF.Common.Extensions.Serialization;
 using TGF.Common.Serialization;
 
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
