@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace TGF.CA.Infrastructure.Secrets.Vault
+﻿namespace TGF.CA.Infrastructure.Secrets.Vault
 {
     /// <summary>
     /// Settings for Vault secrets manager connection for the free version.

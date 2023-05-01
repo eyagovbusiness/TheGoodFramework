@@ -1,21 +1,21 @@
 ﻿using Microsoft.Extensions.Options;
+using TGF.CA.Infrastructure.Discovery;
+using TGF.CA.Infrastructure.Secrets.Common;
+using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 using VaultSharp.V1.Commons;
 using VaultSharp.V1.SecretsEngines;
-using VaultSharp;
-using TGF.CA.Infrastructure.Secrets.Common;
-using TGF.CA.Infrastructure.Discovery;
 
 namespace TGF.CA.Infrastructure.Secrets.Vault
 {
-    public interface ISecretManager
+    public interface ISecretsManager
     {
         Task<T> Get<T>(string path) where T : new();
         Task<UsernamePasswordCredentials> GetRabbitMQCredentials(string aRoleName);
         void UpdateUrl(string aVaultServiceUrl);
     }
 
-    public class SecretsManager : ISecretManager
+    public class SecretsManager : ISecretsManager
     {
         private readonly Settings _vaultSettings;
 
@@ -23,7 +23,7 @@ namespace TGF.CA.Infrastructure.Secrets.Vault
         {
             _vaultSettings = aVaultSettings.Value with { TokenApi = GetTokenFromEnvironmentVariable() };
             if (aServiceDiscovery != null)
-            this.ConfigureDiscoveredSecretsManager(aServiceDiscovery); //TO-DO:TEMPORARY SOLUTION, blocks thread(on startup is not so big problem, but not good)
+                this.ConfigureDiscoveredSecretsManager(aServiceDiscovery); //TO-DO:TEMPORARY SOLUTION, blocks thread(on startup is not so big problem, but not good)
         }
 
         public async Task<T> Get<T>(string aPath)
