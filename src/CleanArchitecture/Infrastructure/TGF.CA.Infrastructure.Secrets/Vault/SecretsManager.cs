@@ -4,6 +4,7 @@ using VaultSharp.V1.Commons;
 using VaultSharp.V1.SecretsEngines;
 using VaultSharp;
 using TGF.CA.Infrastructure.Secrets.Common;
+using TGF.CA.Infrastructure.Discovery;
 
 namespace TGF.CA.Infrastructure.Secrets.Vault
 {
@@ -11,15 +12,19 @@ namespace TGF.CA.Infrastructure.Secrets.Vault
     {
         Task<T> Get<T>(string path) where T : new();
         Task<UsernamePasswordCredentials> GetRabbitMQCredentials(string aRoleName);
-        //Task<UsernamePasswordCredentials> GetMySqlredentials(string roleName);
+        void UpdateUrl(string aVaultServiceUrl);
     }
 
     public class SecretsManager : ISecretManager
     {
         private readonly Settings _vaultSettings;
 
-        public SecretsManager(IOptions<Settings> aVaultSettings)
-            => _vaultSettings = aVaultSettings.Value with { TokenApi = GetTokenFromEnvironmentVariable() };
+        public SecretsManager(IOptions<Settings> aVaultSettings, IServiceDiscovery? aServiceDiscovery = null)
+        {
+            _vaultSettings = aVaultSettings.Value with { TokenApi = GetTokenFromEnvironmentVariable() };
+            if (aServiceDiscovery != null)
+            this.ConfigureDiscoveredSecretsManager(aServiceDiscovery); //TO-DO:TEMPORARY SOLUTION, blocks thread(on startup is not so big problem, but not good)
+        }
 
         public async Task<T> Get<T>(string aPath)
             where T : new()
@@ -33,11 +38,6 @@ namespace TGF.CA.Infrastructure.Secrets.Vault
             return lKv2Secret.Data.Data.ToObject<T>();
         }
 
-        //public Task<UsernamePasswordCredentials> GetMySqlredentials(string roleName)
-        //{
-        //    throw new NotImplementedException();
-        //}
-
         public async Task<UsernamePasswordCredentials> GetRabbitMQCredentials(string aRoleName)
         {
             VaultClient client = new VaultClient(new VaultClientSettings(_vaultSettings.VaultUrl,
@@ -49,8 +49,12 @@ namespace TGF.CA.Infrastructure.Secrets.Vault
         }
 
         private string GetTokenFromEnvironmentVariable()
-            => Environment.GetEnvironmentVariable("VAULT-TOKEN")
-                ?? throw new NotImplementedException("please specify the VAULT-TOKEN env_var");
+            => Environment.GetEnvironmentVariable("VAULT_TOKEN")
+                ?? throw new NotImplementedException("Error: not specified VAULT_TOKEN env_var");
+
+        public void UpdateUrl(string aVaultServiceUrl)
+            => _vaultSettings.UpdateUrl(aVaultServiceUrl);
+
     }
 
 }

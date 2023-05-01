@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Presentation.Middleware;
 using TGF.Common.Logging;
 
@@ -23,6 +24,7 @@ namespace TGF.CA.Application.Setup
                 lBuilder.Host.ConfigureSerilog();
                 lBuilder.Services.AddControllers();
                 lBuilder.Services.AddEndpointsApiExplorer();
+                lBuilder.Services.AddDiscoveryService(lBuilder.Configuration);
                 lBuilder.Services.AddSwaggerGen();
             };
 
@@ -37,9 +39,7 @@ namespace TGF.CA.Application.Setup
             WebApplicationBuilder lBuilder = WebApplication.CreateBuilder();
 
             _defaultBuildActions.Invoke(lBuilder);
-
-            if (aWebApplicationBuilder != null)
-                aWebApplicationBuilder.Invoke(lBuilder);
+            aWebApplicationBuilder?.Invoke(lBuilder);
 
             return lBuilder.Build();
 
