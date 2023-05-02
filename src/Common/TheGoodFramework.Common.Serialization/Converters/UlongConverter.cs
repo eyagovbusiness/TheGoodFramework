@@ -1,5 +1,4 @@
 ﻿using Newtonsoft.Json;
-using System.Formats.Asn1;
 
 namespace TGF.Common.Serialization.Converters
 {
@@ -7,7 +6,7 @@ namespace TGF.Common.Serialization.Converters
     {
         public override ulong ReadJson(JsonReader aReader, Type aObjectType, ulong aExistingValue, bool aHasExistingValue, JsonSerializer aSerializer)
         {
-            if(aReader?.Value == null)
+            if (aReader?.Value == null)
                 throw new JsonSerializationException($"Failed to deserialize {aObjectType.Name} from JSON. JsonReader.Value was null!!");
             if (aReader.TokenType == JsonToken.String)
             {
@@ -19,7 +18,7 @@ namespace TGF.Common.Serialization.Converters
         }
 
         public override void WriteJson(JsonWriter aWriter, ulong aValue, JsonSerializer aSerializer)
-            =>  aWriter.WriteValue(aValue.ToString());
+            => aWriter.WriteValue(aValue.ToString());
 
     }
 }
