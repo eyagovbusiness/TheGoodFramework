@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System.Net;
-using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.Errors;
+using TGF.Common.ROP.HttpResult;
 
 namespace TGF.Common.ROP.Result
 {
