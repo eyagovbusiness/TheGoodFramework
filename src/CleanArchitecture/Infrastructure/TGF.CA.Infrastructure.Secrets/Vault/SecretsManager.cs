@@ -10,7 +10,7 @@ namespace TGF.CA.Infrastructure.Secrets.Vault
 {
     public interface ISecretsManager
     {
-        Task<T> Get<T>(string path) where T : new();
+        Task<T> Get<T>(string aPath) where T : new();
         Task<UsernamePasswordCredentials> GetRabbitMQCredentials(string aRoleName);
         void UpdateUrl(string aVaultServiceUrl);
     }
