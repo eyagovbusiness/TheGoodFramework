@@ -22,7 +22,7 @@ namespace TGF.CA.Presentation.Middleware
             }
             catch (Exception lException)
             {
-                _Logger.LogError(lException.ToString());
+                _Logger.LogError("An error occurred during an API call: {0}. Stack trace: {1}", lException.ToString(), lException.StackTrace);
                 aHttpContext.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 await _Next(aHttpContext);
             }

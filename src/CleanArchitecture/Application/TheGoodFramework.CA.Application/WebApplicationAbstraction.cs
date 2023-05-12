@@ -71,13 +71,14 @@ namespace TGF.CA.Application.Setup
         public static void CustomRun(this WebApplication aWebApplication)
         {
 
-            if (aWebApplication.Environment.IsDevelopment())
+            if (aWebApplication.Environment.IsDevelopment() || aWebApplication.Environment.IsStaging())
             {
                 aWebApplication.UseSwagger();
                 aWebApplication.UseSwaggerUI();
             }
             else
                 aWebApplication.UseHttpsRedirection();
+      
 
             aWebApplication.MapHealthChecks("/health", new HealthCheckOptions()
             {
