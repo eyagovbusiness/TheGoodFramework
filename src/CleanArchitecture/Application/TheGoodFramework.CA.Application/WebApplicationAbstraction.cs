@@ -18,7 +18,7 @@ namespace TGF.CA.Application.Setup
         private static Action<WebApplicationBuilder> _defaultBuildActions =>
             (lBuilder) =>
             {
-                lBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck());
+                lBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck(lBuilder.Configuration));
                 lBuilder.Services.AddHealthChecks();
                 lBuilder.Services.AddHealthChecksUI().AddInMemoryStorage();
                 lBuilder.Host.ConfigureSerilog();
