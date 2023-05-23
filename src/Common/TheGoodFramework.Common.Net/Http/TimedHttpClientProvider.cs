@@ -13,6 +13,7 @@ namespace TGF.Common.Net.Http
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly TimeSpan _replacementInterval;
         private readonly string _baseAddress;
+        private TimeSpan mTimeout;
         private DateTime mLastReplacementTime;
         private HttpClient mHttpClient;
 
@@ -24,12 +25,13 @@ namespace TGF.Common.Net.Http
         /// <param name="aHttpClientFactory"></param>
         /// <param name="aReplacementInterval"><see cref="TimeSpan"/> representing the interval of time this class will use to replace the HttpClient returned from <see cref="GetHttpClient"/></param>
         /// <param name="aBaseAddress">If this parameter is provided, it will be used to define <see cref="HttpClient.BaseAddress"/> <see cref="Uri"/> address used by the returned <see cref="HttpClient"/> instance.</param>
-        public TimedHttpClientProvider(IHttpClientFactory aHttpClientFactory, TimeSpan aReplacementInterval, string aBaseAddress = default)
+        public TimedHttpClientProvider(IHttpClientFactory aHttpClientFactory, TimeSpan aReplacementInterval, string aBaseAddress = default, TimeSpan aTimeOut = default)
         {
             _httpClientFactory = aHttpClientFactory;
             _replacementInterval = aReplacementInterval;
             mLastReplacementTime = DateTime.Now;
             _baseAddress = aBaseAddress;
+            mTimeout = aTimeOut;
 
         }
 
@@ -50,6 +52,17 @@ namespace TGF.Common.Net.Http
             return mHttpClient;
         }
 
+        /// <summary>
+        /// Set the timeout for the HttpClients provided.
+        /// </summary>
+        /// <param name="aTimeOut"></param>
+        public void SetTimeout(TimeSpan aTimeOut)
+        {
+            mTimeout = aTimeOut;
+            if(mHttpClient != null)
+                mHttpClient.Timeout= mTimeout;
+        }
+
         private void ReplaceHttpClient()
         {
             // Dispose the current HttpClient if exist
@@ -59,6 +72,8 @@ namespace TGF.Common.Net.Http
             mHttpClient = _httpClientFactory.CreateClient();
             if(!string.IsNullOrEmpty(_baseAddress))
                 mHttpClient.BaseAddress = new Uri(_baseAddress);
+            if (mTimeout != default)
+                mHttpClient.Timeout = mTimeout;
         }
     }
 
