@@ -11,7 +11,7 @@ namespace TGF.Common.ROP.Result
     /// Internal class that represents the unit of information while returning the result of operations in Reailway Oriented Programming.
     /// </summary>
     /// <typeparam name="T">Type of the result Value.</typeparam>
-    internal class Result<T> : IResult<T>
+    internal readonly struct Result<T> : IResult<T>
     {
         private readonly T _value;
         public T Value => IsSuccess
@@ -20,7 +20,7 @@ namespace TGF.Common.ROP.Result
         public bool IsSuccess => ErrorList.Length == 0;
         public ImmutableArray<IError> ErrorList { get; }
 
-        public Result(T aValue) : base()
+        public Result(T aValue)
         {
             _value = aValue;
             ErrorList = ImmutableArray<IError>.Empty;
