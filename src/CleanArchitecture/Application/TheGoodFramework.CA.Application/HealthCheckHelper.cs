@@ -12,7 +12,7 @@ namespace TGF.CA.Application.Setup
         /// </summary>
         /// <param name="aAditionalHealtCheckConfig">Aditional JSON configuration to add in Dictionary format.</param>
         /// <returns><see cref="IConfiguration"/> with added HealthChecksUI configuration from memory.</returns>
-        public static IConfiguration BuildBasicHealthCheck(IConfiguration aConfiguration = default, Dictionary<string, string?>? aAditionalHealtCheckConfig = null)
+        public static IConfiguration BuildBasicHealthCheck(IConfiguration? aConfiguration = default, Dictionary<string, string?>? aAditionalHealtCheckConfig = null)
         {
             var lNewConfigurationBuilder =
                 new ConfigurationBuilder()

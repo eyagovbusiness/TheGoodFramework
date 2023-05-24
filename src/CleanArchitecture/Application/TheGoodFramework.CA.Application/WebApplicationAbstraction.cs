@@ -78,7 +78,7 @@ namespace TGF.CA.Application.Setup
             }
             else
                 aWebApplication.UseHttpsRedirection();
-      
+
 
             aWebApplication.MapHealthChecks("/health", new HealthCheckOptions()
             {
