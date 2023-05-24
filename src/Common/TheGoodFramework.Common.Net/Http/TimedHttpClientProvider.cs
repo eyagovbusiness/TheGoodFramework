@@ -1,7 +1,4 @@
-﻿using System;
-using System.Net.Http;
-
-namespace TGF.Common.Net.Http
+﻿namespace TGF.Common.Net.Http
 {
     /// <summary>
     /// Composition class of <see cref="IHttpClientFactory"/> that wraps the factory 
@@ -59,8 +56,8 @@ namespace TGF.Common.Net.Http
         public void SetTimeout(TimeSpan aTimeOut)
         {
             mTimeout = aTimeOut;
-            if(mHttpClient != null)
-                mHttpClient.Timeout= mTimeout;
+            if (mHttpClient != null)
+                mHttpClient.Timeout = mTimeout;
         }
 
         private void ReplaceHttpClient()
@@ -70,7 +67,7 @@ namespace TGF.Common.Net.Http
 
             // Create a new HttpClient from the factory with the specified base address if any
             mHttpClient = _httpClientFactory.CreateClient();
-            if(!string.IsNullOrEmpty(_baseAddress))
+            if (!string.IsNullOrEmpty(_baseAddress))
                 mHttpClient.BaseAddress = new Uri(_baseAddress);
             if (mTimeout != default)
                 mHttpClient.Timeout = mTimeout;
