@@ -18,7 +18,7 @@ namespace TGF.Common.ROP.Errors
     /// <summary>
     /// Struct representing an error with an error Code and error Message.
     /// </summary>
-    public class Error : IError
+    public readonly struct Error : IError
     {
         public string Code { get; }
         public string Message { get; }
