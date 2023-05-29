@@ -1,8 +1,10 @@
 ﻿//CODE FROM https://github.com/ElectNewt/Distribt
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.RabbitMQ;
+using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Infrastructure.Secrets.Vault;
 
 namespace TGF.CA.Application.Services
@@ -65,22 +67,20 @@ namespace TGF.CA.Application.Services
 
         public static void AddHandlersInAssembly<T>(this IServiceCollection serviceCollection)
         {
-            throw new NotImplementedException();
-            //serviceCollection.Scan(scan => scan.FromAssemblyOf<T>()
-            //    .AddClasses(classes => classes.AssignableTo<IMessageHandler>())
-            //    .AsImplementedInterfaces()
-            //    .WithTransientLifetime());
+            serviceCollection.Scan(scan => scan.FromAssemblyOf<T>()
+                .AddClasses(classes => classes.AssignableTo<IMessageHandler>())
+                .AsImplementedInterfaces()
+                .WithTransientLifetime());
 
-            //ServiceProvider sp = serviceCollection.BuildServiceProvider();
-            //var listHandlers = sp.GetServices<IMessageHandler>();
-            //serviceCollection.AddConsumerHandlers(listHandlers);
+            ServiceProvider sp = serviceCollection.BuildServiceProvider();
+            var listHandlers = sp.GetServices<IMessageHandler>();
+            serviceCollection.AddConsumerHandlers(listHandlers);
         }
 
         private static async Task<string> GetRabbitMQHostName(IServiceProvider serviceProvider)
         {
-            throw new NotImplementedException();
-            //var serviceDiscovery = serviceProvider.GetService<IServiceDiscovery>();
-            //return await serviceDiscovery?.GetFullAddress(DiscoveryServices.RabbitMQ)!;
+            var serviceDiscovery = serviceProvider.GetService<IServiceDiscovery>();
+            return await serviceDiscovery?.GetFullAddress(InfraServicesRegistry.RabbitMQMessageBroker)!;
         }
     }
 }
