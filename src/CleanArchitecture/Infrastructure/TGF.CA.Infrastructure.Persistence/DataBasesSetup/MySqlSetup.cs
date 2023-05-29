@@ -4,35 +4,20 @@ using TGF.CA.Infrastructure.Persistence.DataBasesDI;
 
 namespace TGF.CA.Infrastructure.Persistence.DataBasesSetup
 {
-    /// <summary>
-    /// Static class to help setting up a new MySql database.
-    /// </summary>
     public static class MySqlSetup
     {
-        /// <summary>
-        /// Adds a new MySql database to this <see cref="IServiceCollection"/>.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="serviceCollection"></param>
-        /// <param name="databaseName"></param>
-        /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
-        public static IServiceCollection AddMySql<T>(this IServiceCollection aServiceCollection, string aDatabaseName)
+        public static IServiceCollection AddMySql<T>(this IServiceCollection serviceCollection, string databaseName)
             where T : DbContext
         {
-            return aServiceCollection
-                .AddMySqlDbContext<T>(serviceProvider => GetConnectionString(serviceProvider, aDatabaseName))
-                .AddMySqlHealthCheck(serviceProvider => GetConnectionString(serviceProvider, aDatabaseName));
+            return serviceCollection
+                .AddMySqlDbContext<T>(serviceProvider => GetConnectionString(serviceProvider, databaseName))
+                .AddMySqlHealthCheck(serviceProvider => GetConnectionString(serviceProvider, databaseName));
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="serviceProvider"></param>
-        /// <param name="databaseName"></param>
-        /// <returns></returns>
-        private static async Task<string> GetConnectionString(IServiceProvider aServiceProvider, string aDatabaseName)
+        private static async Task<string> GetConnectionString(IServiceProvider serviceProvider, string databaseName)
         {
-            return null;
+            return "";
+            //WIP
             //ISecretManager secretManager = serviceProvider.GetRequiredService<ISecretManager>();
             //IServiceDiscovery serviceDiscovery = serviceProvider.GetRequiredService<IServiceDiscovery>();
 
@@ -40,7 +25,7 @@ namespace TGF.CA.Infrastructure.Persistence.DataBasesSetup
             //MySqlCredentials credentials = await secretManager.Get<MySqlCredentials>("mysql");
 
             //return
-            //    $"Server={mysqlData.Server};Port={mysqlData.Port};Database={aDatabaseName};Uid={credentials.Username};password={credentials.Password};";
+            //    $"Server={mysqlData.Server};Port={mysqlData.Port};Database={databaseName};Uid={credentials.username};password={credentials.password};";
         }
 
 
