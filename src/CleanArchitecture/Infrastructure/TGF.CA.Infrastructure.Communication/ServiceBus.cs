@@ -37,7 +37,7 @@ namespace TGF.CA.Application.Services
             IServiceProvider serviceProvider)
         {
             var secretManager = serviceProvider.GetService<ISecretsManager>();
-            var credentials = await secretManager!.GetRabbitMQCredentials("distribt-role");
+            var credentials = await secretManager!.GetRabbitMQCredentials("GuildManagerSC-role");
             return new RabbitMQCredentials() { password = credentials.Password, username = credentials.Username };
         }
 
