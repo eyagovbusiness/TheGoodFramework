@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Infrastructure.Secrets.Common;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 using VaultSharp.V1.Commons;
 using VaultSharp.V1.SecretsEngines;
+using VaultSharp.V1.SystemBackend;
 
 namespace TGF.CA.Infrastructure.Secrets.Vault
 {
@@ -13,6 +15,7 @@ namespace TGF.CA.Infrastructure.Secrets.Vault
         Task<T> Get<T>(string aPath) where T : new();
         Task<UsernamePasswordCredentials> GetRabbitMQCredentials(string aRoleName);
         void UpdateUrl(string aVaultServiceUrl);
+        public Task<VaultSharp.V1.SystemBackend.HealthStatus> GetHealthStatusAsync();
     }
 
     public class SecretsManager : ISecretsManager
@@ -54,6 +57,13 @@ namespace TGF.CA.Infrastructure.Secrets.Vault
 
         public void UpdateUrl(string aVaultServiceUrl)
             => _vaultSettings.UpdateUrl(aVaultServiceUrl);
+
+        public async Task<VaultSharp.V1.SystemBackend.HealthStatus> GetHealthStatusAsync()
+        {
+                VaultClient lClient = new(new VaultClientSettings(_vaultSettings.VaultUrl,
+                                                                    new TokenAuthMethodInfo(_vaultSettings.TokenApi)));
+                return await lClient.V1.System.GetHealthStatusAsync();
+        }
 
     }
 
