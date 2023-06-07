@@ -1,38 +1,27 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using TGF.CA.Infrastructure.Persistence.DataBasesDI;
+﻿using Microsoft.Extensions.DependencyInjection;
+using TGF.CA.Infrastructure.Discovery;
+using TGF.CA.Infrastructure.Secrets.Vault;
 
 namespace TGF.CA.Infrastructure.Persistence.DataBasesSetup
 {
-    public static class MySqlSetup
+    internal static class MySqlSetup
     {
-        public static IServiceCollection AddMySql<T>(this IServiceCollection serviceCollection, string databaseName)
-            where T : DbContext
+        internal static async Task<string> GetConnectionString(IServiceProvider serviceProvider, string databaseName)
         {
-            return serviceCollection
-                .AddMySqlDbContext<T>(serviceProvider => GetConnectionString(serviceProvider, databaseName))
-                .AddMySqlHealthCheck(serviceProvider => GetConnectionString(serviceProvider, databaseName));
+            ISecretsManager secretManager = serviceProvider.GetRequiredService<ISecretsManager>();
+            IServiceDiscovery serviceDiscovery = serviceProvider.GetRequiredService<IServiceDiscovery>();
+
+            DiscoveryData mysqlData = await serviceDiscovery.GetDiscoveryData(InfraServicesRegistry.MySql);
+            MySqlCredentials credentials = await secretManager.Get<MySqlCredentials>("mysql");
+
+            return
+                $"Server={mysqlData.Server};Port={mysqlData.Port};Database={databaseName};Uid={credentials.username};Pwd={credentials.password};";
         }
 
-        private static async Task<string> GetConnectionString(IServiceProvider serviceProvider, string databaseName)
+        internal record MySqlCredentials
         {
-            return "";
-            //WIP
-            //ISecretManager secretManager = serviceProvider.GetRequiredService<ISecretManager>();
-            //IServiceDiscovery serviceDiscovery = serviceProvider.GetRequiredService<IServiceDiscovery>();
-
-            //DiscoveryData mysqlData = await serviceDiscovery.GetDiscoveryData(DiscoveryServices.MySql);
-            //MySqlCredentials credentials = await secretManager.Get<MySqlCredentials>("mysql");
-
-            //return
-            //    $"Server={mysqlData.Server};Port={mysqlData.Port};Database={databaseName};Uid={credentials.username};password={credentials.password};";
-        }
-
-
-        private record MySqlCredentials
-        {
-            public string Username { get; init; } = null!;
-            public string Password { get; init; } = null!;
+            public string username { get; init; } = null!;
+            public string password { get; init; } = null!;
         }
     }
 }
