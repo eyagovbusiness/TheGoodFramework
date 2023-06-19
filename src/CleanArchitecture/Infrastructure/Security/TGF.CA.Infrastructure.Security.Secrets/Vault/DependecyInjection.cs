@@ -1,9 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Infrastructure.Discovery;
-using TGF.CA.Infrastructure.Secrets.Vault;
+using TGF.CA.Infrastructure.Security.Secrets.Vault;
 
-namespace TGF.CA.Infrastructure.Secrets
+namespace TGF.CA.Infrastructure.Security.Secrets
 {
     public static class DependecyInjection
     {

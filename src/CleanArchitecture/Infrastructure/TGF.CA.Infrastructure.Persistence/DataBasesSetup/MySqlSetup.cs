@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Infrastructure.Discovery;
-using TGF.CA.Infrastructure.Secrets.Vault;
+using TGF.CA.Infrastructure.Security.Secrets.Vault;
 
 namespace TGF.CA.Infrastructure.Persistence.DataBasesSetup
 {

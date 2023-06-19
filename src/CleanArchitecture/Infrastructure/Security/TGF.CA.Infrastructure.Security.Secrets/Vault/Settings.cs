@@ -1,4 +1,4 @@
-﻿namespace TGF.CA.Infrastructure.Secrets.Vault
+﻿namespace TGF.CA.Infrastructure.Security.Secrets.Vault
 {
     /// <summary>
     /// Settings for Vault secrets manager connection for the free version.

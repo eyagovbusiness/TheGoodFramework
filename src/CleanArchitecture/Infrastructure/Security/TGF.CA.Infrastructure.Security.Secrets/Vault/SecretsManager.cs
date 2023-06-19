@@ -1,12 +1,12 @@
 ﻿using Microsoft.Extensions.Options;
 using TGF.CA.Infrastructure.Discovery;
-using TGF.CA.Infrastructure.Secrets.Common;
+using TGF.CA.Infrastructure.Security.Secrets.Common;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 using VaultSharp.V1.Commons;
 using VaultSharp.V1.SecretsEngines;
 
-namespace TGF.CA.Infrastructure.Secrets.Vault
+namespace TGF.CA.Infrastructure.Security.Secrets.Vault
 {
     public interface ISecretsManager
     {

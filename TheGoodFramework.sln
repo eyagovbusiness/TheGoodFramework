@@ -39,7 +39,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Infrastructure.Persi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Domain", "src\CleanArchitecture\Domain\TheGoodFramework.CA.Domain\TGF.CA.Domain.csproj", "{A73B4DEB-F21A-4F96-AC03-2DA09E9863AF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Infrastructure.Secrets", "src\CleanArchitecture\Infrastructure\TGF.CA.Infrastructure.Secrets\TGF.CA.Infrastructure.Secrets.csproj", "{EE54F53A-0C0F-4AFC-86A9-0E6F034B1A30}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Infrastructure.Security.Secrets", "src\CleanArchitecture\Infrastructure\TGF.CA.Infrastructure.Security.Secrets\TGF.CA.Infrastructure.Security.Secrets.csproj", "{EE54F53A-0C0F-4AFC-86A9-0E6F034B1A30}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.Common.Serialization", "src\Common\TheGoodFramework.Common.Serialization\TGF.Common.Serialization.csproj", "{E97FD0CD-8B54-46C2-9660-59B243633C5F}"
 EndProject

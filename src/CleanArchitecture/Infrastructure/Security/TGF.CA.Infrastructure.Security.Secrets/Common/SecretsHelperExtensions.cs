@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 
-namespace TGF.CA.Infrastructure.Secrets.Common
+namespace TGF.CA.Infrastructure.Security.Secrets.Common
 {
     /// <summary>
     /// Class to support conversion from the Dictionary from Vault when reading secrets to a given object. 

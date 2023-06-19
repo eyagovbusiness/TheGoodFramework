@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace TGF.CA.Infrastructure.Secrets.Vault
+namespace TGF.CA.Infrastructure.Security.Secrets.Vault
 {
     public class Vault_HealthCheck : IHealthCheck
     {
