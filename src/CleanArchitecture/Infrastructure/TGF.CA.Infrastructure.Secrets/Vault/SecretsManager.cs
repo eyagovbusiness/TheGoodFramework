@@ -13,6 +13,7 @@ namespace TGF.CA.Infrastructure.Secrets.Vault
     public interface ISecretsManager
     {
         Task<T> Get<T>(string aPath) where T : new();
+        Task<object> GetValueObject(string aPath, string aKey);
         Task<UsernamePasswordCredentials> GetRabbitMQCredentials(string aRoleName);
         void UpdateUrl(string aVaultServiceUrl);
         public Task<VaultSharp.V1.SystemBackend.HealthStatus> GetHealthStatusAsync();
@@ -39,6 +40,23 @@ namespace TGF.CA.Infrastructure.Secrets.Vault
                 .ReadSecretAsync(path: aPath, mountPoint: "secret");
 
             return lKv2Secret.Data.Data.ToObject<T>();
+        }
+
+        /// <summary>
+        /// Gets an object represeting the value of the key:value pair from a given secrets path.
+        /// </summary>
+        /// <param name="aPath"></param>
+        /// <param name="aKey"></param>
+        /// <returns></returns>
+        public async Task<object> GetValueObject(string aPath, string aKey)
+        {
+            VaultClient client = new VaultClient(new VaultClientSettings(_vaultSettings.VaultUrl,
+                new TokenAuthMethodInfo(_vaultSettings.TokenApi)));
+
+            Secret<SecretData> lKv2Secret = await client.V1.Secrets.KeyValue.V2
+                .ReadSecretAsync(path: aPath, mountPoint: "secret");
+
+            return lKv2Secret.Data.Data[aKey];
         }
 
         public async Task<UsernamePasswordCredentials> GetRabbitMQCredentials(string aRoleName)
