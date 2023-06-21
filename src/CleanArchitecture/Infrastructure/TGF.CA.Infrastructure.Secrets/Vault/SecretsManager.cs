@@ -1,12 +1,10 @@
-﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Infrastructure.Secrets.Common;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 using VaultSharp.V1.Commons;
 using VaultSharp.V1.SecretsEngines;
-using VaultSharp.V1.SystemBackend;
 
 namespace TGF.CA.Infrastructure.Secrets.Vault
 {
@@ -78,9 +76,9 @@ namespace TGF.CA.Infrastructure.Secrets.Vault
 
         public async Task<VaultSharp.V1.SystemBackend.HealthStatus> GetHealthStatusAsync()
         {
-                VaultClient lClient = new(new VaultClientSettings(_vaultSettings.VaultUrl,
-                                                                    new TokenAuthMethodInfo(_vaultSettings.TokenApi)));
-                return await lClient.V1.System.GetHealthStatusAsync();
+            VaultClient lClient = new(new VaultClientSettings(_vaultSettings.VaultUrl,
+                                                                new TokenAuthMethodInfo(_vaultSettings.TokenApi)));
+            return await lClient.V1.System.GetHealthStatusAsync();
         }
 
     }
