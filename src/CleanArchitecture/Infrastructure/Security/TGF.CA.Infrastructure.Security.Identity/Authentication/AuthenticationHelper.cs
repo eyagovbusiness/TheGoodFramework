@@ -9,11 +9,12 @@ using TGF.CA.Infrastructure.Security.Secrets.Vault;
 namespace TGF.CA.Application.Setup
 {
     /// <summary>
-    /// 
+    /// Extension class to add custom authentication logic to our <see cref="IServiceCollection"/> from our WebApplicationBuilder
     /// </summary>
+    /// <remarks>REQUIERES <see cref="ISecretsManager"/> service registered.</remarks>
     public static class Authentication_DI
     {
-        public static void AddAuthentication(this IServiceCollection aServiceCollection)
+        public static void AddCustomAuthentication(this IServiceCollection aServiceCollection)
         {
             ServiceProvider lServiceProvider = aServiceCollection.BuildServiceProvider();
             aServiceCollection.AddAuthentication(authOptions =>
