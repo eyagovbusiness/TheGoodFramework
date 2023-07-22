@@ -7,7 +7,7 @@ using TGF.CA.Infrastructure.Communication.RabbitMQ;
 using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Infrastructure.Security.Secrets.Vault;
 
-namespace TGF.CA.Application.Services
+namespace TGF.CA.Infrastructure.Communication
 {
     public static class ServiceBus
     {
