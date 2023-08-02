@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Application.Setup;
+using TGF.CA.Infrastructure.Communication;
 
 namespace TGF.CA.Infrastructure.Security.Identity
 {
@@ -11,7 +12,8 @@ namespace TGF.CA.Infrastructure.Security.Identity
             aServiceCollection.AddAuthorization();
             //aServiceCollection.AddAuthorization(options =>
             //{
-            //    options.AddPolicy("CanManageUsers", p => p.RequireRole("Espada"));
+            //    options.AddPolicy("IsAdmin", policy =>
+            //        policy.RequireRole("Admin").RequireAuthenticatedUser());
             //});
             return aServiceCollection;
         }

@@ -96,24 +96,6 @@ namespace TGF.CA.Application.Setup
         private static OAuthEvents GetMyDiscordOAuthEvents()
         => new()
         {
-            OnRedirectToAuthorizationEndpoint = context =>
-            {
-                //if the request is forwarded from a the YARP reverse proxy, then correct the redirect Uri accordingly. 
-                if (context.Request.Headers.TryGetValue("X-Forwarded-Host", out var forwardedHost))
-                {
-                    // Get the original protocol from the incoming request headers
-                    var lOriginalProtocol = context.Request.Scheme;
-
-                    // Construct the full callback URL using the original protocol and host (since reverse-proxied requests modify the host, we need to rebuild the redirect Uri) 
-                    var lValidCallbackUrl = lOriginalProtocol + "://" + forwardedHost + context.Request.PathBase + "/members-ms/auth/oauthCallback";
-
-                    // Set the updated redirect URI in the redirect context
-                    context.RedirectUri = context.RedirectUri.ReplaceRedirectUri(lValidCallbackUrl);                   
-                }
-                context.Response.Redirect(context.RedirectUri);//call the base redirect from OAuthEvents.OnRedirectToAuthorizationEndpoint
-                return Task.CompletedTask;
-            },
-
             OnCreatingTicket = async context =>
             {
                 var lResquest = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);

@@ -75,9 +75,10 @@ namespace TGF.CA.Application.Setup.MinimalAPIs
             });
 
             aWebApplication.UseMiddleware<ExceptionHandlerMiddleware>();
+            //aWebApplication.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedProto });
             //aWebApplication.UseCors();
+            aWebApplication.UseRouting();//UseRouting() must be called before UseAuthentication() and UseAuthorization()
             aWebApplication.UseAuthentication();
-            aWebApplication.UseRouting();
             aWebApplication.UseAuthorization();//UseAuthorization must be called after UseRouting() and before UseEndpoints()
             aWebApplication.UseEndpoints(config => config.MapHealthChecksUI());
             aWebApplication.UseSwagger();
