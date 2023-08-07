@@ -7,6 +7,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using TGF.CA.Application.Setup.Swagger;
+using TGF.CA.Infrastructure.Communication;
 using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Presentation.Middleware;
 using TGF.Common.Logging;
@@ -20,20 +21,24 @@ namespace TGF.CA.Application.Setup.MinimalAPIs
     public static class MinimalWebApplicationAbstraction
     {
         private static Action<WebApplicationBuilder> DefaultBuildActions(params Type[] aScanMarkerList) =>
-            (lBuilder) =>
+        (lBuilder) =>
+        {
+            lBuilder.Services.AddCors(options =>
             {
-                lBuilder.Services.AddSerializer();
-                lBuilder.Services.AddDiscoveryService(lBuilder.Configuration);
-                lBuilder.Services.AddEndpointsApiExplorer();
-                lBuilder.Services.AddSwaggerGen();
-                lBuilder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
-                lBuilder.Services.AddEndpointDefinitions(aScanMarkerList);
-                lBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck(lBuilder.Configuration));
-                lBuilder.Services.AddHealthChecks();
-                lBuilder.Services.AddHealthChecksUI().AddInMemoryStorage();
-                lBuilder.Host.ConfigureSerilog();
+                options.AddPolicy("AllowFrontCorsPolicy", builder => builder.WithOrigins("staging.alfilo.org"));
+            });
+            lBuilder.Services.AddSerializer();
+            lBuilder.Services.AddDiscoveryService(lBuilder.Configuration);
+            lBuilder.Services.AddEndpointsApiExplorer();
+            lBuilder.Services.AddSwaggerGen();
+            lBuilder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+            lBuilder.Services.AddEndpointDefinitions(aScanMarkerList);
+            lBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck(lBuilder.Configuration));
+            lBuilder.Services.AddHealthChecks();
+            lBuilder.Services.AddHealthChecksUI().AddInMemoryStorage();
+            lBuilder.Host.ConfigureSerilog();
 
-            };
+        };
 
         /// <summary>
         /// Creates a new instance of <see cref="WebApplication"/> with custom serilog configuration from <see cref="LoggerConfigurator"/>. Also additional <see cref="WebApplicationBuilder"/> actions can included in the build.
@@ -76,7 +81,7 @@ namespace TGF.CA.Application.Setup.MinimalAPIs
 
             aWebApplication.UseMiddleware<ExceptionHandlerMiddleware>();
             //aWebApplication.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedProto });
-            //aWebApplication.UseCors();
+            aWebApplication.UseCors("AllowFrontCorsPolicy");
             aWebApplication.UseRouting();//UseRouting() must be called before UseAuthentication() and UseAuthorization()
             aWebApplication.UseAuthentication();
             aWebApplication.UseAuthorization();//UseAuthorization must be called after UseRouting() and before UseEndpoints()
