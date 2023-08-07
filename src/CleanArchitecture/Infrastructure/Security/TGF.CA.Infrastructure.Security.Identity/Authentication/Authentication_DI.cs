@@ -43,7 +43,10 @@ namespace TGF.CA.Application.Setup
                 authOptions.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 authOptions.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             })
-            .AddCookie()
+            .AddCookie(options =>
+            {
+                options.Cookie.Name = "PreAuthCookie";
+            })
             .AddCustomJwtBearer(lAPISecret)
             .AddOAuth("Discord", 
                 options =>
