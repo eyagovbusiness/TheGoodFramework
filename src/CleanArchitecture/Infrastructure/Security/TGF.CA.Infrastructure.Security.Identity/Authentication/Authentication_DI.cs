@@ -46,6 +46,7 @@ namespace TGF.CA.Application.Setup
             .AddCookie(options =>
             {
                 options.Cookie.Name = "PreAuthCookie";
+                options.Cookie.SameSite = SameSiteMode.Lax;
             })
             .AddCustomJwtBearer(lAPISecret)
             .AddOAuth("Discord", 
