@@ -25,7 +25,7 @@ namespace TGF.CA.Application.Setup.MinimalAPIs
         {
             lBuilder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowFrontCorsPolicy", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+                options.AddPolicy("AllowFrontCorsPolicy", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()/*.AllowCredentials()*/);
             });
             lBuilder.Services.AddSerializer();
             lBuilder.Services.AddDiscoveryService(lBuilder.Configuration);
@@ -79,8 +79,9 @@ namespace TGF.CA.Application.Setup.MinimalAPIs
                 aConfig.UIPath = "/health-ui";
             });
 
-            aWebApplication.UseMiddleware<ExceptionHandlerMiddleware>();
+
             //aWebApplication.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedProto });
+            aWebApplication.UseCustomErrorHandlingMiddleware();
             aWebApplication.UseCors("AllowFrontCorsPolicy");
             aWebApplication.UseRouting();//UseRouting() must be called before UseAuthentication() and UseAuthorization()
             aWebApplication.UseAuthentication();

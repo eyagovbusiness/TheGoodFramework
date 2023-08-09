@@ -90,9 +90,11 @@ namespace TGF.CA.Application.Setup
                 aConfig.UIPath = "/health-ui";
             });
 
-            aWebApplication.UseMiddleware<ExceptionHandlerMiddleware>();
-            aWebApplication.UseRouting().UseEndpoints(config => config.MapHealthChecksUI());
-            aWebApplication.UseAuthorization();
+            aWebApplication.UseCustomErrorHandlingMiddleware();
+            aWebApplication.UseRouting();//UseRouting() must be called before UseAuthentication() and UseAuthorization()
+            //aWebApplication.UseAuthentication();
+            //aWebApplication.UseAuthorization();//UseAuthorization must be called after UseRouting() and before UseEndpoints()
+            aWebApplication.UseEndpoints(config => config.MapHealthChecksUI());
             aWebApplication.MapControllers();
             aWebApplication.Run();
         }
