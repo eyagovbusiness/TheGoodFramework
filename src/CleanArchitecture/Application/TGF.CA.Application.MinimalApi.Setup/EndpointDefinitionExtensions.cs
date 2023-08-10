@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace TGF.CA.Application.Setup.MinimalAPIs
+namespace TGF.CA.Application.MinimalApi.Setup
 {
     /// <summary>
     /// Extensions class used to help on registering all the defined endpoints by scanning assemblies loking for classes that implement <see cref="IEndpointDefinition"/>.

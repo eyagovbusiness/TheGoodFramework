@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using TGF.CA.Application.Setup;
 using TGF.CA.Application.Setup.Swagger;
 using TGF.CA.Infrastructure.Communication;
 using TGF.CA.Infrastructure.Discovery;
@@ -13,7 +14,7 @@ using TGF.CA.Presentation.Middleware;
 using TGF.Common.Logging;
 using TGF.Common.Serialization;
 
-namespace TGF.CA.Application.Setup.MinimalAPIs
+namespace TGF.CA.Application.MinimalApi.Setup
 {
     /// <summary>
     /// Class to support logic abstraction on the WebApplication creation for Minimal APIs.
@@ -37,6 +38,7 @@ namespace TGF.CA.Application.Setup.MinimalAPIs
             lBuilder.Services.AddHealthChecks();
             lBuilder.Services.AddHealthChecksUI().AddInMemoryStorage();
             lBuilder.Host.ConfigureSerilog();
+            lBuilder.Services.AddProblemDetails();
 
         };
 

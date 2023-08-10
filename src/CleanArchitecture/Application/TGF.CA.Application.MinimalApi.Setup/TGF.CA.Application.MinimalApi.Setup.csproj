@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" Version="7.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCore.HealthChecks.UI" Version="7.0.2" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="7.1.0" />
+    <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="7.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\TheGoodFramework.Common.Logging\TGF.Common.Logging.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Security\TGF.CA.Infrastructure.Security.Identity\TGF.CA.Infrastructure.Security.Identity.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Security\TGF.CA.Infrastructure.Security.Secrets\TGF.CA.Infrastructure.Security.Secrets.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\TGF.CA.Infrastructure.Discovery\TGF.CA.Infrastructure.Discovery.csproj" />
+    <ProjectReference Include="..\..\Presentation\TGF.CA.Presentation.Middleware\TGF.CA.Presentation.Middleware.csproj" />
+    <ProjectReference Include="..\TheGoodFramework.CA.Application\TGF.CA.Application.Setup.csproj" />
+  </ItemGroup>
+
+</Project>
