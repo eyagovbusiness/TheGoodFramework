@@ -48,7 +48,7 @@ namespace TGF.CA.Presentation.Middleware
             {
                 foreach (int statusCode in aPossibleStatusCodes)
                 {
-                    if (statusCode >= 200 && statusCode <= 399)
+                    if (statusCode >= 200 && statusCode <= 299)
                     {
                         if (typeof(TSuccessResultType) != typeof(InternalNoSuccessResultType))
                             aRouteHandlerBuilder.Produces<TSuccessResultType>(statusCode);
