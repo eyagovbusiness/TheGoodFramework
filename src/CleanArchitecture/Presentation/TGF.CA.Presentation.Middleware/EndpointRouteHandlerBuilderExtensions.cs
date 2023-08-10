@@ -16,7 +16,7 @@ namespace TGF.CA.Presentation.Middleware
         private class InternalNoSuccessResultType { }
 
         /// <summary>
-        /// Sets the response metadata of all possible responses this endpoint can send.
+        /// Sets the response metadata of all possible responses this endpoint can send. Problem response with code 500 is always added by default.
         /// </summary>
         /// <typeparam name="TSuccessResultType">The Type used to populate the response body on successful responses.</typeparam>
         /// <param name="aRouteHandlerBuilder"><see cref="RouteHandlerBuilder"/> of the endpoint source where the metadata will be set.</param>
@@ -28,7 +28,7 @@ namespace TGF.CA.Presentation.Middleware
 
 
         /// <summary>
-        /// Sets the response metadata of all possible responses this endpoint can send.
+        /// Sets the response metadata of all possible responses this endpoint can send. Problem response with code 500 is always added by default.
         /// </summary>
         /// <param name="aRouteHandlerBuilder"><see cref="RouteHandlerBuilder"/> of the endpoint source where the metadata will be set.</param>
         /// <param name="aPossibleResponseStatusCodes">List of pameters that defines all the possible Http response codes this endpoint can use in the responses. This includes both, success or failure response codes.</param>
@@ -48,7 +48,7 @@ namespace TGF.CA.Presentation.Middleware
             {
                 foreach (int statusCode in aPossibleStatusCodes)
                 {
-                    if (statusCode >= 200 && statusCode <= 299)
+                    if (statusCode >= 200 && statusCode <= 399)
                     {
                         if (typeof(TSuccessResultType) != typeof(InternalNoSuccessResultType))
                             aRouteHandlerBuilder.Produces<TSuccessResultType>(statusCode);
