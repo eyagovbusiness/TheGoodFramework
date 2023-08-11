@@ -24,19 +24,10 @@ namespace TGF.CA.Application.MinimalApi.Setup
         private static Action<WebApplicationBuilder> DefaultBuildActions(params Type[] aScanMarkerList) =>
         (lBuilder) =>
         {
-            //lBuilder.Services.AddCors(options =>
-            //{
-            //    options.AddPolicy("AllowFrontCorsPolicy", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()/*.AllowCredentials()*/);
-            //});
             lBuilder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowFrontCorsPolicy", builder =>
-                {
-                    builder.WithOrigins("http://staging.alfilo.org")
-                           .AllowAnyHeader()
-                           .AllowAnyMethod()
-                           .AllowCredentials();
-                });
+                options.AddPolicy("AllowFrontCorsPolicy", builder => builder.WithOrigins("http://staging.alfilo.org")
+                                                                            .AllowAnyHeader().AllowAnyMethod().AllowCredentials());
             });
             lBuilder.Services.AddSerializer();
             lBuilder.Services.AddDiscoveryService(lBuilder.Configuration);

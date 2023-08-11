@@ -1,6 +1,10 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Application.Setup;
 using TGF.CA.Infrastructure.Communication;
+using TGF.CA.Infrastructure.Security.Identity.Authorization;
+using TGF.CA.Infrastructure.Security.Identity.Authorization.Role;
 
 namespace TGF.CA.Infrastructure.Security.Identity
 {
@@ -9,13 +13,17 @@ namespace TGF.CA.Infrastructure.Security.Identity
         public static async Task<IServiceCollection> AddCustomIdentityAsync(this IServiceCollection aServiceCollection)
         {
             await aServiceCollection.AddDiscordOAuthPlusJWTAuthentication();
-            aServiceCollection.AddAuthorization();
-            //aServiceCollection.AddAuthorization(options =>
-            //{
-            //    options.AddPolicy("IsAdmin", policy =>
-            //        policy.RequireRole("Admin").RequireAuthenticatedUser());
-            //});
+            aServiceCollection.AddAuthorization(options =>
+            {
+                PolicyBuilder.AddRoleHierarchyPolicy(options, "Admin");
+                PolicyBuilder.AddRoleHierarchyPolicy(options, "Espada");
+                PolicyBuilder.AddRoleHierarchyPolicy(options, "Daga");
+                PolicyBuilder.AddRoleHierarchyPolicy(options, "Cadete");
+                PolicyBuilder.AddRoleHierarchyPolicy(options, "Afiliado");
+            });
             return aServiceCollection;
         }
+
+
     }
 }
