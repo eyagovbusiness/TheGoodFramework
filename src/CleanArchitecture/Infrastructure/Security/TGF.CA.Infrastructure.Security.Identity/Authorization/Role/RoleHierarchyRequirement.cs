@@ -2,11 +2,14 @@
 
 namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Role
 {
+    /// <summary>
+    /// Implementation of <see cref="IAuthorizationRequirement"/> that defines role requirements.
+    /// </summary>
     public class RoleHierarchyRequirement : IAuthorizationRequirement
     {
-        public string Role { get; }
+        public string RoleName { get; }
 
-        public RoleHierarchyRequirement(string aRole)
-            => Role = aRole;
+        public RoleHierarchyRequirement(string aRoleName)
+            => RoleName = aRoleName;
     }
 }

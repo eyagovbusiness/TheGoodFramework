@@ -3,15 +3,23 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Role
 {
-    internal static class PolicyBuilder
+    /// <summary>
+    /// Static class that provides logic to add role hierarchy policies.
+    /// </summary>
+    internal static class RolePolicyBuilder
     {
-        public static void AddRoleHierarchyPolicy(AuthorizationOptions aAuthorizationOptions, string aRole)
+        /// <summary>
+        /// Adds role hierarchy based authorization policies to the provided AuthorizationOptions.
+        /// </summary>
+        /// <param name="aAuthorizationOptions"><see cref="AuthorizationOptions"/> where to add the role policies.</param>
+        /// <param name="aRoleName">Role name that is required to satisfy the role policy requirement.</param>
+        public static void AddRoleHierarchyPolicy(AuthorizationOptions aAuthorizationOptions, string aRoleName)
         {
-            aAuthorizationOptions.AddPolicy($"Requires_{aRole}", policy =>
+            aAuthorizationOptions.AddPolicy($"Requires_{aRoleName}", policy =>
             {
                 policy.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
                 policy.RequireAuthenticatedUser();
-                policy.Requirements.Add(new RoleHierarchyRequirement(aRole));
+                policy.Requirements.Add(new RoleHierarchyRequirement(aRoleName));
             });
         }
     }

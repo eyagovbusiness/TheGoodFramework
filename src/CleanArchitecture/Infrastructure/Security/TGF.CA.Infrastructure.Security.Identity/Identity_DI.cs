@@ -1,29 +1,30 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Application.Setup;
-using TGF.CA.Infrastructure.Communication;
-using TGF.CA.Infrastructure.Security.Identity.Authorization;
-using TGF.CA.Infrastructure.Security.Identity.Authorization.Role;
 
 namespace TGF.CA.Infrastructure.Security.Identity
 {
+    /// <summary>
+    /// Static class to provide <see cref="IServiceCollection"/> extensions to add Identity related custom logic to the web application.
+    /// </summary>
     public static class Identity_DI
     {
+        /// <summary>
+        /// Adds custom identity logic to the web application. Using Discord OAuth2, session cookies based on Discord Auth and JWT Bearer tokens to authorize api endpoints.
+        /// </summary>
         public static async Task<IServiceCollection> AddCustomIdentityAsync(this IServiceCollection aServiceCollection)
         {
             await aServiceCollection.AddDiscordOAuthPlusJWTAuthentication();
-            aServiceCollection.AddAuthorization(options =>
-            {
-                PolicyBuilder.AddRoleHierarchyPolicy(options, "Admin");
-                PolicyBuilder.AddRoleHierarchyPolicy(options, "Espada");
-                PolicyBuilder.AddRoleHierarchyPolicy(options, "Daga");
-                PolicyBuilder.AddRoleHierarchyPolicy(options, "Cadete");
-                PolicyBuilder.AddRoleHierarchyPolicy(options, "Afiliado");
-            });
+            aServiceCollection.AddAuthorization();
+            //aServiceCollection.AddAuthorization(options =>
+            //{
+            //    RolePolicyBuilder.AddRoleHierarchyPolicy(options, "Admin");
+            //    RolePolicyBuilder.AddRoleHierarchyPolicy(options, "Espada");
+            //    RolePolicyBuilder.AddRoleHierarchyPolicy(options, "Daga");
+            //    RolePolicyBuilder.AddRoleHierarchyPolicy(options, "Cadete");
+            //    RolePolicyBuilder.AddRoleHierarchyPolicy(options, "Afiliado");
+            //});
             return aServiceCollection;
         }
-
 
     }
 }
