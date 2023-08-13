@@ -8,7 +8,6 @@ using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using TGF.CA.Application.Setup;
 using TGF.CA.Application.Setup.Swagger;
-using TGF.CA.Infrastructure.Communication;
 using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Presentation.Middleware;
 using TGF.Common.Logging;
