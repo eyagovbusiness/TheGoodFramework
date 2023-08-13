@@ -26,7 +26,7 @@ namespace TGF.CA.Application.MinimalApi.Setup
         {
             lBuilder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowFrontCorsPolicy", builder => builder.WithOrigins("https://staging.alfilo.org")
+                options.AddPolicy("AllowFrontCorsPolicy", builder => builder.WithOrigins("http://staging.alfilo.org")
                                                                             .AllowAnyHeader().AllowAnyMethod().AllowCredentials());
             });
             lBuilder.Services.AddSerializer();
