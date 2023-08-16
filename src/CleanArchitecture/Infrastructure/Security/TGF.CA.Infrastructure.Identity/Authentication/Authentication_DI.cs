@@ -54,7 +54,7 @@ namespace TGF.CA.Application.Setup
                 {
                     options.AuthorizationEndpoint = "https://discord.com/oauth2/authorize";
                     options.Scope.Add("identify");
-                    options.CallbackPath = new PathString("/api/auth/oauthCallback");
+                    options.CallbackPath = new PathString("/auth/oauthCallback");
 
                     options.ClientId = lDiscordUserAuth.ClientId;
                     options.ClientSecret = lDiscordUserAuth.ClientSecret;
@@ -65,7 +65,7 @@ namespace TGF.CA.Application.Setup
                     options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id");
                     options.ClaimActions.MapJsonKey(ClaimTypes.Name, "username");
 
-                    options.AccessDeniedPath = new PathString("/api/auth/oauthFailed");
+                    options.AccessDeniedPath = new PathString("/auth/oauthFailed");
 
                     options.Events = GetMyDiscordOAuthEvents();
                 }
