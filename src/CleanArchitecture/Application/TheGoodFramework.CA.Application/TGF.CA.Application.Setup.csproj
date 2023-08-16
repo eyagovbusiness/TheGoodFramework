@@ -19,8 +19,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\TheGoodFramework.Common.Logging\TGF.Common.Logging.csproj" />
-    <ProjectReference Include="..\..\Infrastructure\Security\TGF.CA.Infrastructure.Security.Identity\TGF.CA.Infrastructure.Security.Identity.csproj" />
-    <ProjectReference Include="..\..\Infrastructure\Security\TGF.CA.Infrastructure.Security.Secrets\TGF.CA.Infrastructure.Security.Secrets.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Security\TGF.CA.Infrastructure.Identity\TGF.CA.Infrastructure.Identity.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\Security\TGF.CA.Infrastructure.Secrets\TGF.CA.Infrastructure.Secrets.csproj" />
     <ProjectReference Include="..\..\Infrastructure\TGF.CA.Infrastructure.Discovery\TGF.CA.Infrastructure.Discovery.csproj" />
     <ProjectReference Include="..\..\Presentation\TGF.CA.Presentation.Middleware\TGF.CA.Presentation.Middleware.csproj" />
   </ItemGroup>
