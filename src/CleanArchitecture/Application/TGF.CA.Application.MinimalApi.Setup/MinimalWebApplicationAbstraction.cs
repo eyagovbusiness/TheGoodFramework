@@ -84,8 +84,8 @@ namespace TGF.CA.Application.MinimalApi.Setup
 
             //aWebApplication.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedProto });
             aWebApplication.UseCustomErrorHandlingMiddleware();
+            aWebApplication.UseCors("AllowFrontCorsPolicy");//CORS should be placed before routing.
             aWebApplication.UseRouting();//UseRouting() must be called before UseAuthentication() and UseAuthorization()
-            aWebApplication.UseCors("AllowFrontCorsPolicy");
             aWebApplication.UseAuthentication();
             aWebApplication.UseAuthorization();//UseAuthorization must be called after UseRouting() and before UseEndpoints()
             aWebApplication.UseEndpoints(config => config.MapHealthChecksUI());
