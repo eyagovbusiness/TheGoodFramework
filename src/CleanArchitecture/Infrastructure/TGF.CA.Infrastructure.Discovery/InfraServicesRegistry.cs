@@ -8,6 +8,7 @@
     {
         public const string RabbitMQMessageBroker = "RabbitMQ";
         public const string VaultSecretsManager = "VaultSecretsManager";
-        public const string MySql = "MySql";
+        public const string MySQL = "MySQL";
+        public const string PostgreSQL = "PostgreSQL";
     }
 }

@@ -1,0 +1,55 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Builder;
+
+namespace TGF.CA.lWebApplicationlication.MinimalApi.Setup
+{
+
+    public static class WebApplicationDbContextExtensions
+    {
+        /// <summary>
+        /// Applies all pending migrations to the specified <see cref="DbContext"/> type.
+        /// </summary>
+        /// <typeparam name="TDbContext">The type of the <see cref="DbContext"/> for which migrations should be applied.</typeparam>
+        /// <param name="lWebApplication">The <see cref="WebApplication"/> instance.</param>
+        /// <returns>The same <see cref="WebApplication"/> instance after applying the migrations.</returns>
+        public static WebApplication UseMigrations<TDbContext>(this WebApplication lWebApplication)
+            where TDbContext : DbContext
+        =>lWebApplication.UseMigrations(typeof(TDbContext));
+
+        /// <summary>
+        /// Applies all pending migrations to the specified DbContext types.
+        /// </summary>
+        /// <param name="lWebApplication">The <see cref="WebApplication"/> instance.</param>
+        /// <param name="lDbContextTypes">An array of <see cref="DbContext"/> types for which migrations should be applied.</param>
+        /// <returns>The same <see cref="WebApplication"/> instance after applying the migrations.</returns>
+        public static WebApplication UseMigrations(this WebApplication lWebApplication, params Type[] lDbContextTypes)
+        {
+            using (var lScope = lWebApplication.Services.CreateScope())
+            {
+                foreach (var lDbContextType in lDbContextTypes)
+                {
+                    WebApplicationlyMigration(lScope.ServiceProvider, lDbContextType);
+                }
+            }
+            return lWebApplication;
+        }
+
+        /// <summary>
+        /// Applies all pending migrations for the given <see cref="DbContext"/> type.
+        /// </summary>
+        /// <param name="lServiceProvider">The <see cref="IServiceProvider"/> instance.</param>
+        /// <param name="lDbContextType">The type of the <see cref="DbContext"/> for which migrations should be applied.</param>
+        private static void WebApplicationlyMigration(IServiceProvider lServiceProvider, Type lDbContextType)
+        {
+            if (!typeof(DbContext).IsAssignableFrom(lDbContextType))
+                throw new ArgumentException($"Type '{lDbContextType.FullName}' is not a DbContext type.");
+
+            var lDbContext = lServiceProvider.GetService(lDbContextType) as DbContext 
+                             ?? throw new InvalidOperationException($"No service for type '{lDbContextType.FullName}' has been registered.");
+            lDbContext.Database.Migrate();
+        }
+
+    }
+
+}
