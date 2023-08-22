@@ -2,7 +2,7 @@ namespace TGF.CA.Infrastructure.Communication.RabbitMQ;
 //CODE FROM https://github.com/ElectNewt/Distribt
 public class RabbitMQSettings
 {
-    public string Hostname { get; private set; } = null!;
+    public string? Hostname { get; private set; }
     public RabbitMQCredentials? Credentials { get; private set; }
     public PublisherSettings? Publisher { get; init; }
     public ConsumerSettings? Consumer { get; init; }
