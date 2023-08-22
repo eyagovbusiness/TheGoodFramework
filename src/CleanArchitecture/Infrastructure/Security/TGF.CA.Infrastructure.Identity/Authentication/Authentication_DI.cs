@@ -49,15 +49,15 @@ namespace TGF.CA.Application.Setup
                 options.Cookie.SameSite = SameSiteMode.Lax;
             })
             .AddCustomJwtBearer(lAPISecret)
-            .AddOAuth("Discord", 
+            .AddOAuth("Discord",
                 options =>
                 {
                     options.AuthorizationEndpoint = "https://discord.com/oauth2/authorize";
                     options.Scope.Add("identify");
                     options.CallbackPath = new PathString("/auth/oauthCallback");
 
-                    options.ClientId = lDiscordUserAuth.ClientId;
-                    options.ClientSecret = lDiscordUserAuth.ClientSecret;
+                    options.ClientId = lDiscordUserAuth.ClientId!;
+                    options.ClientSecret = lDiscordUserAuth.ClientSecret!;
 
                     options.TokenEndpoint = "https://discord.com/api/oauth2/token";
                     options.UserInformationEndpoint = "https://discord.com/api/users/@me";

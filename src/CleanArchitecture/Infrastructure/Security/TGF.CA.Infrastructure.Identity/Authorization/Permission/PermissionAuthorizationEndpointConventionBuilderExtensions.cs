@@ -20,8 +20,8 @@ namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Permission
         /// <param name="aPermissions"></param>
         /// <returns>The same instance of <see cref="IEndpointConventionBuilder"/> that can be used to chain more methods.</returns>
         /// <exception cref="ArgumentNullException">Can be thrown when aBuilder or aPermissions arguments are null.</exception>
-        public static TBuilder RequirePermissions<TBuilder, TPermissionsEnum>(this TBuilder aBuilder, params TPermissionsEnum[] aPermissions) 
-            where TBuilder : IEndpointConventionBuilder 
+        public static TBuilder RequirePermissions<TBuilder, TPermissionsEnum>(this TBuilder aBuilder, params TPermissionsEnum[] aPermissions)
+            where TBuilder : IEndpointConventionBuilder
             where TPermissionsEnum : struct
         {
             if (aBuilder == null)

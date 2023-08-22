@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Builder;
 
 namespace TGF.CA.lWebApplicationlication.MinimalApi.Setup
 {
@@ -15,7 +15,7 @@ namespace TGF.CA.lWebApplicationlication.MinimalApi.Setup
         /// <returns>The same <see cref="WebApplication"/> instance after applying the migrations.</returns>
         public static WebApplication UseMigrations<TDbContext>(this WebApplication lWebApplication)
             where TDbContext : DbContext
-        =>lWebApplication.UseMigrations(typeof(TDbContext));
+        => lWebApplication.UseMigrations(typeof(TDbContext));
 
         /// <summary>
         /// Applies all pending migrations to the specified DbContext types.
@@ -45,7 +45,7 @@ namespace TGF.CA.lWebApplicationlication.MinimalApi.Setup
             if (!typeof(DbContext).IsAssignableFrom(lDbContextType))
                 throw new ArgumentException($"Type '{lDbContextType.FullName}' is not a DbContext type.");
 
-            var lDbContext = lServiceProvider.GetService(lDbContextType) as DbContext 
+            var lDbContext = lServiceProvider.GetService(lDbContextType) as DbContext
                              ?? throw new InvalidOperationException($"No service for type '{lDbContextType.FullName}' has been registered.");
             lDbContext.Database.Migrate();
         }

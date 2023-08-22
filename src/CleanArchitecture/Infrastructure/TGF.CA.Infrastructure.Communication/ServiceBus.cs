@@ -38,7 +38,7 @@ namespace TGF.CA.Infrastructure.Communication
         {
             var secretManager = serviceProvider.GetService<ISecretsManager>();
             var credentials = await secretManager!.GetRabbitMQCredentials("GuildManagerSC-role");
-            return new RabbitMQCredentials() { password = credentials.Password, username = credentials.Username };
+            return new RabbitMQCredentials() { Password = credentials.Password, Username = credentials.Username };
         }
 
         public static void AddServiceBusIntegrationConsumer(this IServiceCollection serviceCollection,

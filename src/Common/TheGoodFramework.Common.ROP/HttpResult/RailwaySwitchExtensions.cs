@@ -86,7 +86,7 @@ namespace TGF.Common.ROP.HttpResult
         public static async Task<IHttpResult<T>> Verify<T>(this Task<IHttpResult<T>> aThisResult, Func<T, bool> aVerifyFunction, IHttpError aHttpError)
         {
             var lThisResult = await aThisResult;
-            return lThisResult.IsSuccess && !aVerifyFunction(lThisResult.Value) 
+            return lThisResult.IsSuccess && !aVerifyFunction(lThisResult.Value)
                 ? Result.Result.Failure<T>(aHttpError)
                 : lThisResult;
         }

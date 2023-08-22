@@ -35,7 +35,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
         public static IServiceCollection AddPostgresHealthCheckFromConnectionString(this IServiceCollection aServiceCollection, string aConnectionString)
             => aServiceCollection
                 .AddHealthChecks()
-                .AddNpgSql(aConnectionString, name:"Database")
+                .AddNpgSql(aConnectionString, name: "Database")
                 .Services;
     }
 }

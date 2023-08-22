@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TGF.CA.Infrastructure.Security.Secrets.Vault;
+﻿using TGF.CA.Infrastructure.Security.Secrets.Vault;
 
 namespace TGF.CA.Infrastructure.Security.Identity.Authentication
 {
     public class DiscordUserAuth
     {
-        public string ClientId { get; set; }
-        public string ClientSecret { get; set; }
+        public string? ClientId { get; set; }
+        public string? ClientSecret { get; set; }
     }
     public static class AuthenticationHelper
     {

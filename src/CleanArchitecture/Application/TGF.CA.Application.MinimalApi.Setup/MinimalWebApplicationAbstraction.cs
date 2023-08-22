@@ -62,25 +62,17 @@ namespace TGF.CA.Application.MinimalApi.Setup
         /// <param name="aWebApplication"></param>
         public static void CustomMinimalRun(this WebApplication aWebApplication)
         {
-
             if (aWebApplication.Environment.IsDevelopment() || aWebApplication.Environment.IsStaging())
             {
                 aWebApplication.UseSwagger();
                 aWebApplication.UseSwaggerUI();
             }
-            else
-                aWebApplication.UseHttpsRedirection();
 
             aWebApplication.MapHealthChecks("/health", new HealthCheckOptions()
             {
                 Predicate = _ => true,
                 ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
             });
-            aWebApplication.UseHealthChecksUI(aConfig =>
-            {
-                aConfig.UIPath = "/health-ui";
-            });
-
 
             //aWebApplication.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedProto });
             aWebApplication.UseCustomErrorHandlingMiddleware();
@@ -88,11 +80,8 @@ namespace TGF.CA.Application.MinimalApi.Setup
             aWebApplication.UseRouting();//UseRouting() must be called before UseAuthentication() and UseAuthorization()
             aWebApplication.UseAuthentication();
             aWebApplication.UseAuthorization();//UseAuthorization must be called after UseRouting() and before UseEndpoints()
-            aWebApplication.UseEndpoints(config => config.MapHealthChecksUI());
-            aWebApplication.UseSwagger();
-            aWebApplication.UseSwaggerUI();
+            aWebApplication.MapHealthChecksUI(options => options.UIPath = "/health-ui");
             aWebApplication.UseEndpointDefinitions();
-
             aWebApplication.Run();
         }
 

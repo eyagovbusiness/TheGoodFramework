@@ -17,7 +17,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
         {
             var lPostgreSQLSecrets = await GetPostgreSQLSecrets(aServiceProvider);
             var lPostgreSQLDiscoveryData = await GetPostgreSQLDiscoveryData(aServiceProvider);
-            return $"Host={lPostgreSQLDiscoveryData.Server};Port={lPostgreSQLDiscoveryData.Port};Username={lPostgreSQLSecrets.username};Password={lPostgreSQLSecrets.password};Database={aDatabaseName};";
+            return $"Host={lPostgreSQLDiscoveryData.Server};Port={lPostgreSQLDiscoveryData.Port};Username={lPostgreSQLSecrets.Username};Password={lPostgreSQLSecrets.Password};Database={aDatabaseName};";
 
         }
 
@@ -35,10 +35,10 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
                .Get<PostgreSQLSecrets>("postgres")
                 ?? throw new Exception("Error loading retrieving the PostgreSQL secrets!!");
 
-        private class PostgreSQLSecrets
+        private record PostgreSQLSecrets
         {
-            public string? username { get; set; }
-            public string? password { get; set; }
+            public string? Username { get; set; }
+            public string? Password { get; set; }
         }
 
         #endregion

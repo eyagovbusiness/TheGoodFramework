@@ -20,8 +20,8 @@ public class RabbitMQSettings
 
 public record RabbitMQCredentials
 {
-    public string username { get; init; } = null!;
-    public string password { get; init; } = null!;
+    public string? Username { get; init; }
+    public string? Password { get; init; }
 }
 
 public record PublisherSettings

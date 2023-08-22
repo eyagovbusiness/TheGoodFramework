@@ -35,8 +35,8 @@ public static class RabbitMQDependencyInjection
     {
         RabbitMQSettings settings = serviceProvider.GetRequiredService<IOptions<RabbitMQSettings>>().Value;
         ConnectionFactory factory = new ConnectionFactory();
-        factory.UserName = settings.Credentials?.username;
-        factory.Password = settings.Credentials?.password;
+        factory.UserName = settings.Credentials?.Username;
+        factory.Password = settings.Credentials?.Password;
         factory.VirtualHost = "/";
         factory.HostName = settings.Hostname;
         factory.Port = AmqpTcpEndpoint.UseDefaultPort;

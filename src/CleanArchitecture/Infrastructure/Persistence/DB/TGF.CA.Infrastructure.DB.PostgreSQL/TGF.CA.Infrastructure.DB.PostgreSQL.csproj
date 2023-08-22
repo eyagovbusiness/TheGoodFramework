@@ -7,8 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.10" /> <!--ESSENTIAL TO FORCE VERSION 7.0.10 TO AVOID COMPATIBILITY ISSUES-->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.10"> <!--ESSENTIAL TO RUN MIGRATIONS IN THE PROJECTS REFERENCING THIS LIBRARY-->
+    <!--ESSENTIAL TO FORCE VERSION 7.0.10 TO AVOID COMPATIBILITY ISSUES-->
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.10" />
+    <!--ESSENTIAL TO FORCE VERSION 7.0.10 TO AVOID COMPATIBILITY ISSUES-->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.10" />
+    <!--ESSENTIAL TO RUN MIGRATIONS IN THE PROJECTS REFERENCING THIS LIBRARY-->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.10"> 
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>

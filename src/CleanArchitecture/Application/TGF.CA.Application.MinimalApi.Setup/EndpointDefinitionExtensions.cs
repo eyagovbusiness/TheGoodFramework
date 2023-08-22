@@ -33,7 +33,7 @@ namespace TGF.CA.Application.MinimalApi.Setup
         /// Defines in our already built <see cref="WebApplication"/> the endpoints declared in every <see cref="IEndpointDefinition"/> that was registered in the <see cref="WebApplicationBuilder"/> from <see cref="EndpointDefinitionExtensions.AddEndpointDefinitions(IServiceCollection, Type[])"/>
         /// </summary>
         /// <param name="aWebApplication"></param>
-        public static void UseEndpointDefinitions(this WebApplication aWebApplication) 
+        public static void UseEndpointDefinitions(this WebApplication aWebApplication)
         {
             var lEndpointDefinitionList = aWebApplication.Services.GetRequiredService<IReadOnlyCollection<IEndpointDefinition>>();
             foreach (var lEndpointDefinition in lEndpointDefinitionList)

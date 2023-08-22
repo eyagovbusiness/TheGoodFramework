@@ -32,7 +32,7 @@ namespace TGF.CA.Infrastructure.DB.MySQL
             var lMySqlSecrets = await GetMySQLSecrets(aServiceProvider);
             var lMySqlDiscoveryData = await GetMySQLDiscoveryData(aServiceProvider);
             return
-                $"Server={lMySqlDiscoveryData.Server};Port={lMySqlDiscoveryData.Port};Database={aDatabaseName};Uid={lMySqlSecrets.username};Pwd={lMySqlSecrets.password};";
+                $"Server={lMySqlDiscoveryData.Server};Port={lMySqlDiscoveryData.Port};Database={aDatabaseName};Uid={lMySqlSecrets.Username};Pwd={lMySqlSecrets.Password};";
         }
 
         #region private
@@ -49,10 +49,10 @@ namespace TGF.CA.Infrastructure.DB.MySQL
                .Get<MySQLSecrets>("mysql")
                 ?? throw new Exception("Error loading retrieving the MySQL secrets!!");
 
-        private class MySQLSecrets
+        private record MySQLSecrets
         {
-            public string username { get; set; }
-            public string password { get; set; }
+            public string? Username { get; set; }
+            public string? Password { get; set; }
         }
 
         #endregion
