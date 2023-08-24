@@ -13,9 +13,9 @@ namespace TGF.CA.lWebApplicationlication.MinimalApi.Setup
         /// <typeparam name="TDbContext">The type of the <see cref="DbContext"/> for which migrations should be applied.</typeparam>
         /// <param name="lWebApplication">The <see cref="WebApplication"/> instance.</param>
         /// <returns>The same <see cref="WebApplication"/> instance after applying the migrations.</returns>
-        public static WebApplication UseMigrations<TDbContext>(this WebApplication lWebApplication)
+        public static async Task<WebApplication> UseMigrations<TDbContext>(this WebApplication lWebApplication)
             where TDbContext : DbContext
-        => lWebApplication.UseMigrations(typeof(TDbContext));
+        => await lWebApplication.UseMigrations(typeof(TDbContext));
 
         /// <summary>
         /// Applies all pending migrations to the specified DbContext types.
@@ -23,13 +23,13 @@ namespace TGF.CA.lWebApplicationlication.MinimalApi.Setup
         /// <param name="lWebApplication">The <see cref="WebApplication"/> instance.</param>
         /// <param name="lDbContextTypes">An array of <see cref="DbContext"/> types for which migrations should be applied.</param>
         /// <returns>The same <see cref="WebApplication"/> instance after applying the migrations.</returns>
-        public static WebApplication UseMigrations(this WebApplication lWebApplication, params Type[] lDbContextTypes)
+        public static async Task<WebApplication> UseMigrations(this WebApplication lWebApplication, params Type[] lDbContextTypes)
         {
             using (var lScope = lWebApplication.Services.CreateScope())
             {
                 foreach (var lDbContextType in lDbContextTypes)
                 {
-                    WebApplicationlyMigration(lScope.ServiceProvider, lDbContextType);
+                    await WebApplicationlyMigration(lScope.ServiceProvider, lDbContextType);
                 }
             }
             return lWebApplication;
@@ -40,14 +40,14 @@ namespace TGF.CA.lWebApplicationlication.MinimalApi.Setup
         /// </summary>
         /// <param name="lServiceProvider">The <see cref="IServiceProvider"/> instance.</param>
         /// <param name="lDbContextType">The type of the <see cref="DbContext"/> for which migrations should be applied.</param>
-        private static void WebApplicationlyMigration(IServiceProvider lServiceProvider, Type lDbContextType)
+        private static async Task WebApplicationlyMigration(IServiceProvider lServiceProvider, Type lDbContextType)
         {
             if (!typeof(DbContext).IsAssignableFrom(lDbContextType))
                 throw new ArgumentException($"Type '{lDbContextType.FullName}' is not a DbContext type.");
 
             var lDbContext = lServiceProvider.GetService(lDbContextType) as DbContext
                              ?? throw new InvalidOperationException($"No service for type '{lDbContextType.FullName}' has been registered.");
-            lDbContext.Database.Migrate();
+            await lDbContext.Database.MigrateAsync();
         }
 
     }

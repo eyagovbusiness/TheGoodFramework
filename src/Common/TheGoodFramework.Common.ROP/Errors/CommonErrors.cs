@@ -13,13 +13,18 @@ namespace TGF.Common.ROP.Errors
         public static class CancellationToken
         {
             /// <summary>
+            /// Represents an <see cref="HttpError"/> that should be propagated when a <see cref="System.Threading.CancellationToken"/> is flagged to cancel the current operations.
+            /// </summary>
+            public static HttpError Cancelled => new(
+                CancelledError,
+                HttpStatusCode.RequestTimeout);
+
+            /// <summary>
             /// Represents an <see cref="Error"/> that should be propagated when a <see cref="System.Threading.CancellationToken"/> is flagged to cancel the current operations.
             /// </summary>
-            public static HttpError Cancelled => new HttpError(
-                new Error("CancellationToken.Cancelled",
-                    "The request was cancelled."),
-                HttpStatusCode.NoContent);
-
+            public static Error CancelledError => new(
+                "CancellationToken.Cancelled",
+                "The request was cancelled.");
         }
     }
 }
