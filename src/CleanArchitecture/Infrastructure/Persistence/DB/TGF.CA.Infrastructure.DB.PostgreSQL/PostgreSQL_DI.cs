@@ -9,6 +9,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
     /// </summary>
     public static class PostgreSQL_DI
     {
+
         /// <summary>
         /// Adds PostgreSQL service with a connection to the specified database and using the given DbContext type. Also includes its own healthcheck.
         /// </summary>
@@ -25,7 +26,6 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
                 .AddPostgresHealthCheckFromConnectionString(lConnectionString);
         }
 
-
         /// <summary>
         /// Adds a healthcheck in the target <see cref="IServiceCollection"/> for the PostgreSQL database resolved from the provided aConnectionString.
         /// </summary>
@@ -37,5 +37,6 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
                 .AddHealthChecks()
                 .AddNpgSql(aConnectionString, name: "Database")
                 .Services;
+
     }
 }

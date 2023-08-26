@@ -5,7 +5,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Reflection;
 using TGF.CA.Application.Setup;
 using TGF.CA.Application.Setup.Swagger;
 using TGF.CA.Infrastructure.Discovery;
@@ -20,7 +22,7 @@ namespace TGF.CA.Application.MinimalApi.Setup
     /// </summary>
     public static class MinimalWebApplicationAbstraction
     {
-        private static Action<WebApplicationBuilder> DefaultBuildActions(params Type[] aScanMarkerList) =>
+        private static Action<WebApplicationBuilder> DefaultBuildActions(IEnumerable<string> aXmlCommentFiles, params Type[] aScanMarkerList) =>
         (lBuilder) =>
         {
             lBuilder.Services.AddCors(options =>
@@ -31,7 +33,11 @@ namespace TGF.CA.Application.MinimalApi.Setup
             lBuilder.Services.AddSerializer();
             lBuilder.Services.AddDiscoveryService(lBuilder.Configuration);
             lBuilder.Services.AddEndpointsApiExplorer();
-            lBuilder.Services.AddSwaggerGen();
+            lBuilder.Services.AddSwaggerGen(c =>
+            {
+                foreach (var lXmlDocFileFullPath in aXmlCommentFiles)
+                    c.IncludeXmlComments(lXmlDocFileFullPath);
+            });
             lBuilder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
             lBuilder.Services.AddEndpointDefinitions(aScanMarkerList);
             lBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck(lBuilder.Configuration));
@@ -47,10 +53,10 @@ namespace TGF.CA.Application.MinimalApi.Setup
         /// </summary>
         /// <param name="aWebHostBuilderAction">Custom logic to add on the WebApplicationBuilder that will be used to build the resulting <see cref="WebApplication"/>.</param>
         /// <returns>A new customized instance of <see cref="WebApplication"/>.</returns>
-        public static WebApplicationBuilder GetNewBuilder(params Type[] aScanMarkerList)
+        public static WebApplicationBuilder GetNewBuilder(IEnumerable<string> aXmlCommentFileList = default!, params Type[] aScanMarkerList)
         {
             WebApplicationBuilder lBuilder = WebApplication.CreateBuilder();
-            var lBuildActions = DefaultBuildActions(aScanMarkerList);
+            var lBuildActions = DefaultBuildActions(aXmlCommentFileList, aScanMarkerList);
             lBuildActions(lBuilder);
             return lBuilder;
 

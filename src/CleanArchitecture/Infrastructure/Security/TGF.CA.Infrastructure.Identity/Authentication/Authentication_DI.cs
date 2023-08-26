@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -20,6 +22,7 @@ namespace TGF.CA.Application.Setup
     /// <remarks>REQUIERES <see cref="ISecretsManager"/> service registered.</remarks>
     public static class Authentication_DI
     {
+        private static readonly string mDiscordAuthSchemeName = "Discord";
         public static async Task AddBasicJWTAuthentication(this IServiceCollection aServiceCollection)
         {
             var lAPISecret = await GetAPISecret(aServiceCollection);
@@ -49,7 +52,7 @@ namespace TGF.CA.Application.Setup
                 options.Cookie.SameSite = SameSiteMode.Lax;
             })
             .AddCustomJwtBearer(lAPISecret)
-            .AddOAuth("Discord",
+            .AddOAuth(mDiscordAuthSchemeName,
                 options =>
                 {
                     options.AuthorizationEndpoint = "https://discord.com/oauth2/authorize";
@@ -72,6 +75,18 @@ namespace TGF.CA.Application.Setup
             );
         }
 
+        /// <summary>
+        /// Configures this endpoint to require the AuthenticationSchemes "Discord". from <see cref="mDiscordAuthSchemeName"/>
+        /// </summary>
+        public static TBuilder RequireDiscord<TBuilder>(this TBuilder aBuilder)
+            where TBuilder : IEndpointConventionBuilder
+        => aBuilder.RequireAuthorization(new AuthorizeAttribute
+        {
+            AuthenticationSchemes = mDiscordAuthSchemeName
+        });
+
+        #region Private
+
         private static async Task<string> GetAPISecret(IServiceCollection aServiceCollection)
             => await aServiceCollection.BuildServiceProvider()
                .GetRequiredService<ISecretsManager>()!
@@ -83,19 +98,19 @@ namespace TGF.CA.Application.Setup
                .GetDiscordUserAuth();
 
         private static AuthenticationBuilder AddCustomJwtBearer(this AuthenticationBuilder aAuthenticationBuilder, string aAPISecret)
-            => aAuthenticationBuilder.AddJwtBearer(jwtBearerOptions =>
+        => aAuthenticationBuilder.AddJwtBearer(jwtBearerOptions =>
+        {
+            jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
             {
-                jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
-                {
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(aAPISecret)),
-                    ValidateIssuerSigningKey = true,
-                    //ValidIssuer = string.Empty,
-                    ValidateIssuer = false,
-                    //ValidAudience = string.Empty,
-                    ValidateAudience = false,
-                    ValidateLifetime = true,
-                };
-            });
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(aAPISecret)),
+                ValidateIssuerSigningKey = true,
+                //ValidIssuer = string.Empty,
+                ValidateIssuer = false,
+                //ValidAudience = string.Empty,
+                ValidateAudience = false,
+                ValidateLifetime = true,
+            };
+        });
 
         private static OAuthEvents GetMyDiscordOAuthEvents()
         => new()
@@ -114,6 +129,8 @@ namespace TGF.CA.Application.Setup
                 context.RunClaimActions(lUser);
             }
         };
+
+        #endregion
 
     }
 }
