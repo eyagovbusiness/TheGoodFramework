@@ -5,9 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using System.Reflection;
 using TGF.CA.Application.Setup;
 using TGF.CA.Application.Setup.Swagger;
 using TGF.CA.Infrastructure.Discovery;
@@ -35,8 +33,9 @@ namespace TGF.CA.Application.MinimalApi.Setup
             lBuilder.Services.AddEndpointsApiExplorer();
             lBuilder.Services.AddSwaggerGen(c =>
             {
-                foreach (var lXmlDocFileFullPath in aXmlCommentFiles)
-                    c.IncludeXmlComments(lXmlDocFileFullPath);
+                if(aXmlCommentFiles != null)
+                    foreach (var lXmlDocFileFullPath in aXmlCommentFiles)
+                        c.IncludeXmlComments(lXmlDocFileFullPath);
             });
             lBuilder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
             lBuilder.Services.AddEndpointDefinitions(aScanMarkerList);
