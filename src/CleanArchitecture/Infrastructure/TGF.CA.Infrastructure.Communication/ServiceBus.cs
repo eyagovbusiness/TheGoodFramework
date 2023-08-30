@@ -6,7 +6,6 @@ using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.RabbitMQ;
 using TGF.CA.Infrastructure.Discovery;
-using TGF.CA.Infrastructure.Security.Secrets.Vault;
 
 namespace TGF.CA.Infrastructure.Communication
 {

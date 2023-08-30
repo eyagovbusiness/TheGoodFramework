@@ -19,7 +19,7 @@ namespace TGF.CA.Infrastructure.Security.Secrets.Vault
 
         public SecretsManager(IOptions<VaultSettings> aVaultSettings, IServiceDiscovery? aServiceDiscovery = null)
         {
-            _serviceDiscovery = aServiceDiscovery 
+            _serviceDiscovery = aServiceDiscovery
                 ?? throw new Exception("Unable to setup Vault SecretsManager because the service discovery was null.");
             _vaultSettings = aVaultSettings.Value with { TokenApi = GetTokenFromEnvironmentVariable() };
         }

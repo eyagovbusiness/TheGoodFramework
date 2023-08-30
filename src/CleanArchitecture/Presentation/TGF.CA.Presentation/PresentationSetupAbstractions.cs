@@ -1,19 +1,19 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Options;
-using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 using Swashbuckle.AspNetCore.SwaggerGen;
+using System.Text.Json;
+using TGF.CA.Presentation.Middleware;
+using TGF.CA.Presentation.MinimalAPI;
+using TGF.CA.Presentation.Swagger;
 using TGF.Common.Logging;
 using TGF.Common.Serialization;
-using TGF.CA.Presentation.MinimalAPI;
-using TGF.CA.Presentation.Middleware;
-using TGF.CA.Presentation.Swagger;
-using Microsoft.IdentityModel.Tokens;
-using System.Text.Json;
-using Microsoft.AspNetCore.Http.Json;
 
 namespace TGF.CA.Presentation
 {
@@ -48,7 +48,7 @@ namespace TGF.CA.Presentation
                 if (aXmlCommentFileList != null)
                     foreach (var lXmlDocFileFullPath in aXmlCommentFileList)
                         c.IncludeXmlComments(lXmlDocFileFullPath);
-                if(!aBaseSwaggerPath.IsNullOrEmpty())
+                if (!aBaseSwaggerPath.IsNullOrEmpty())
                     c.DocumentFilter<BasePathDocumentFilter>(aBaseSwaggerPath);
             });
             lBuilder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
@@ -107,7 +107,7 @@ namespace TGF.CA.Presentation
 
             aWebApplication.UseRouting();//UseRouting() must be called before UseAuthentication() and UseAuthorization()
 
-            if(aUseIdentity)
+            if (aUseIdentity)
             {
                 aWebApplication.UseAuthentication();
                 aWebApplication.UseAuthorization();//UseAuthorization must be called after UseRouting() and before UseEndpoints()
