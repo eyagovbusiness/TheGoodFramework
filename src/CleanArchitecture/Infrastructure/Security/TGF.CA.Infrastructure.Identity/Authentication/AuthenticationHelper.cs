@@ -1,4 +1,4 @@
-﻿using TGF.CA.Infrastructure.Security.Secrets.Vault;
+﻿using TGF.CA.Application;
 
 namespace TGF.CA.Infrastructure.Security.Identity.Authentication
 {
@@ -10,13 +10,6 @@ namespace TGF.CA.Infrastructure.Security.Identity.Authentication
     public static class AuthenticationHelper
     {
 
-        public static async Task<string> GetAPISecret(this ISecretsManager aSecretsManager)
-        {
-            var lAPISecret = await aSecretsManager.GetValueObject("apisecrets", "SecretKey")
-                             ?? throw new Exception("Error loading retrieving the APISecret!!");
-
-            return lAPISecret.ToString()!;
-        }
         public static async Task<DiscordUserAuth> GetDiscordUserAuth(this ISecretsManager aSecretsManager)
         {
             var lDiscordUserAuth = await aSecretsManager.Get<DiscordUserAuth>("discordauth")
@@ -24,6 +17,7 @@ namespace TGF.CA.Infrastructure.Security.Identity.Authentication
 
             return lDiscordUserAuth;
         }
+
         /// <summary>
         /// Replaces the value of the URL parameter "redirect_uri" with the provided string. 
         /// </summary>

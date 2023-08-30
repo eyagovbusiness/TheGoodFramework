@@ -5,7 +5,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using TGF.CA.Infrastructure.Discovery;
-using TGF.CA.Presentation.Middleware;
+//using TGF.CA.Infrastructure.Discovery;
+//using TGF.CA.Presentation.Middleware;
 using TGF.Common.Logging;
 
 namespace TGF.CA.Application.Setup
@@ -22,9 +23,9 @@ namespace TGF.CA.Application.Setup
                 lBuilder.Services.AddHealthChecks();
                 lBuilder.Services.AddHealthChecksUI().AddInMemoryStorage();
                 lBuilder.Host.ConfigureSerilog();
-                lBuilder.Services.AddControllers();
                 lBuilder.Services.AddEndpointsApiExplorer();
                 lBuilder.Services.AddDiscoveryService(lBuilder.Configuration);
+                lBuilder.Services.AddControllers();
                 lBuilder.Services.AddSwaggerGen();
             };
 
@@ -76,8 +77,8 @@ namespace TGF.CA.Application.Setup
                 aWebApplication.UseSwagger();
                 aWebApplication.UseSwaggerUI();
             }
-            else
-                aWebApplication.UseHttpsRedirection();
+            //else
+            //    aWebApplication.UseHttpsRedirection();
 
 
             aWebApplication.MapHealthChecks("/health", new HealthCheckOptions()
@@ -90,10 +91,8 @@ namespace TGF.CA.Application.Setup
                 aConfig.UIPath = "/health-ui";
             });
 
-            aWebApplication.UseCustomErrorHandlingMiddleware();
+            //aWebApplication.UseCustomErrorHandlingMiddleware();
             aWebApplication.UseRouting();//UseRouting() must be called before UseAuthentication() and UseAuthorization()
-            //aWebApplication.UseAuthentication();
-            //aWebApplication.UseAuthorization();//UseAuthorization must be called after UseRouting() and before UseEndpoints()
             aWebApplication.UseEndpoints(config => config.MapHealthChecksUI());
             aWebApplication.MapControllers();
             aWebApplication.Run();

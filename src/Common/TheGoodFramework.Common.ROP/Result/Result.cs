@@ -1,5 +1,4 @@
-﻿using MediatR;
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using System.Net;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;

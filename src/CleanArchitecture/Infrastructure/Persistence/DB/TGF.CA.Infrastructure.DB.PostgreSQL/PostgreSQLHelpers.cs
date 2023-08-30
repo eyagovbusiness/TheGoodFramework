@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using TGF.CA.Application;
 using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Infrastructure.Security.Secrets.Vault;
 

@@ -27,21 +27,32 @@ public static class RabbitMQDependencyInjection
             x.SetHostName(rabbitMqHostName.Invoke(serviceProvider).Result);
         });
 
+        // Retrieve the connection string using our helper method
+        ServiceProvider sp = serviceCollection.BuildServiceProvider();
+        string connectionString = GenerateRabbitMqConnectionString(sp);
+
         serviceCollection.AddHealthChecks()
-            .AddRabbitMQ(AddRabbitMqHealthCheck, name: name, failureStatus: HealthStatus.Unhealthy);
+            .AddRabbitMQ(connectionString, name: name, failureStatus: HealthStatus.Unhealthy);
     }
 
-    private static IConnection AddRabbitMqHealthCheck(IServiceProvider serviceProvider)
+    private static string GenerateRabbitMqConnectionString(IServiceProvider serviceProvider)
     {
         RabbitMQSettings settings = serviceProvider.GetRequiredService<IOptions<RabbitMQSettings>>().Value;
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.UserName = settings.Credentials?.Username;
-        factory.Password = settings.Credentials?.Password;
-        factory.VirtualHost = "/";
-        factory.HostName = settings.Hostname;
-        factory.Port = AmqpTcpEndpoint.UseDefaultPort;
-        return factory.CreateConnection();
+        return $"amqp://{settings.Credentials?.Username}:{settings.Credentials?.Password}@{settings.Hostname}/";
     }
+
+    //obsolete
+    //private static IConnection AddRabbitMqHealthCheck(IServiceProvider serviceProvider)
+    //{
+    //    RabbitMQSettings settings = serviceProvider.GetRequiredService<IOptions<RabbitMQSettings>>().Value;
+    //    ConnectionFactory factory = new ConnectionFactory();
+    //    factory.UserName = settings.Credentials?.Username;
+    //    factory.Password = settings.Credentials?.Password;
+    //    factory.VirtualHost = "/";
+    //    factory.HostName = settings.Hostname;
+    //    factory.Port = AmqpTcpEndpoint.UseDefaultPort;
+    //    return factory.CreateConnection();
+    //}
 
     /// <summary>
     /// this method is used when the credentials are inside the configuration. not recommended.

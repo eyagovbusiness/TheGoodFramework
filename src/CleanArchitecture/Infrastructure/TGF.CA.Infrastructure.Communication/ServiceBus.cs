@@ -1,6 +1,7 @@
 ﻿//CODE FROM https://github.com/ElectNewt/Distribt
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TGF.CA.Application;
 using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.RabbitMQ;

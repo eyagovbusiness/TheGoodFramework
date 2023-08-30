@@ -19,8 +19,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\TheGoodFramework.Common.Logging\TGF.Common.Logging.csproj" />
+    <ProjectReference Include="..\..\..\Common\TheGoodFramework.Common.ROP\TGF.Common.ROP.csproj" />
     <ProjectReference Include="..\..\..\Common\TheGoodFramework.Common.Serialization\TGF.Common.Serialization.csproj" />
-    <ProjectReference Include="..\TheGoodFramework.CA.Application\TGF.CA.Application.Setup.csproj" />
+    <ProjectReference Include="..\..\Application\TGF.CA.Application\TGF.CA.Application.csproj" />
   </ItemGroup>
 
 </Project>

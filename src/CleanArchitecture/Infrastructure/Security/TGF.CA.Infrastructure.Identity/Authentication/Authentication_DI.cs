@@ -2,8 +2,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OAuth;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -12,7 +10,6 @@ using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using TGF.CA.Infrastructure.Security.Identity.Authentication;
-using TGF.CA.Infrastructure.Security.Secrets.Vault;
 
 namespace TGF.CA.Application.Setup
 {
@@ -22,7 +19,6 @@ namespace TGF.CA.Application.Setup
     /// <remarks>REQUIERES <see cref="ISecretsManager"/> service registered.</remarks>
     public static class Authentication_DI
     {
-        private static readonly string mDiscordAuthSchemeName = "Discord";
         public static async Task AddBasicJWTAuthentication(this IServiceCollection aServiceCollection)
         {
             var lAPISecret = await GetAPISecret(aServiceCollection);
@@ -52,7 +48,7 @@ namespace TGF.CA.Application.Setup
                 options.Cookie.SameSite = SameSiteMode.Lax;
             })
             .AddCustomJwtBearer(lAPISecret)
-            .AddOAuth(mDiscordAuthSchemeName,
+            .AddOAuth(AuthenticationSchemes.DiscordAuthSchemeName,
                 options =>
                 {
                     options.AuthorizationEndpoint = "https://discord.com/oauth2/authorize";
@@ -74,16 +70,6 @@ namespace TGF.CA.Application.Setup
                 }
             );
         }
-
-        /// <summary>
-        /// Configures this endpoint to require the AuthenticationSchemes "Discord". from <see cref="mDiscordAuthSchemeName"/>
-        /// </summary>
-        public static TBuilder RequireDiscord<TBuilder>(this TBuilder aBuilder)
-            where TBuilder : IEndpointConventionBuilder
-        => aBuilder.RequireAuthorization(new AuthorizeAttribute
-        {
-            AuthenticationSchemes = mDiscordAuthSchemeName
-        });
 
         #region Private
 

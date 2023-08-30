@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
+using TGF.CA.Application;
 
 namespace TGF.CA.Infrastructure.Security.Secrets.Vault
 {
@@ -15,16 +16,10 @@ namespace TGF.CA.Infrastructure.Security.Secrets.Vault
         {
             try
             {
-                var lHealthResponse = await _secretsManager.GetHealthStatusAsync();
-
-                if (lHealthResponse?.Initialized == true && lHealthResponse?.Sealed == false)
-                {
-                    return HealthCheckResult.Healthy("Vault is initialized and unsealed.");
-                }
-                else
-                {
-                    return HealthCheckResult.Unhealthy("Vault is not initialized or sealed.");
-                }
+                var lIsHealty = await _secretsManager.GetIsHealthy();
+                return lIsHealty
+                    ? HealthCheckResult.Healthy("Vault is initialized and unsealed.")
+                    : HealthCheckResult.Unhealthy("Vault is not initialized or sealed.");
             }
             catch (Exception lEx)
             {

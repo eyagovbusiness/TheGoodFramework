@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace TGF.CA.Application.MinimalApi.Setup
+namespace TGF.CA.Presentation.MinimalAPI
 {
     /// <summary>
     /// Extensions class used to help on registering all the defined endpoints by scanning assemblies loking for classes that implement <see cref="IEndpointDefinition"/>.
@@ -30,7 +30,7 @@ namespace TGF.CA.Application.MinimalApi.Setup
         }
 
         /// <summary>
-        /// Defines in our already built <see cref="WebApplication"/> the endpoints declared in every <see cref="IEndpointDefinition"/> that was registered in the <see cref="WebApplicationBuilder"/> from <see cref="EndpointDefinitionExtensions.AddEndpointDefinitions(IServiceCollection, Type[])"/>
+        /// Defines in our already built <see cref="WebApplication"/> the endpoints declared in every <see cref="IEndpointDefinition"/> that was registered in the <see cref="WebApplicationBuilder"/> from <see cref="AddEndpointDefinitions(IServiceCollection, Type[])"/>
         /// </summary>
         /// <param name="aWebApplication"></param>
         public static void UseEndpointDefinitions(this WebApplication aWebApplication)

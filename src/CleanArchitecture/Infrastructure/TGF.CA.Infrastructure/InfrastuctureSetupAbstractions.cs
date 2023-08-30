@@ -2,10 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace TGF.CA.lWebApplicationlication.MinimalApi.Setup
+namespace TGF.CA.Infrastructure
 {
-
-    public static class WebApplicationDbContextExtensions
+    public static class InfrastuctureSetupAbstractions
     {
         /// <summary>
         /// Applies all pending migrations to the specified <see cref="DbContext"/> type.
@@ -28,9 +27,7 @@ namespace TGF.CA.lWebApplicationlication.MinimalApi.Setup
             using (var lScope = lWebApplication.Services.CreateScope())
             {
                 foreach (var lDbContextType in lDbContextTypes)
-                {
                     await WebApplicationlyMigration(lScope.ServiceProvider, lDbContextType);
-                }
             }
             return lWebApplication;
         }
@@ -49,7 +46,5 @@ namespace TGF.CA.lWebApplicationlication.MinimalApi.Setup
                              ?? throw new InvalidOperationException($"No service for type '{lDbContextType.FullName}' has been registered.");
             await lDbContext.Database.MigrateAsync();
         }
-
     }
-
 }

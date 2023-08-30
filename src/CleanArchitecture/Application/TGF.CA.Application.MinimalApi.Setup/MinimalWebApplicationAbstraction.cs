@@ -8,8 +8,8 @@ using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using TGF.CA.Application.Setup;
 using TGF.CA.Application.Setup.Swagger;
-using TGF.CA.Infrastructure.Discovery;
-using TGF.CA.Presentation.Middleware;
+//using TGF.CA.Infrastructure.Discovery;
+//using TGF.CA.Presentation.Middleware;
 using TGF.Common.Logging;
 using TGF.Common.Serialization;
 
@@ -29,7 +29,7 @@ namespace TGF.CA.Application.MinimalApi.Setup
                                                                             .AllowAnyHeader().AllowAnyMethod().AllowCredentials());
             });
             lBuilder.Services.AddSerializer();
-            lBuilder.Services.AddDiscoveryService(lBuilder.Configuration);
+            //lBuilder.Services.AddDiscoveryService(lBuilder.Configuration);
             lBuilder.Services.AddEndpointsApiExplorer();
             lBuilder.Services.AddSwaggerGen(c =>
             {
@@ -80,7 +80,7 @@ namespace TGF.CA.Application.MinimalApi.Setup
             });
 
             //aWebApplication.UseForwardedHeaders(new ForwardedHeadersOptions { ForwardedHeaders = ForwardedHeaders.XForwardedHost | ForwardedHeaders.XForwardedProto });
-            aWebApplication.UseCustomErrorHandlingMiddleware();
+            //aWebApplication.UseCustomErrorHandlingMiddleware();
             aWebApplication.UseCors("AllowFrontCorsPolicy");//CORS should be placed before routing.
             aWebApplication.UseRouting();//UseRouting() must be called before UseAuthentication() and UseAuthorization()
             aWebApplication.UseAuthentication();
