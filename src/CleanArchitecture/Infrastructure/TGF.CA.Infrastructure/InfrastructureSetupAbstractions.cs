@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace TGF.CA.Infrastructure
 {
-    public static class InfrastuctureSetupAbstractions
+    public static class InfrastructureSetupAbstractions
     {
         /// <summary>
         /// Applies all pending migrations to the specified <see cref="DbContext"/> type.
