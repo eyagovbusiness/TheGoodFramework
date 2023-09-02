@@ -27,7 +27,7 @@ namespace TGF.CA.Infrastructure
             using (var lScope = lWebApplication.Services.CreateScope())
             {
                 foreach (var lDbContextType in lDbContextTypes)
-                    await WebApplicationlyMigration(lScope.ServiceProvider, lDbContextType);
+                    await WebApplicationMigration(lScope.ServiceProvider, lDbContextType);
             }
             return lWebApplication;
         }
@@ -37,7 +37,7 @@ namespace TGF.CA.Infrastructure
         /// </summary>
         /// <param name="lServiceProvider">The <see cref="IServiceProvider"/> instance.</param>
         /// <param name="lDbContextType">The type of the <see cref="DbContext"/> for which migrations should be applied.</param>
-        private static async Task WebApplicationlyMigration(IServiceProvider lServiceProvider, Type lDbContextType)
+        private static async Task WebApplicationMigration(IServiceProvider lServiceProvider, Type lDbContextType)
         {
             if (!typeof(DbContext).IsAssignableFrom(lDbContextType))
                 throw new ArgumentException($"Type '{lDbContextType.FullName}' is not a DbContext type.");

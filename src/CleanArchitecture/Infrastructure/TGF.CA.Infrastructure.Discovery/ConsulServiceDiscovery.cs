@@ -1,11 +1,10 @@
 ﻿using Consul;
 using Microsoft.Extensions.Caching.Memory;
 using System.Text;
+using TGF.CA.Application;
 
 namespace TGF.CA.Infrastructure.Discovery
 {
-    //CODE FROM https://github.com/ElectNewt/Distribt
-    public record DiscoveryData(string Server, int Port);
     public class ConsulServiceDiscovery : IServiceDiscovery
     {
         private readonly IConsulClient _client;

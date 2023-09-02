@@ -13,4 +13,8 @@
     <PackageReference Include="AspNetCore.HealthChecks.Consul" Version="7.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Application\TGF.CA.Application\TGF.CA.Application.csproj" />
+  </ItemGroup>
+
 </Project>
