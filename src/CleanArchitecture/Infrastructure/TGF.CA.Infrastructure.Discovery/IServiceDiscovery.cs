@@ -1,5 +1,6 @@
-﻿
-namespace TGF.CA.Application
+﻿using TGF.CA.Application;
+
+namespace TGF.CA.Infrastructure.Discovery
 {
     /// <summary>
     /// Provides methods to discover services and retrieve their associated data.
