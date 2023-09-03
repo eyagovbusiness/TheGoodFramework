@@ -53,7 +53,7 @@ namespace TGF.CA.Application.Setup
                 {
                     options.AuthorizationEndpoint = "https://discord.com/oauth2/authorize";
                     options.Scope.Add("identify");
-                    options.CallbackPath = new PathString("/auth/oauthCallback");
+                    options.CallbackPath = new PathString("/auth/OAuthCallback");
 
                     options.ClientId = lDiscordUserAuth.ClientId!;
                     options.ClientSecret = lDiscordUserAuth.ClientSecret!;
@@ -65,7 +65,7 @@ namespace TGF.CA.Application.Setup
                     options.ClaimActions.MapJsonKey(ClaimTypes.Name, "username");
                     options.ClaimActions.MapJsonKey(ClaimTypes.GivenName, "global_name");
 
-                    options.AccessDeniedPath = new PathString("/auth/oauthFailed");
+                    options.AccessDeniedPath = new PathString("/auth/OAuthFailed");
 
                     options.Events = GetMyDiscordOAuthEvents();
                 }
@@ -104,14 +104,14 @@ namespace TGF.CA.Application.Setup
         {
             OnCreatingTicket = async context =>
             {
-                var lResquest = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
-                lResquest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                lResquest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
+                var lRequest = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
+                lRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                lRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);
 
-                var lRespone = await context.Backchannel.SendAsync(lResquest, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
-                lRespone.EnsureSuccessStatusCode();
+                var lResponse = await context.Backchannel.SendAsync(lRequest, HttpCompletionOption.ResponseHeadersRead, context.HttpContext.RequestAborted);
+                lResponse.EnsureSuccessStatusCode();
 
-                var lUser = JsonDocument.Parse(await lRespone.Content.ReadAsStringAsync()).RootElement;
+                var lUser = JsonDocument.Parse(await lResponse.Content.ReadAsStringAsync()).RootElement;
 
                 context.RunClaimActions(lUser);
             }
