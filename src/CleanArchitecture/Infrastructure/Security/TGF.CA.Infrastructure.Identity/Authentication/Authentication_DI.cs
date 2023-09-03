@@ -63,6 +63,7 @@ namespace TGF.CA.Application.Setup
 
                     options.ClaimActions.MapJsonKey(ClaimTypes.NameIdentifier, "id");
                     options.ClaimActions.MapJsonKey(ClaimTypes.Name, "username");
+                    options.ClaimActions.MapJsonKey(ClaimTypes.GivenName, "global_name");
 
                     options.AccessDeniedPath = new PathString("/auth/oauthFailed");
 
