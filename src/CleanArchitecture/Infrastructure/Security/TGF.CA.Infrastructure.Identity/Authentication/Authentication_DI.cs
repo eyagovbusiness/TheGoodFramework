@@ -80,7 +80,7 @@ namespace TGF.CA.Application.Setup
         private static async Task<string> GetAPISecret(IServiceCollection aServiceCollection)
             => await aServiceCollection.BuildServiceProvider()
                .GetRequiredService<ISecretsManager>()!
-               .GetAPISecret();
+               .GetTokenSecret(DefaultTokenNames.AccessToken);
 
         private static async Task<DiscordUserAuth> GetDiscordUserAuth(IServiceCollection aServiceCollection)
             => await aServiceCollection.BuildServiceProvider()

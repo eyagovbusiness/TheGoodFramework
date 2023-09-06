@@ -73,8 +73,24 @@ namespace TGF.CA.Infrastructure.Security.Secrets.Vault
 
         public async Task<string> GetAPISecret()
         {
-            var lAPISecret = await GetValueObject("apisecrets", "SecretKey")
+            var lAPISecret = await GetValueObject("apisecrets", "SecretTokenKey")
                              ?? throw new Exception("Error loading retrieving the APISecret!!");
+
+            return lAPISecret.ToString()!;
+        }
+
+        public async Task<string> GetTokenSecret(string aTokenName)
+        {
+            var lAPISecret = await GetValueObject("tokensecrets", aTokenName)
+                             ?? throw new Exception("Error loading retrieving the APISecret!!");
+
+            return lAPISecret.ToString()!;
+        }
+
+        public async Task<string> GetServiceKey(string aServiceName)
+        {
+            var lAPISecret = await GetValueObject("apisecrets", aServiceName)
+                 ?? throw new Exception($"Error loading retrieving the ApiKey for service {aServiceName}.");
 
             return lAPISecret.ToString()!;
         }
