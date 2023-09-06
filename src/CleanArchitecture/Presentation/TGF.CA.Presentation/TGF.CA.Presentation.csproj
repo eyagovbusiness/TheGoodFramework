@@ -22,6 +22,7 @@
     <ProjectReference Include="..\..\..\Common\TheGoodFramework.Common.ROP\TGF.Common.ROP.csproj" />
     <ProjectReference Include="..\..\..\Common\TheGoodFramework.Common.Serialization\TGF.Common.Serialization.csproj" />
     <ProjectReference Include="..\..\Application\TGF.CA.Application\TGF.CA.Application.csproj" />
+    <ProjectReference Include="..\..\Infrastructure\TGF.CA.Infrastructure\TGF.CA.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

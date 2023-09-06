@@ -43,15 +43,8 @@ namespace TGF.CA.Presentation
             });
             lBuilder.Services.AddSerializer();
             lBuilder.Services.AddEndpointsApiExplorer();
-            lBuilder.Services.AddSwaggerGen(c =>
-            {
-                if (aXmlCommentFileList != null)
-                    foreach (var lXmlDocFileFullPath in aXmlCommentFileList)
-                        c.IncludeXmlComments(lXmlDocFileFullPath);
-                if (!aBaseSwaggerPath.IsNullOrEmpty())
-                    c.DocumentFilter<BasePathDocumentFilter>(aBaseSwaggerPath);
-            });
-            lBuilder.Services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+
+            lBuilder.Services.AddSwaggerGen(opt => opt.ConfigureSwagger(aXmlCommentFileList, aBaseSwaggerPath));
             lBuilder.Services.AddEndpointDefinitions(aScanMarkerList);
 
             #region Infrastructure

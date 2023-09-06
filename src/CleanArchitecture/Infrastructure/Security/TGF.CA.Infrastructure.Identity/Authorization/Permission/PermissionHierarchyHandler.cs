@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using TGF.CA.Application;
 
 namespace TGF.CA.Infrastructure.Security.Identity.Authorization
 {
@@ -17,7 +18,7 @@ namespace TGF.CA.Infrastructure.Security.Identity.Authorization
         /// <returns></returns>
         protected override Task HandleRequirementAsync(AuthorizationHandlerContext aContext, PermissionRequirement<TPermissionsEnum> aPermissionRequirement)
         {
-            if (int.TryParse(aContext.User.Claims.FirstOrDefault(c => c.Type == "permissions")?.Value, out int lNumericValue))
+            if (int.TryParse(aContext.User.Claims.FirstOrDefault(c => c.Type == DefaultApplicationClaimTypes.Permissions)?.Value, out int lNumericValue))
                 if ((lNumericValue & Convert.ToInt32(aPermissionRequirement.RequiredPermissions)) == Convert.ToInt32(aPermissionRequirement.RequiredPermissions))
                     aContext.Succeed(aPermissionRequirement);
             return Task.CompletedTask;
