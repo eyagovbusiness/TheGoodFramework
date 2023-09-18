@@ -1,7 +1,6 @@
 ﻿using Consul;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using TGF.CA.Application;
 
 namespace TGF.CA.Infrastructure.Discovery
 {

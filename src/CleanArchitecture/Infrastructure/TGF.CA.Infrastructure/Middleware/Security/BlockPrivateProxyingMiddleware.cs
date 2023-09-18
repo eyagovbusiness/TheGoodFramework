@@ -28,7 +28,7 @@ namespace TGF.CA.Infrastructure.Middleware.Security
         {
             if (context.Request.Path.Value == null || context.Request.Path.Value.Contains(_privatePathSegment, StringComparison.OrdinalIgnoreCase))
             {
-                context.Response.StatusCode = (int)HttpStatusCode.NotFound; 
+                context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                 return;
             }
 
