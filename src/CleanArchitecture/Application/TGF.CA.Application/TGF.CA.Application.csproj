@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\TheGoodFramework.Common.ROP\TGF.Common.ROP.csproj" />
+    <ProjectReference Include="..\..\..\Common\TGF.Common.ROP\TGF.Common.ROP.csproj" />
   </ItemGroup>
 
 </Project>

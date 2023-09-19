@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\TheGoodFramework.Common.Serialization\TGF.Common.Serialization.csproj" />
+    <ProjectReference Include="..\..\..\Common\TGF.Common.Serialization\TGF.Common.Serialization.csproj" />
     <ProjectReference Include="..\Security\TGF.CA.Infrastructure.Secrets\TGF.CA.Infrastructure.Secrets.csproj" />
     <ProjectReference Include="..\TGF.CA.Infrastructure.Discovery\TGF.CA.Infrastructure.Discovery.csproj" />
   </ItemGroup>
