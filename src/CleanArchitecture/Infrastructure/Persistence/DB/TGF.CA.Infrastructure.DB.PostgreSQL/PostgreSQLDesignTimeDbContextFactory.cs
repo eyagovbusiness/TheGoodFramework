@@ -32,7 +32,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
         {
             IConfigurationRoot lConfiguration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.Development.json")
+                .AddJsonFile("appsettings.Design.json")
                 .Build();
 
             var lOptionsBuilder = new DbContextOptionsBuilder<TDbContext>();
