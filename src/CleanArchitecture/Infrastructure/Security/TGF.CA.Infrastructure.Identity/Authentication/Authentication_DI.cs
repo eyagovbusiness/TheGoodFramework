@@ -2,9 +2,11 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -32,7 +34,7 @@ namespace TGF.CA.Application.Setup
             .AddCustomJwtBearer(lAPISecret);
         }
 
-        public static async Task AddDiscordOAuthPlusJWTAuthentication(this IServiceCollection aServiceCollection, IConfiguration aConfiguration)
+        public static async Task AddDiscordOAuthPlusJWTAuthentication(this IServiceCollection aServiceCollection, IConfiguration aConfiguration, IWebHostEnvironment aEnvironment)
         {
             var lAPISecret = await GetAPISecret(aServiceCollection);
             var lDiscordUserAuth = await GetDiscordUserAuth(aServiceCollection);
@@ -47,7 +49,8 @@ namespace TGF.CA.Application.Setup
             {
                 options.Cookie.Name = "PreAuthCookie";
                 options.Cookie.SameSite = SameSiteMode.Lax;
-                options.Cookie.Domain = aConfiguration.GetValue<string>("CookieDomain");
+                if (!aEnvironment.IsDevelopment()) 
+                    options.Cookie.Domain = aConfiguration.GetValue<string>("CookieDomain");
             })
             .AddCustomJwtBearer(lAPISecret)
             .AddOAuth(AuthenticationSchemes.DiscordAuthSchemeName,
