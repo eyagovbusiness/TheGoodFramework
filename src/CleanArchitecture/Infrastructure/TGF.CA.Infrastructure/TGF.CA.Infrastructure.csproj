@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Security\TGF.CA.Infrastructure.Secrets\TGF.CA.Infrastructure.Secrets.csproj" />
+    <ProjectReference Include="..\..\Application\TGF.CA.Application\TGF.CA.Application.csproj" />
   </ItemGroup>
 
 </Project>

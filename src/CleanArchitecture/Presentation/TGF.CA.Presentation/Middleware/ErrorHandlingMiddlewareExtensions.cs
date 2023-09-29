@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using System.Diagnostics;
+using TGF.CA.Application;
 
 namespace TGF.CA.Presentation.Middleware
 {
@@ -9,9 +10,9 @@ namespace TGF.CA.Presentation.Middleware
     {
         public static WebApplication UseCustomErrorHandlingMiddleware(this WebApplication aWebApplication)
         {
-            aWebApplication.UseExceptionHandler("/error");
+            aWebApplication.UseExceptionHandler(EndpointRoutes.error);
             aWebApplication.UseStatusCodePages();
-            aWebApplication.Map("/error", (HttpContext aHttpContext) =>
+            aWebApplication.Map(EndpointRoutes.error, (HttpContext aHttpContext) =>
             {
                 Exception? lException = aHttpContext.Features.Get<IExceptionHandlerFeature?>()?.Error;
                 var lExtensions = new Dictionary<string, object?>

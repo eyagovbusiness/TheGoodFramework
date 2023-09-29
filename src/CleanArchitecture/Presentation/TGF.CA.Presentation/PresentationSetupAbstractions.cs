@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Text.Json;
+using TGF.CA.Application;
 using TGF.CA.Presentation.Middleware;
 using TGF.CA.Presentation.MinimalAPI;
 using TGF.CA.Presentation.Swagger;
@@ -84,7 +85,7 @@ namespace TGF.CA.Presentation
                 aWebApplication.UseSwaggerUI();
             }
 
-            aWebApplication.MapHealthChecks("/health", new HealthCheckOptions()
+            aWebApplication.MapHealthChecks(EndpointRoutes.health, new HealthCheckOptions()
             {
                 Predicate = _ => true,
                 ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
@@ -103,7 +104,7 @@ namespace TGF.CA.Presentation
                 aWebApplication.UseAuthorization();//UseAuthorization must be called after UseRouting() and before UseEndpoints()
             }
 
-            aWebApplication.MapHealthChecksUI(options => options.UIPath = "/health-ui");
+            aWebApplication.MapHealthChecksUI(options => options.UIPath = EndpointRoutes.healthUi);
             aWebApplication.UseEndpointDefinitions();
             aWebApplication.Run();
         }

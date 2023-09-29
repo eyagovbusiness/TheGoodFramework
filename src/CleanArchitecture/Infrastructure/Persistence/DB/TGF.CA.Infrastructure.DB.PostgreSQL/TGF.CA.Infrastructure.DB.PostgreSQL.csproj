@@ -8,13 +8,18 @@
 
   <ItemGroup>
     <!--ESSENTIAL TO FORCE VERSION 7.0.10 TO AVOID COMPATIBILITY ISSUES-->
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="7.0.10">
+      <TreatAsUsed>true</TreatAsUsed>
+    </PackageReference>
     <!--ESSENTIAL TO FORCE VERSION 7.0.10 TO AVOID COMPATIBILITY ISSUES-->
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.10" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="7.0.10">
+      <TreatAsUsed>true</TreatAsUsed>
+    </PackageReference>
     <!--ESSENTIAL TO RUN MIGRATIONS IN THE PROJECTS REFERENCING THIS LIBRARY-->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="7.0.10"> 
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <TreatAsUsed>true</TreatAsUsed>
     </PackageReference>
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" />
@@ -22,7 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Security\TGF.CA.Infrastructure.Secrets\TGF.CA.Infrastructure.Secrets.csproj" />
     <ProjectReference Include="..\..\..\TGF.CA.Infrastructure.Discovery\TGF.CA.Infrastructure.Discovery.csproj" />
   </ItemGroup>
 
