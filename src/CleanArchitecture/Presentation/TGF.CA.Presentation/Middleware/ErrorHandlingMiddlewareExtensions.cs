@@ -10,9 +10,9 @@ namespace TGF.CA.Presentation.Middleware
     {
         public static WebApplication UseCustomErrorHandlingMiddleware(this WebApplication aWebApplication)
         {
-            aWebApplication.UseExceptionHandler(EndpointRoutes.error);
+            aWebApplication.UseExceptionHandler(TGFEndpointRoutes.error);
             aWebApplication.UseStatusCodePages();
-            aWebApplication.Map(EndpointRoutes.error, (HttpContext aHttpContext) =>
+            aWebApplication.Map(TGFEndpointRoutes.error, (HttpContext aHttpContext) =>
             {
                 Exception? lException = aHttpContext.Features.Get<IExceptionHandlerFeature?>()?.Error;
                 var lExtensions = new Dictionary<string, object?>

@@ -1,7 +1,7 @@
 ﻿
 namespace TGF.CA.Application
 {
-    public struct EndpointRoutes
+    public struct TGFEndpointRoutes
     {
         public const string health = "/health";
         public const string healthUi = "/health-ui";

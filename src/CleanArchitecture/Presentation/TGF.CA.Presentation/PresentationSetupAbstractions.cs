@@ -85,7 +85,7 @@ namespace TGF.CA.Presentation
                 aWebApplication.UseSwaggerUI();
             }
 
-            aWebApplication.MapHealthChecks(EndpointRoutes.health, new HealthCheckOptions()
+            aWebApplication.MapHealthChecks(TGFEndpointRoutes.health, new HealthCheckOptions()
             {
                 Predicate = _ => true,
                 ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
@@ -104,7 +104,7 @@ namespace TGF.CA.Presentation
                 aWebApplication.UseAuthorization();//UseAuthorization must be called after UseRouting() and before UseEndpoints()
             }
 
-            aWebApplication.MapHealthChecksUI(options => options.UIPath = EndpointRoutes.healthUi);
+            aWebApplication.MapHealthChecksUI(options => options.UIPath = TGFEndpointRoutes.healthUi);
             aWebApplication.UseEndpointDefinitions();
             aWebApplication.Run();
         }
