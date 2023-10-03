@@ -1,2 +1,2 @@
 # TheGoodFramework
-This is a personal library to help me developing my projects, reuse the abstractions I make during my work to reuse them along my projects or modifying open-source libraries for my personal needs.
+This project is a set of personal libraries I developed to use in my other projects, it contains pattern implementations, code abstractions and extensions. The most remarkable part is a framework for developing web applications following Clean Architecture(CA) and Domain Driven Design(DDD), a customized Railway Oriented Programming(ROP) library and many other web application abstractions with a big impact on reducing the development time of my projects.
