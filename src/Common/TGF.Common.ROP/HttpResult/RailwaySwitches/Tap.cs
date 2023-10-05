@@ -32,7 +32,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <param name="aThisResult">The task producing the <see cref="IHttpResult{T}"/> to act upon.</param>
         /// <param name="aDeadEndAction">The action to execute if the result is successful.</param>
         /// <returns>A task producing the original <see cref="IHttpResult{T}"/>.</returns>
-        /// <remarks>From Async with Sync DeadEndFunction.</remarks>
+        /// <remarks>From Async with Sync DeadEndFunction, IDEALLY IT SHOULD NEVER BE USED.</remarks>
         public static async Task<IHttpResult<T>> Tap<T>(this Task<IHttpResult<T>> aThisResult, Action<T> aDeadEndAction)
         {
             var lThisResult = await aThisResult;

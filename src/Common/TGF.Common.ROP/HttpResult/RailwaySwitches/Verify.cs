@@ -33,7 +33,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <param name="aVerifyFunction">The function to use for verification.</param>
         /// <param name="aHttpError">The error to return in case of verification failure.</param>
         /// <returns>A task producing either the original result or a failure, depending on the verification.</returns>
-        /// <remarks>From Async with Sync verify function.</remarks>
+        /// <remarks>From Async with Sync verify function, IDEALLY IT SHOULD NEVER BE USED.</remarks>
         public static async Task<IHttpResult<T>> Verify<T>(this Task<IHttpResult<T>> aThisResult, Func<T, bool> aVerifyFunction, IHttpError aHttpError)
         {
             var lThisResult = await aThisResult;

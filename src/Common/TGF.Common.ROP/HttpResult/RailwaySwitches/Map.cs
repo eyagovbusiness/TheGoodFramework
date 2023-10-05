@@ -37,7 +37,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <returns>
         /// A task producing an <see cref="IHttpResult{T2}"/>, containing the mapped value if the original result was successful, or the original error(s) and status code otherwise.
         /// </returns>
-        /// <remarks>From Async with Sync mapping, although the result is wrapped in a task due to the async nature of the first result.</remarks>
+        /// <remarks>From Async with Sync mapping, IDEALLY IT SHOULD NEVER BE USED. Although the result is wrapped in a task due to the async nature of the first result.</remarks>
         public static async Task<IHttpResult<T2>> Map<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, T2> aMapSuccessFunction)
         {
             var lThisResult = await aThisResult;
