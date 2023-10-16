@@ -4,10 +4,9 @@ using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Application;
 using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
-using TGF.CA.Infrastructure.Communication.RabbitMQ;
 using TGF.CA.Infrastructure.Discovery;
 
-namespace TGF.CA.Infrastructure.Communication
+namespace TGF.CA.Infrastructure.Communication.RabbitMQ
 {
     public static class ServiceBus
     {

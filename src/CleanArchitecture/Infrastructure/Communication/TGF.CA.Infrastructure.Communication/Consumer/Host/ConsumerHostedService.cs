@@ -7,8 +7,7 @@ public class ConsumerHostedService<TMessage> : IHostedService
 {
     private readonly IConsumerManager<TMessage> _consumerManager;
     private readonly IMessageConsumer<TMessage> _messageConsumer;
-    private readonly CancellationTokenSource _stoppingCancellationTokenSource =
-        new CancellationTokenSource();
+    private readonly CancellationTokenSource _stoppingCancellationTokenSource = new();
     private Task? _executingTask;
 
     public ConsumerHostedService(IConsumerManager<TMessage> consumerManager, IMessageConsumer<TMessage> messageConsumer)
