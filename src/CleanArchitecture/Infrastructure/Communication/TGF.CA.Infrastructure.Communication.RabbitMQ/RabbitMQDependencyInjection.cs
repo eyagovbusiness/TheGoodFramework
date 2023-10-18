@@ -40,19 +40,6 @@ public static class RabbitMQDependencyInjection
         return $"amqp://{settings.Credentials?.Username}:{settings.Credentials?.Password}@{settings.Hostname}/";
     }
 
-    //obsolete
-    //private static IConnection AddRabbitMqHealthCheck(IServiceProvider serviceProvider)
-    //{
-    //    RabbitMQSettings settings = serviceProvider.GetRequiredService<IOptions<RabbitMQSettings>>().Value;
-    //    ConnectionFactory factory = new ConnectionFactory();
-    //    factory.UserName = settings.Credentials?.Username;
-    //    factory.Password = settings.Credentials?.Password;
-    //    factory.VirtualHost = "/";
-    //    factory.HostName = settings.Hostname;
-    //    factory.Port = AmqpTcpEndpoint.UseDefaultPort;
-    //    return factory.CreateConnection();
-    //}
-
     /// <summary>
     /// this method is used when the credentials are inside the configuration. not recommended.
     /// </summary>

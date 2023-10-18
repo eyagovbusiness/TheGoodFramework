@@ -49,8 +49,7 @@ namespace TGF.CA.Application.Setup
             {
                 options.Cookie.Name = "PreAuthCookie";
                 options.Cookie.SameSite = SameSiteMode.Lax;
-                if (!aEnvironment.IsDevelopment()) 
-                    options.Cookie.Domain = aConfiguration.GetValue<string>("CookieDomain");
+                options.Cookie.Domain = aConfiguration.GetValue<string>("CookieDomain");
             })
             .AddCustomJwtBearer(lAPISecret)
             .AddOAuth(AuthenticationSchemes.DiscordAuthSchemeName,
