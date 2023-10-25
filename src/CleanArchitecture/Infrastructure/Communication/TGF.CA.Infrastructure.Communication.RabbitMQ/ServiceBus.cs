@@ -10,14 +10,6 @@ namespace TGF.CA.Infrastructure.Communication.RabbitMQ
 {
     public static class ServiceBus
     {
-        public static void AddServiceBusIntegrationPublisher(this IServiceCollection serviceCollection,
-            IConfiguration configuration)
-        {
-            serviceCollection.AddRabbitMQ(GetRabbitMqSecretCredentials, GetRabbitMQHostName,
-                configuration, "IntegrationPublisher");
-            serviceCollection.AddRabbitMQPublisher<IntegrationMessage>();
-        }
-
         /// <summary>
         /// default option (KeyValue) to get credentials using Vault 
         /// </summary>
@@ -29,15 +21,12 @@ namespace TGF.CA.Infrastructure.Communication.RabbitMQ
             return await secretManager!.Get<RabbitMQCredentials>("rabbitmq");
         }
 
-        /// <summary>
-        /// this option is used to show the usage of different engines on Vault
-        /// </summary>
-        private static async Task<RabbitMQCredentials> GetRabbitMqSecretCredentialsfromRabbitMQEngine(
-            IServiceProvider serviceProvider)
+        public static void AddServiceBusIntegrationPublisher(this IServiceCollection serviceCollection,
+            IConfiguration configuration)
         {
-            var secretManager = serviceProvider.GetService<ISecretsManager>();
-            var credentials = await secretManager!.GetRabbitMQCredentials("GuildManagerSC-role");
-            return new RabbitMQCredentials() { Password = credentials.Password, Username = credentials.Username };
+            serviceCollection.AddRabbitMQ(GetRabbitMqSecretCredentials, GetRabbitMQHostName,
+                configuration, "IntegrationPublisher");
+            serviceCollection.AddRabbitMQPublisher<IntegrationMessage>();
         }
 
         public static void AddServiceBusIntegrationConsumer(this IServiceCollection serviceCollection,
@@ -64,16 +53,25 @@ namespace TGF.CA.Infrastructure.Communication.RabbitMQ
             serviceCollection.AddRabbitMqConsumer<DomainMessage>();
         }
 
-        public static void AddHandlersInAssembly<T>(this IServiceCollection serviceCollection)
+        public static void AddMessageHandlersInAssembly<T>(this IServiceCollection aServiceCollection)
         {
-            serviceCollection.Scan(scan => scan.FromAssemblyOf<T>()
+            // Check if at least one implementation of IMessageHandler is found.
+            var lMessageHandlerCount = typeof(T).Assembly.GetTypes()
+                .Where(t => t.IsClass && !t.IsAbstract && typeof(IMessageHandler).IsAssignableFrom(t))
+                .Count();
+            if (lMessageHandlerCount < 1)
+                throw new InvalidOperationException("AddHandlersInAssembly<T>() was called but any implementation of IMessageHandler was found during the scan in T's assembly. Please add at lest one or remove the call of this method.");
+
+            // Add IMessageHandler implementations as transient.
+            aServiceCollection.Scan(scan => scan.FromAssemblyOf<T>()
                 .AddClasses(classes => classes.AssignableTo<IMessageHandler>())
                 .AsImplementedInterfaces()
                 .WithTransientLifetime());
 
-            ServiceProvider sp = serviceCollection.BuildServiceProvider();
-            var listHandlers = sp.GetServices<IMessageHandler>();
-            serviceCollection.AddConsumerHandlers(listHandlers);
+            // Add the IMessageHandlerRegistry which depends on a collection of all IMessageHandler registered above.
+            aServiceCollection.AddSingleton<IMessageHandlerRegistry, MessageHandlerRegistry>();
+            // Add IHandleMessage implementation which depends on the IMessageHandlerRegistry registered above.
+            aServiceCollection.AddSingleton<IHandleMessage, HandleMessage>();
         }
 
         private static async Task<string> GetRabbitMQHostName(IServiceProvider serviceProvider)

@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using TGF.CA.Infrastructure.Communication.Consumer;
-using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.Publisher;
 using TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
@@ -46,13 +45,6 @@ public static class RabbitMQDependencyInjection
     public static void AddRabbitMQ(this IServiceCollection serviceCollection, IConfiguration configuration)
     {
         serviceCollection.Configure<RabbitMQSettings>(configuration.GetSection("Bus:RabbitMQ"));
-    }
-
-    public static void AddConsumerHandlers(this IServiceCollection serviceCollection,
-        IEnumerable<IMessageHandler> handlers)
-    {
-        serviceCollection.AddSingleton<IMessageHandlerRegistry>(new MessageHandlerRegistry(handlers));
-        serviceCollection.AddSingleton<IHandleMessage, HandleMessage>();
     }
 
     public static void AddRabbitMqConsumer<TMessage>(this IServiceCollection serviceCollection)
