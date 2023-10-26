@@ -22,7 +22,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <param name="aObjectToValidate">The object to validate.</param>
         /// <param name="aValidator">The validator to use.</param>
         /// <returns>Either the original result or a failure, depending on the validation result.</returns>
-        public static async Task<IHttpResult<T>> Verify<T,Tval>(this Task<IHttpResult<T>> aThisResult, Tval aObjectToValidate, AbstractValidator<Tval> aValidator)
+        public static async Task<IHttpResult<T>> Validate<T,Tval>(this Task<IHttpResult<T>> aThisResult, Tval aObjectToValidate, AbstractValidator<Tval> aValidator)
         {
             var lThisResult = await aThisResult;
             var lValidationResult = aValidator.Validate(aObjectToValidate);
