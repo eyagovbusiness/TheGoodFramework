@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 
-namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Permission
+namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Permissions
 {
     /// <summary>
     /// Static class to register the additional logic needed to support endpoints authorization by permissions enums.
