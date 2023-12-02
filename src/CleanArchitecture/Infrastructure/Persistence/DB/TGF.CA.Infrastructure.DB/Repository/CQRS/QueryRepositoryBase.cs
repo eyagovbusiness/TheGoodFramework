@@ -6,13 +6,14 @@ using TGF.Common.ROP.Result;
 
 namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 {
-    public abstract class QueryRepositoryBase<TDbContext> : IQueryRepository
+    public abstract class QueryRepositoryBase<TRepository,TDbContext> : IQueryRepository
     where TDbContext : DbContext
+    where TRepository : class
     {
         protected readonly TDbContext _context;
-        protected readonly ILogger<RepositoryBase<TDbContext>> _logger;
+        protected readonly ILogger<TRepository> _logger;
 
-        public QueryRepositoryBase(TDbContext aContext, ILogger<RepositoryBase<TDbContext>> aLogger)
+        public QueryRepositoryBase(TDbContext aContext, ILogger<TRepository> aLogger)
         {
             _context = aContext;
             _logger = aLogger;

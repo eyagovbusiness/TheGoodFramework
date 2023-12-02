@@ -7,16 +7,17 @@ using TGF.CA.Infrastructure.DB.Repository.CQRS;
 
 namespace TGF.CA.Infrastructure.DB.Repository
 {
-    public abstract class RepositoryBase<TDbContext>
+    public abstract class RepositoryBase<TRepository, TDbContext>
     where TDbContext : DbContext
+    where TRepository : class
     {
         private readonly ICommandRepository _commandRepository;
         private readonly IQueryRepository _queryRepository;
 
         protected readonly TDbContext _context;
-        protected readonly ILogger<RepositoryBase<TDbContext>> _logger;
+        protected readonly ILogger<TRepository> _logger;
 
-        public RepositoryBase(TDbContext aContext, ILogger<RepositoryBase<TDbContext>> aLogger)
+        public RepositoryBase(TDbContext aContext, ILogger<TRepository> aLogger)
         {
             _commandRepository = new InternalCommandRepository(aContext, aLogger);
             _queryRepository = new InternalQueryRepository(aContext, aLogger);
@@ -86,15 +87,15 @@ namespace TGF.CA.Infrastructure.DB.Repository
         #endregion
 
         #region Private helper classes
-        private class InternalCommandRepository : CommandRepositoryBase<TDbContext>
+        private class InternalCommandRepository : CommandRepositoryBase<TRepository, TDbContext>
         {
-            internal InternalCommandRepository(TDbContext aContext, ILogger<RepositoryBase<TDbContext>> aLogger) : base(aContext, aLogger)
+            internal InternalCommandRepository(TDbContext aContext, ILogger<TRepository> aLogger) : base(aContext, aLogger)
             {
             }
         }
-        private class InternalQueryRepository : QueryRepositoryBase<TDbContext>
+        private class InternalQueryRepository : QueryRepositoryBase<TRepository,TDbContext>
         {
-            internal InternalQueryRepository(TDbContext aContext, ILogger<RepositoryBase<TDbContext>> aLogger) : base(aContext, aLogger)
+            internal InternalQueryRepository(TDbContext aContext, ILogger<TRepository> aLogger) : base(aContext, aLogger)
             {
             }
         }

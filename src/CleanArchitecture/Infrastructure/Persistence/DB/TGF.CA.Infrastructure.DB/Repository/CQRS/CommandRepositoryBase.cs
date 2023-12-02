@@ -8,13 +8,14 @@ using TGF.Common.ROP.Result;
 
 namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 {
-    public abstract class CommandRepositoryBase<TDbContext> : ICommandRepository
+    public abstract class CommandRepositoryBase<TRepository, TDbContext> : ICommandRepository
     where TDbContext : DbContext
+    where TRepository : class
     {
         protected readonly TDbContext _context;
-        protected readonly ILogger<RepositoryBase<TDbContext>> _logger;
+        protected readonly ILogger<TRepository> _logger;
 
-        public CommandRepositoryBase(TDbContext aContext, ILogger<RepositoryBase<TDbContext>> aLogger)
+        public CommandRepositoryBase(TDbContext aContext, ILogger<TRepository> aLogger)
         {
             _context = aContext;
             _logger = aLogger;
