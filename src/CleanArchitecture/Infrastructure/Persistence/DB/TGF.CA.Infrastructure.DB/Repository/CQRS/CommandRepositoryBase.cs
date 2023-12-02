@@ -8,7 +8,7 @@ using TGF.Common.ROP.Result;
 
 namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 {
-    public abstract class CommandRepositoryBase<TDbContext> : ICommandRepository 
+    public abstract class CommandRepositoryBase<TDbContext> : ICommandRepository
     where TDbContext : DbContext
     {
         protected readonly TDbContext _context;
@@ -23,15 +23,43 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         #region ICommandRepository
 
         #region Command
+        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<IHttpResult<T>>> aCommandAsyncAction, CancellationToken aCancellationToken = default)
+        {
+            try
+            {
+                return await Result.CancellationTokenResult(aCancellationToken)
+                    .Bind(_ => aCommandAsyncAction(aCancellationToken))
+                    .Bind(commandResult => SaveChangesAsync(commandResult, aCancellationToken));
+            }
+            catch (Exception lEx)
+            {
+                _logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
+                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+            }
+        }
+
         public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<T>> aCommandAsyncAction, CancellationToken aCancellationToken = default)
         {
             try
             {
-                T lCommandAsyncActionResult = default!;
                 return await Result.CancellationTokenResult(aCancellationToken)
-                    .Tap(async _ => lCommandAsyncActionResult = await aCommandAsyncAction(aCancellationToken))
-                    .Bind(_ => SaveChangesAsync(aCancellationToken))
-                    .Map(_ => lCommandAsyncActionResult);
+                    .Map(_ => aCommandAsyncAction(aCancellationToken))
+                    .Bind(commandResult => SaveChangesAsync(commandResult, aCancellationToken));
+            }
+            catch (Exception lEx)
+            {
+                _logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
+                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+            }
+        }
+
+        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<IHttpResult<T>> aCommandAction, CancellationToken aCancellationToken = default)
+        {
+            try
+            {
+                return await Result.CancellationTokenResult(aCancellationToken)
+                    .Bind(_ => aCommandAction())
+                    .Bind(commandResult => SaveChangesAsync(commandResult, aCancellationToken));
             }
             catch (Exception lEx)
             {
@@ -44,11 +72,9 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         {
             try
             {
-                T lCommandActionResult = default!;
                 return await Result.CancellationTokenResult(aCancellationToken)
-                    .Tap(_ => lCommandActionResult = aCommandAction())
-                    .Bind(_ => SaveChangesAsync(aCancellationToken))
-                    .Map(_ => lCommandActionResult);
+                    .Map(_ => aCommandAction())
+                    .Bind(commandResult => SaveChangesAsync(commandResult, aCancellationToken));
             }
             catch (Exception lEx)
             {
@@ -62,51 +88,15 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         #region Create-Update-Delete
         public virtual async Task<IHttpResult<T>> AddAsync<T>(T aEntity, CancellationToken aCancellationToken = default)
             where T : class
-        {
-            try
-            {
-                await _context.Set<T>().AddAsync(aEntity, aCancellationToken);
-                await _context.SaveChangesAsync(aCancellationToken);
-                return Result.SuccessHttp(aEntity);
-            }
-            catch (Exception lEx)
-            {
-                _logger.LogError(lEx, "An error occurred while adding the entity to the DB: {ErrorMessage}", lEx.Message);
-                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
-            }
-        }
+        => await TryCommandAsync(async (aCancellationToken) => (await _context.Set<T>().AddAsync(aEntity, aCancellationToken)).Entity, aCancellationToken);
 
-        public virtual async Task<IHttpResult<Unit>> UpdateAsync<T>(T aEntity, CancellationToken aCancellationToken = default)
+        public virtual async Task<IHttpResult<T>> UpdateAsync<T>(T aEntity, CancellationToken aCancellationToken = default)
             where T : class
-        {
-            try
-            {
-                _context.Set<T>().Update(aEntity);
-                await _context.SaveChangesAsync(aCancellationToken);
-                return Result.SuccessHttp(Unit.Value);
-            }
-            catch (Exception lEx)
-            {
-                _logger.LogError(lEx, "An error occurred while updating the DB entity: {ErrorMessage}", lEx.Message);
-                return Result.Failure<Unit>(CommonErrors.UnhandledException.New(lEx.Message));
-            }
-        }
+        => await TryCommandAsync(() => _context.Set<T>().Update(aEntity).Entity, aCancellationToken);
 
-        public virtual async Task<IHttpResult<Unit>> DeleteAsync<T>(T aEntity, CancellationToken aCancellationToken = default)
+        public virtual async Task<IHttpResult<T>> DeleteAsync<T>(T aEntity, CancellationToken aCancellationToken = default)
             where T : class
-        {
-            try
-            {
-                _context.Set<T>().Remove(aEntity);
-                await _context.SaveChangesAsync(aCancellationToken);
-                return Result.SuccessHttp(Unit.Value);
-            }
-            catch (Exception lEx)
-            {
-                _logger.LogError(lEx, "An error occurred while deleting the entity from DB: {ErrorMessage}", lEx.Message);
-                return Result.Failure<Unit>(CommonErrors.UnhandledException.New(lEx.Message));
-            }
-        }
+        => await TryCommandAsync(() => _context.Set<T>().Remove(aEntity).Entity, aCancellationToken);
 
         #endregion
 
@@ -156,36 +146,36 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         #endregion
 
         #region Save
-        public async Task<IHttpResult<Unit>> SaveChangesAsync(CancellationToken aCancellationToken = default)
+        public async Task<IHttpResult<T>> SaveChangesAsync<T>(T aResult, CancellationToken aCancellationToken = default)
         {
             try
             {
                 return !_context.ChangeTracker.HasChanges() || (await _context.SaveChangesAsync(aCancellationToken) > 0)
-                    ? Result.SuccessHttp(Unit.Value)
-                    : Result.Failure<Unit>(DBErrors.Repository.Save.Error);
+                    ? Result.SuccessHttp(aResult)
+                    : Result.Failure<T>(DBErrors.Repository.Save.Error);
             }
             catch (Exception lEx)
             {
                 _logger.LogError(lEx, "An error occurred while saving DB changes: {ErrorMessage}", lEx.Message);
-                return Result.Failure<Unit>(CommonErrors.UnhandledException.New(lEx.Message));
+                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
 
-        public async Task<IHttpResult<Unit>> ShouldSaveChangesAsync(CancellationToken aCancellationToken = default)
+        public async Task<IHttpResult<T>> ShouldSaveChangesAsync<T>(T aResult, CancellationToken aCancellationToken = default)
         {
             try
             {
                 if (!_context.ChangeTracker.HasChanges())
-                    return Result.Failure<Unit>(DBErrors.Repository.Save.NoChanges);
+                    return Result.Failure<T>(DBErrors.Repository.Save.NoChanges);
 
                 return await _context.SaveChangesAsync(aCancellationToken) > 0
-                    ? Result.SuccessHttp(Unit.Value)
-                    : Result.Failure<Unit>(DBErrors.Repository.Save.Error);
+                    ? Result.SuccessHttp(aResult)
+                    : Result.Failure<T>(DBErrors.Repository.Save.Error);
             }
             catch (Exception lEx)
             {
                 _logger.LogError(lEx, "An error occurred while saving DB changes: {ErrorMessage}", lEx.Message);
-                return Result.Failure<Unit>(CommonErrors.UnhandledException.New(lEx.Message));
+                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
 

@@ -20,12 +20,12 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         #region IQueryRepository
 
         #region Query
-        public async Task<IHttpResult<T>> TryQueryAsync<T>(Func<CancellationToken, Task<T>> aQueryAction, CancellationToken aCancellationToken = default)
+        public async Task<IHttpResult<T>> TryQueryAsync<T>(Func<CancellationToken, Task<IHttpResult<T>>> aQueryAsyncAction, CancellationToken aCancellationToken = default)
         {
             try
             {
                 return await Result.CancellationTokenResult(aCancellationToken)
-                    .Map(async _ => await aQueryAction(aCancellationToken));
+                    .Bind(_ => aQueryAsyncAction(aCancellationToken));
             }
             catch (Exception lEx)
             {
@@ -33,24 +33,58 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
                 return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
-        #endregion
 
-        #region Read
-
-        public virtual async Task<IHttpResult<T>> GetByIdAsync<T>(object aEntityId, CancellationToken aCancellationToken = default)
-            where T : class
+        public async Task<IHttpResult<T>> TryQueryAsync<T>(Func<CancellationToken, Task<T>> aQueryAsyncAction, CancellationToken aCancellationToken = default)
         {
             try
             {
-                var lEntity = await _context.Set<T>().FindAsync(new object[] { aEntityId }, aCancellationToken);
-                return lEntity != null ? Result.SuccessHttp(lEntity) : Result.Failure<T>(DBErrors.Repository.Entity.NotFound);
+                return await Result.CancellationTokenResult(aCancellationToken)
+                    .Map(async _ => await aQueryAsyncAction(aCancellationToken));
             }
             catch (Exception lEx)
             {
-                _logger.LogError(lEx, "An error occurred while trying to get the entity by Id from DB: {ErrorMessage}", lEx.Message);
+                _logger.LogError(lEx, "An error occurred trying to execute a DB query at repository level : {ErrorMessage}", lEx.Message);
                 return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
+
+        public IHttpResult<T> TryQuery<T>(Func<IHttpResult<T>> aQueryAction)
+        {
+            try
+            {
+                return aQueryAction();
+            }
+            catch (Exception lEx)
+            {
+                _logger.LogError(lEx, "An error occurred trying to execute a DB query at repository level : {ErrorMessage}", lEx.Message);
+                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+            }
+        }
+
+        public IHttpResult<T> TryQuery<T>(Func<T> aQueryAction)
+        {
+            try
+            {
+                return Result.SuccessHttp(aQueryAction());
+            }
+            catch (Exception lEx)
+            {
+                _logger.LogError(lEx, "An error occurred trying to execute a DB query at repository level : {ErrorMessage}", lEx.Message);
+                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+            }
+        }
+
+        #endregion
+
+        #region Read
+        public virtual async Task<IHttpResult<T>> GetByIdAsync<T>(object aEntityId, CancellationToken aCancellationToken = default)
+            where T : class
+        => await TryQueryAsync(async (aCancellationToken) =>
+        {
+            var lEntity = await _context.Set<T>().FindAsync(new object[] { aEntityId }, aCancellationToken);
+            return lEntity != null ? Result.SuccessHttp(lEntity!) : Result.Failure<T>(DBErrors.Repository.Entity.NotFound);
+
+        }, aCancellationToken);
 
         #endregion
 
