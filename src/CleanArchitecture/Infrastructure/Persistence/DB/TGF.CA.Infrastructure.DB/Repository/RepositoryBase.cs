@@ -7,7 +7,12 @@ using TGF.CA.Infrastructure.DB.Repository.CQRS;
 #pragma warning disable CA1068 // CancellationToken parameters must come last
 namespace TGF.CA.Infrastructure.DB.Repository
 {
-    public abstract class RepositoryBase<TRepository, TDbContext>
+    /// <summary>
+    /// A base class for any read/write repository with native error handling logic using ROP.
+    /// </summary>
+    /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
+    /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
+    public abstract class RepositoryBase<TRepository, TDbContext> : ICommandRepository, IQueryRepository
     where TDbContext : DbContext
     where TRepository : class
     {
@@ -78,9 +83,9 @@ namespace TGF.CA.Infrastructure.DB.Repository
         #endregion
 
         #region Save
-        protected virtual async Task<IHttpResult<T>> TrySaveChangesAsync<T>(T aResult, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
+        public virtual async Task<IHttpResult<T>> TrySaveChangesAsync<T>(T aResult, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
             => await _commandRepository.TrySaveChangesAsync(aResult, aCancellationToken, aSaveResultOverride);
-        protected virtual IHttpResult<T> DefaultSaveResultFunc<T>(int aChangeCount, T aCommandResult)
+        public virtual IHttpResult<T> DefaultSaveResultFunc<T>(int aChangeCount, T aCommandResult)
             => _commandRepository.DefaultSaveResultFunc(aChangeCount, aCommandResult);
 
         #endregion

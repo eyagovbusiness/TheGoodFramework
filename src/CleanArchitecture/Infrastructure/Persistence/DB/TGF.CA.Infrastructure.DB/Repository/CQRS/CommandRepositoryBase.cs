@@ -8,6 +8,11 @@ using TGF.Common.ROP.Result;
 #pragma warning disable CA1068 // CancellationToken parameters must come last
 namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 {
+    /// <summary>
+    /// A base class for a CQRS write repository with native error handling logic for Command operations using ROP.
+    /// </summary>
+    /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
+    /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
     public abstract class CommandRepositoryBase<TRepository, TDbContext> : ICommandRepository
     where TDbContext : DbContext
     where TRepository : class
