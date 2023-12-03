@@ -4,7 +4,7 @@ using TGF.Common.ROP;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using TGF.CA.Infrastructure.DB.Repository.CQRS;
-
+#pragma warning disable CA1068 // CancellationToken parameters must come last
 namespace TGF.CA.Infrastructure.DB.Repository
 {
     public abstract class RepositoryBase<TRepository, TDbContext>
@@ -26,14 +26,14 @@ namespace TGF.CA.Infrastructure.DB.Repository
         }
 
         #region Command-Query
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<IHttpResult<T>>> aCommandAsyncAction, CancellationToken aCancellationToken = default) 
-            => await _commandRepository.TryCommandAsync(aCommandAsyncAction, aCancellationToken);
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<T>> aCommandAsyncAction, CancellationToken aCancellationToken = default) 
-            => await _commandRepository.TryCommandAsync(aCommandAsyncAction, aCancellationToken);
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<IHttpResult<T>> aCommandAction, CancellationToken aCancellationToken = default) 
-            => await _commandRepository.TryCommandAsync(aCommandAction, aCancellationToken);
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<T> aCommandAction, CancellationToken aCancellationToken = default) 
-            => await _commandRepository.TryCommandAsync(aCommandAction, aCancellationToken);
+        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<IHttpResult<T>>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
+            => await _commandRepository.TryCommandAsync(aCommandAsyncAction, aCancellationToken, aSaveResultOverride);
+        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<T>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
+            => await _commandRepository.TryCommandAsync(aCommandAsyncAction, aCancellationToken, aSaveResultOverride);
+        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<IHttpResult<T>> aCommandAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
+            => await _commandRepository.TryCommandAsync(aCommandAction, aCancellationToken, aSaveResultOverride);
+        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<T> aCommandAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default) 
+            => await _commandRepository.TryCommandAsync(aCommandAction, aCancellationToken, aSaveResultOverride);
 
         public async Task<IHttpResult<T>> TryQueryAsync<T>(Func<CancellationToken, Task<IHttpResult<T>>> aQueryAsyncAction, CancellationToken aCancellationToken = default) 
             => await _queryRepository.TryQueryAsync(aQueryAsyncAction, aCancellationToken);
@@ -78,11 +78,10 @@ namespace TGF.CA.Infrastructure.DB.Repository
         #endregion
 
         #region Save
-        protected async Task<IHttpResult<T>> SaveChangesAsync<T>(T aResult, CancellationToken aCancellationToken = default)
-            => await _commandRepository.SaveChangesAsync(aResult, aCancellationToken);
-
-        protected async Task<IHttpResult<T>> ShouldSaveChangesAsync<T>(T aResult, CancellationToken aCancellationToken = default)
-            => await _commandRepository.ShouldSaveChangesAsync(aResult, aCancellationToken);
+        protected virtual async Task<IHttpResult<T>> TrySaveChangesAsync<T>(T aResult, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
+            => await _commandRepository.TrySaveChangesAsync(aResult, aCancellationToken, aSaveResultOverride);
+        protected virtual IHttpResult<T> DefaultSaveResultFunc<T>(int aChangeCount, T aCommandResult)
+            => _commandRepository.DefaultSaveResultFunc(aChangeCount, aCommandResult);
 
         #endregion
 

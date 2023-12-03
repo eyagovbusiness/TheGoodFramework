@@ -5,7 +5,7 @@ using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP;
 using TGF.Common.ROP.Result;
-
+#pragma warning disable CA1068 // CancellationToken parameters must come last
 namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 {
     public abstract class CommandRepositoryBase<TRepository, TDbContext> : ICommandRepository
@@ -24,13 +24,13 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         #region ICommandRepository
 
         #region Command
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<IHttpResult<T>>> aCommandAsyncAction, CancellationToken aCancellationToken = default)
+        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<IHttpResult<T>>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
         {
             try
             {
                 return await Result.CancellationTokenResult(aCancellationToken)
                     .Bind(_ => aCommandAsyncAction(aCancellationToken))
-                    .Bind(commandResult => SaveChangesAsync(commandResult, aCancellationToken));
+                    .Bind(commandResult => TrySaveChangesAsync(commandResult, aCancellationToken, aSaveResultOverride));
             }
             catch (Exception lEx)
             {
@@ -39,13 +39,13 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             }
         }
 
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<T>> aCommandAsyncAction, CancellationToken aCancellationToken = default)
+        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<T>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
         {
             try
             {
                 return await Result.CancellationTokenResult(aCancellationToken)
                     .Map(_ => aCommandAsyncAction(aCancellationToken))
-                    .Bind(commandResult => SaveChangesAsync(commandResult, aCancellationToken));
+                    .Bind(commandResult => TrySaveChangesAsync(commandResult, aCancellationToken, aSaveResultOverride));
             }
             catch (Exception lEx)
             {
@@ -54,13 +54,13 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             }
         }
 
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<IHttpResult<T>> aCommandAction, CancellationToken aCancellationToken = default)
+        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<IHttpResult<T>> aCommandAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
         {
             try
             {
                 return await Result.CancellationTokenResult(aCancellationToken)
                     .Bind(_ => aCommandAction())
-                    .Bind(commandResult => SaveChangesAsync(commandResult, aCancellationToken));
+                    .Bind(commandResult => TrySaveChangesAsync(commandResult, aCancellationToken, aSaveResultOverride));
             }
             catch (Exception lEx)
             {
@@ -69,13 +69,13 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             }
         }
 
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<T> aCommandAction, CancellationToken aCancellationToken = default)
+        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<T> aCommandAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
         {
             try
             {
                 return await Result.CancellationTokenResult(aCancellationToken)
                     .Map(_ => aCommandAction())
-                    .Bind(commandResult => SaveChangesAsync(commandResult, aCancellationToken));
+                    .Bind(commandResult => TrySaveChangesAsync(commandResult, aCancellationToken, aSaveResultOverride));
             }
             catch (Exception lEx)
             {
@@ -147,13 +147,18 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         #endregion
 
         #region Save
-        public async Task<IHttpResult<T>> SaveChangesAsync<T>(T aResult, CancellationToken aCancellationToken = default)
+        public async Task<IHttpResult<T>> TrySaveChangesAsync<T>(T aResult, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
         {
             try
             {
-                return !_context.ChangeTracker.HasChanges() || (await _context.SaveChangesAsync(aCancellationToken) > 0)
-                    ? Result.SuccessHttp(aResult)
-                    : Result.Failure<T>(DBErrors.Repository.Save.Error);
+                if(aSaveResultOverride == default)
+                    return DefaultSaveResultFunc(
+                        await _context.SaveChangesAsync(aCancellationToken)
+                        , aResult);
+
+                return aSaveResultOverride(
+                    await _context.SaveChangesAsync(aCancellationToken)
+                    , aResult);
             }
             catch (Exception lEx)
             {
@@ -161,28 +166,16 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
                 return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
-
-        public async Task<IHttpResult<T>> ShouldSaveChangesAsync<T>(T aResult, CancellationToken aCancellationToken = default)
-        {
-            try
-            {
-                if (!_context.ChangeTracker.HasChanges())
-                    return Result.Failure<T>(DBErrors.Repository.Save.NoChanges);
-
-                return await _context.SaveChangesAsync(aCancellationToken) > 0
-                    ? Result.SuccessHttp(aResult)
-                    : Result.Failure<T>(DBErrors.Repository.Save.Error);
-            }
-            catch (Exception lEx)
-            {
-                _logger.LogError(lEx, "An error occurred while saving DB changes: {ErrorMessage}", lEx.Message);
-                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
-            }
-        }
+        public virtual IHttpResult<T> DefaultSaveResultFunc<T>(int aChangeCount, T aCommandResult)
+        => !_context.ChangeTracker.HasChanges() || aChangeCount > 0
+            ? Result.SuccessHttp(aCommandResult)
+            : Result.Failure<T>(DBErrors.Repository.Save.Error);
 
         #endregion
 
         #endregion
+
+
 
     }
 }
