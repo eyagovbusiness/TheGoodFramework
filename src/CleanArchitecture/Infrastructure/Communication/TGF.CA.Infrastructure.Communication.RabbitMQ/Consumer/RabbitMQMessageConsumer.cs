@@ -35,6 +35,7 @@ public class RabbitMQMessageConsumer<TMessage> : IMessageConsumer<TMessage>
     {
         using var lConnection = _connectionFactory.CreateConnection();
         using var lChannel = lConnection.CreateModel();
+        lChannel.BasicQos(0, 1, false);//Each consumer will take only 1 message at time and take the next one after ACK the current processing one.
         var lReceiver = new RabbitMQMessageReceiver(lChannel, _serializer, _handleMessage);
         string lQueue = GetCorrectQueue();
 
