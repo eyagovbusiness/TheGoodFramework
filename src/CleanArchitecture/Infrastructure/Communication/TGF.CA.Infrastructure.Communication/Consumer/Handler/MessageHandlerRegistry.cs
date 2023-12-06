@@ -11,8 +11,7 @@ public class MessageHandlerRegistry : IMessageHandlerRegistry
 {
     private readonly IEnumerable<IMessageHandler> _messageHandlers;
 
-    private readonly ConcurrentDictionary<string, IEnumerable<IMessageHandler>> _cachedHandlers =
-        new ConcurrentDictionary<string, IEnumerable<IMessageHandler>>();
+    private readonly ConcurrentDictionary<string, IEnumerable<IMessageHandler>> _cachedHandlers = new();
 
     public MessageHandlerRegistry(IEnumerable<IMessageHandler> messageHandlers)
     {

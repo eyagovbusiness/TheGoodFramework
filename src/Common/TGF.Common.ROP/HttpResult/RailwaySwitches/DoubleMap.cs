@@ -18,6 +18,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <returns>
         /// A task producing an <see cref="IHttpResult{T2}"/>, where the value is determined by either the success or failure mapping function, as appropriate.
         /// </returns>
+        /// <remarks>Async to Async.</remarks>
         public static async Task<IHttpResult<T2>> DoubleMap<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, Task<T2>> aMapFailureFunction)
         {
             var lThisResult = await aThisResult;
@@ -40,6 +41,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <returns>
         /// A task producing an <see cref="IHttpResult{T2}"/>, where the value is determined by either the success or failure mapping function, as appropriate.
         /// </returns>
+        /// <remarks>Async to Sync, IDEALLY IT SHOULD NEVER BE USED.</remarks>
         public static async Task<IHttpResult<T2>> DoubleMap<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, T2> aMapFailureFunction)
         {
             var lThisResult = await aThisResult;

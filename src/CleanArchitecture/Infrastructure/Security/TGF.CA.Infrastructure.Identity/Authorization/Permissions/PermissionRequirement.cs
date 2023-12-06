@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 
-namespace TGF.CA.Infrastructure.Security.Identity.Authorization
+namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Permissions
 {
     /// <summary>
     /// Implementation of <see cref="IAuthorizationRequirement"/> that defines permission requirements.

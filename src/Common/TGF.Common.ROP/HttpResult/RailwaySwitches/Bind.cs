@@ -33,7 +33,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <param name="aThisResult">The task returning the initial result.</param>
         /// <param name="aNextResult">A function producing the next result based on the value of the first result.</param>
         /// <returns>A task yielding the resulting <see cref="IHttpResult{T2}"/>.</returns>
-        /// <remarks>Async to Sync binding, although the result is wrapped in a task due to the async nature of the first result.</remarks>
+        /// <remarks>Async to Sync binding, IDEALLY IT SHOULD NEVER BE USED. Although the result is wrapped in a task due to the async nature of the first result.</remarks>
         public static async Task<IHttpResult<T2>> Bind<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, IHttpResult<T2>> aNextResult)
         {
             var lThisResult = await aThisResult;

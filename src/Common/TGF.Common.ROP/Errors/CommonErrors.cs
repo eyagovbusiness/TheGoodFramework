@@ -26,5 +26,20 @@ namespace TGF.Common.ROP.Errors
                 "CancellationToken.Cancelled",
                 "The request was cancelled.");
         }
+
+        public static class UnhandledException
+        {
+            public static HttpError Cancelled => new(
+            new Error("CancellationToken.Cancelled",
+                "The request was cancelled."),
+            HttpStatusCode.InternalServerError);
+            public static HttpError New(string aExceptionMessage, HttpStatusCode aStatusCode = HttpStatusCode.InternalServerError)
+            {
+                return new HttpError(
+                    new Error("UnhandledException", aExceptionMessage),
+                    aStatusCode);
+            }
+        }
+
     }
 }

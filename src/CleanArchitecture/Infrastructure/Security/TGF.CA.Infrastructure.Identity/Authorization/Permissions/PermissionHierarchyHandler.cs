@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using TGF.CA.Application;
 
-namespace TGF.CA.Infrastructure.Security.Identity.Authorization
+namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Permissions
 {
     /// <summary>
     /// Subclass of <see cref="AuthorizationHandler{T}"/> where 

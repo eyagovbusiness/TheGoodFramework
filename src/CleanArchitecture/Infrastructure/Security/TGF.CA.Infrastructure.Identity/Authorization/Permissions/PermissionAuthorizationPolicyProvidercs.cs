@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Options;
 using System.Collections.Concurrent;
 
-namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Permission
+namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Permissions
 {
     /// <summary>
     /// Subclass of <see cref="DefaultAuthorizationPolicyProvider"/> that can be added to any WebApplicationBuilder's collection of services as singelton service to extend the default ahuthorization policy provider in order to register dinamically custom policies required by endpoints at runtime by using the EndpointConventionBuilderExtension <see cref="PermissionAuthorizationEndpointConventionBuilderExtensions.RequirePermissions{TBuilder, TPermissionsEnum}(TBuilder, TPermissionsEnum[])"/>.

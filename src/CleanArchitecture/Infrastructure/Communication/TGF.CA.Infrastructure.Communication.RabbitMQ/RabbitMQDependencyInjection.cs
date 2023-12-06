@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 using TGF.CA.Infrastructure.Communication.Consumer;
-using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.Publisher;
 using TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
@@ -40,32 +39,12 @@ public static class RabbitMQDependencyInjection
         return $"amqp://{settings.Credentials?.Username}:{settings.Credentials?.Password}@{settings.Hostname}/";
     }
 
-    //obsolete
-    //private static IConnection AddRabbitMqHealthCheck(IServiceProvider serviceProvider)
-    //{
-    //    RabbitMQSettings settings = serviceProvider.GetRequiredService<IOptions<RabbitMQSettings>>().Value;
-    //    ConnectionFactory factory = new ConnectionFactory();
-    //    factory.UserName = settings.Credentials?.Username;
-    //    factory.Password = settings.Credentials?.Password;
-    //    factory.VirtualHost = "/";
-    //    factory.HostName = settings.Hostname;
-    //    factory.Port = AmqpTcpEndpoint.UseDefaultPort;
-    //    return factory.CreateConnection();
-    //}
-
     /// <summary>
     /// this method is used when the credentials are inside the configuration. not recommended.
     /// </summary>
     public static void AddRabbitMQ(this IServiceCollection serviceCollection, IConfiguration configuration)
     {
         serviceCollection.Configure<RabbitMQSettings>(configuration.GetSection("Bus:RabbitMQ"));
-    }
-
-    public static void AddConsumerHandlers(this IServiceCollection serviceCollection,
-        IEnumerable<IMessageHandler> handlers)
-    {
-        serviceCollection.AddSingleton<IMessageHandlerRegistry>(new MessageHandlerRegistry(handlers));
-        serviceCollection.AddSingleton<IHandleMessage, HandleMessage>();
     }
 
     public static void AddRabbitMqConsumer<TMessage>(this IServiceCollection serviceCollection)

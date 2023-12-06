@@ -101,12 +101,6 @@ namespace TGF.Common.ROP.Result
 
         #endregion
 
-        #region SerializationExtensions
-        public static string Serialize<T>(this IHttpResult<T> aResult) => Utf8Json.JsonSerializer.ToJsonString(aResult);
-        public static IHttpResult<T>? DeserializeHttpResult<T>(string aResultSerializedString) => System.Text.Json.JsonSerializer.Deserialize<IHttpResult<T>>(aResultSerializedString) ?? default;
-        public static IResult<T>? DeserializeResult<T>(string aResultSerializedString) => System.Text.Json.JsonSerializer.Deserialize<IResult<T>>(aResultSerializedString) ?? default;
-        #endregion
-
     }
 
 }

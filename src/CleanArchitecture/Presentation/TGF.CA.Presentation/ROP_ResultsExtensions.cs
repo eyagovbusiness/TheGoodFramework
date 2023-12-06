@@ -20,9 +20,7 @@ namespace TGF.CA.Presentation
         public static IResult ToIResult<T>(this IHttpResult<T> aHttpResult)
             => aHttpResult.IsSuccess
                    ? aHttpResult.Value.ToResponseResult(aHttpResult.StatusCode)
-                   : Results.Problem(title: aHttpResult.ErrorList.First().Code,
-                                     detail: aHttpResult.ErrorList.GetErrorListAsString(),
-                                     statusCode: (int)aHttpResult.StatusCode);
+                   : aHttpResult.ToProblemDetailResponseResult();
 
         /// <summary>
         /// Gets a <see cref="Task"/> that returns a new instance of an <see cref="IResult"/> created from the provided <paramref name="aHttpResult"/>.
@@ -66,30 +64,44 @@ namespace TGF.CA.Presentation
 
         }
 
-        #region To-DO: Add to IHttpError a property to specify if it is a validation error, and handle if the IResult will be a Results.ValidationProblem() ir Results.Problem() based on that
-        //private static IResult ToProblemDetailResponseResult<T>(this IEnumerable<HttpError> aHttpErrorList, HttpStatusCode aProblemStatusCode)
-        //        => aHttpErrorList.First().IsValidationError
-        //           ? Results.ValidationProblem(aHttpErrorList.ConvertToErrorDictionary())
-        //           : Results.Problem(title: aHttpErrorList.First().Code,
-        //                             detail: aHttpErrorList.GetErrorListAsString(),
-        //                             statusCode: (int)aHttpResult.StatusCode);
-        //public static Dictionary<string, string> ConvertToErrorDictionary(this IEnumerable<HttpError> httpErrors)
-        //{
-        //    var errorDictionary = new Dictionary<string, string>();
+        #region ProblemDetail building
 
-        //    foreach (var httpError in httpErrors)
-        //    {
-        //        string errorCode = httpError.Error.Code;
-        //        string errorMessage = httpError.Error.Message;
+        /// <summary>
+        /// Converts an <see cref="IHttpResult{T}"/> to a problem detail response result. The methos assumes the <see cref="IHttpResult{T}"/> is not a success result.
+        /// </summary>
+        /// <typeparam name="T">The type of the value contained in the <see cref="IHttpResult{T}"/>.</typeparam>
+        /// <param name="aHttpResult">The <see cref="IHttpResult{T}"/> to be converted.</param>
+        /// <returns>
+        /// A problem detail response result containing the details of the validation errors if they exist, 
+        /// or a problem detail containing the first error from the error list, along with the associated HTTP status code.
+        /// </returns>
+        private static IResult ToProblemDetailResponseResult<T>(this IHttpResult<T> aHttpResult)
+                => aHttpResult.HasValidationErrors()
+                   ? Results.ValidationProblem(aHttpResult.ErrorList.ConvertToErrorDictionary())
+                   : Results.Problem(title: aHttpResult.ErrorList.First().Code,
+                                     detail: aHttpResult.ErrorList.GetErrorListAsString(),
+                                     statusCode: (int)aHttpResult.StatusCode);
 
-        //        if (!errorDictionary.ContainsKey(errorCode))
-        //        {
-        //            errorDictionary.Add(errorCode, errorMessage);
-        //        }
-        //    }
+        /// <summary>
+        /// Converts a list of errors to a dictionary where the key is the error code, and the value is an array of error messages.
+        /// </summary>
+        /// <param name="aErrorList">The list of errors to convert.</param>
+        /// <returns>A dictionary containing error codes as keys and error messages as values.</returns>
+        private static Dictionary<string, string[]> ConvertToErrorDictionary(this IEnumerable<IError> aErrorList)
+        {
+            var lErrorDictionary = new Dictionary<string, List<string>>();
+            foreach (var lError in aErrorList)
+            {
+                if (!lErrorDictionary.TryGetValue(lError.Code, out var lErrorMessages))
+                {
+                    lErrorMessages = new List<string>();
+                    lErrorDictionary[lError.Code] = lErrorMessages;
+                }
+                lErrorMessages.Add(lError.Message);
+            }
 
-        //    return errorDictionary;
-        //}
+            return lErrorDictionary.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.ToArray());
+        }
         #endregion
 
     }
