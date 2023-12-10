@@ -1,73 +1,66 @@
-using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using System.Text;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.Publisher;
+using TGF.CA.Infrastructure.Communication.RabbitMQ.Settings;
 using TGF.Common.Serialization;
 
+//code inspired from https://github.com/ElectNewt/Distribt
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Publisher;
-
 public class RabbitMQMessagePublisher<TMessage> : IExternalMessagePublisher<TMessage>
     where TMessage : IMessage
 {
     private readonly ISerializer _serializer;
-    private readonly RabbitMQSettings _settings;
-    private readonly ConnectionFactory _connectionFactory;
+    private readonly IRabbitMQSettingsFactory _rabbitMQSettingsFactory;
+    private readonly Lazy<Task<RabbitMQSettings>> _settings;
+    private readonly Lazy<Task<ConnectionFactory>> _connectionFactory;
 
-    public RabbitMQMessagePublisher(ISerializer serializer, IOptions<RabbitMQSettings> settings)
+    public RabbitMQMessagePublisher(ISerializer serializer, IRabbitMQSettingsFactory aRabbitMQSettingsFactory)
     {
-        _settings = settings.Value;
         _serializer = serializer;
-        _connectionFactory = new ConnectionFactory()
-        {
-            HostName = _settings.Hostname,
-            Password = _settings.Credentials!.Password,
-            UserName = _settings.Credentials.Username
-        };
+        _rabbitMQSettingsFactory = aRabbitMQSettingsFactory;
+        _settings = new Lazy<Task<RabbitMQSettings>>(_rabbitMQSettingsFactory.GetRabbitMQSettingsAsync);
+        _connectionFactory = new Lazy<Task<ConnectionFactory>>(GetConnectionFactory);
     }
 
-    public Task Publish(TMessage message, string? routingKey = null, CancellationToken cancellationToken = default)
+    public async Task Publish(TMessage message, string? routingKey = null, CancellationToken cancellationToken = default)
     {
-        using IConnection connection = _connectionFactory.CreateConnection();
-        using IModel model = connection.CreateModel();
+        var lConnectionFactory = await _connectionFactory.Value;
+        using IConnection connection = lConnectionFactory.CreateConnection();
+        using IModel model = connection.CreateModel(); 
 
         PublishSingle(message, model, routingKey);
-
-        return Task.CompletedTask;
     }
 
-    public Task PublishMany(IEnumerable<TMessage> messages, string? routingKey = null, CancellationToken cancellationToken = default)
+    public async Task PublishMany(IEnumerable<TMessage> messages, string? routingKey = null, CancellationToken cancellationToken = default)
     {
-        using IConnection connection = _connectionFactory.CreateConnection();
+        using IConnection connection = (await _connectionFactory.Value).CreateConnection();
         using IModel model = connection.CreateModel();
         foreach (TMessage message in messages)
         {
             PublishSingle(message, model, routingKey);
         }
-
-        return Task.CompletedTask;
     }
 
-
-
-    private void PublishSingle(TMessage message, IModel model, string? routingKey)
+    private async void PublishSingle(TMessage message, IModel model, string? routingKey)
     {
         var properties = model.CreateBasicProperties();
         properties.Persistent = true;
         properties.Type = RemoveVersion(message.GetType());
+        var lCorrectExchange = await GetCorrectExchange();
 
-        model.BasicPublish(exchange: GetCorrectExchange(),
+        model.BasicPublish(exchange: lCorrectExchange,
             routingKey: routingKey ?? "",
             basicProperties: properties,
             body: _serializer.SerializeObjectToByteArray(message));
     }
 
-    private string GetCorrectExchange()
+    private async Task<string> GetCorrectExchange()
     {
         return (typeof(TMessage) == typeof(IntegrationMessage)
-            ? _settings.Publisher?.IntegrationExchange
-            : _settings.Publisher?.DomainExchange)
-               ?? throw new ArgumentException("please configure the Exchanges on the appsettings");
+            ? (await _settings.Value).Publisher?.IntegrationExchange
+            : (await _settings.Value).Publisher?.DomainExchange)
+               ?? throw new ArgumentException("Please configure the Exchanges on the appsettings.");
     }
 
     /// <summary>
@@ -94,5 +87,16 @@ public class RabbitMQMessagePublisher<TMessage> : IExternalMessagePublisher<TMes
             stringBuilder.Append(RemoveVersionFromQualifiedName(assemblyQualifiedName, indexOfGenericClose));
 
         return stringBuilder.ToString();
+    }
+
+    private async Task<ConnectionFactory> GetConnectionFactory()
+    {
+        var lSettings = await _settings.Value;
+        return new()
+        {
+            HostName = lSettings.Hostname,
+            Password = lSettings.Credentials!.Password,
+            UserName = lSettings.Credentials!.Username
+        };
     }
 }
