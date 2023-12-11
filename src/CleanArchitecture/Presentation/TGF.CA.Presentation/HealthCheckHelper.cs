@@ -20,7 +20,7 @@ namespace TGF.CA.Presentation
                 new Dictionary<string, string?>
                 {
                     {"HealthChecksUI:HealthChecks:0:Name", $"{aConfiguration?.GetValue<string>("AppName") ?? "self"}"},
-                    {"HealthChecksUI:HealthChecks:0:Uri", $"http://localhost/health"},
+                    {"HealthChecksUI:HealthChecks:0:Uri", $"http://localhost:8080/health"},
                     {"HealthChecksUI:EvaluationTimeInSeconds", $"{aConfiguration?.GetValue<string>("HealthCheckTickInSeconds") ?? "60"}" },
                     {"HealthChecksUI:MinimumSecondsBetweenFailureNotifications", "90" }
                 });

@@ -1,22 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AspNetCore.HealthChecks.Rabbitmq" Version="7.0.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-    <PackageReference Include="Microsoft.Extensions.Http" Version="7.0.0" />
-    <PackageReference Include="Scrutor" Version="4.2.2" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\..\..\..\Common\TGF.Common.ROP\TGF.Common.ROP.csproj" />
-    <ProjectReference Include="..\..\..\..\Common\TGF.Common.Serialization\TGF.Common.Serialization.csproj" />
-    <ProjectReference Include="..\..\Security\TGF.CA.Infrastructure.Secrets\TGF.CA.Infrastructure.Secrets.csproj" />
     <ProjectReference Include="..\..\TGF.CA.Infrastructure.Discovery\TGF.CA.Infrastructure.Discovery.csproj" />
   </ItemGroup>
 

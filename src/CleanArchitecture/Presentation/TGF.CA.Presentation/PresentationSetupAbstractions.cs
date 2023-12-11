@@ -39,7 +39,7 @@ namespace TGF.CA.Presentation
             #region Infrastructure
             aWebApplicationBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck(aWebApplicationBuilder.Configuration));
             aWebApplicationBuilder.Services.AddHealthChecks();
-            aWebApplicationBuilder.Services.AddHealthChecksUI().AddInMemoryStorage();
+            //aWebApplicationBuilder.Services.AddHealthChecksUI().AddInMemoryStorage(); TO-DO: GSWB-44
             aWebApplicationBuilder.Host.ConfigureSerilog();
             #endregion
 

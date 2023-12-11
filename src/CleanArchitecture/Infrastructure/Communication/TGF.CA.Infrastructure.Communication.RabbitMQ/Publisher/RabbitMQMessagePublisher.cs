@@ -1,98 +1,98 @@
-using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using System.Text;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.Publisher;
+using TGF.CA.Infrastructure.Communication.RabbitMQ.Settings;
 using TGF.Common.Serialization;
 
+//code inspired from https://github.com/ElectNewt/Distribt
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Publisher;
-
 public class RabbitMQMessagePublisher<TMessage> : IExternalMessagePublisher<TMessage>
     where TMessage : IMessage
 {
     private readonly ISerializer _serializer;
-    private readonly RabbitMQSettings _settings;
-    private readonly ConnectionFactory _connectionFactory;
+    private readonly IRabbitMQSettingsFactory _rabbitMQSettingsFactory;
+    private readonly Lazy<Task<RabbitMQSettings>> _settings;
+    private readonly Lazy<Task<ConnectionFactory>> _connectionFactory;
 
-    public RabbitMQMessagePublisher(ISerializer serializer, IOptions<RabbitMQSettings> settings)
+    public RabbitMQMessagePublisher(ISerializer serializer, IRabbitMQSettingsFactory aRabbitMQSettingsFactory)
     {
-        _settings = settings.Value;
         _serializer = serializer;
-        _connectionFactory = new ConnectionFactory()
-        {
-            HostName = _settings.Hostname,
-            Password = _settings.Credentials!.Password,
-            UserName = _settings.Credentials.Username
-        };
+        _rabbitMQSettingsFactory = aRabbitMQSettingsFactory;
+        _settings = new Lazy<Task<RabbitMQSettings>>(_rabbitMQSettingsFactory.GetRabbitMQSettingsAsync);
+        _connectionFactory = new Lazy<Task<ConnectionFactory>>(GetConnectionFactory);
     }
 
-    public Task Publish(TMessage message, string? routingKey = null, CancellationToken cancellationToken = default)
+    public async Task Publish(TMessage aMessage, string? aRoutingKey = null, CancellationToken aCancellationToken = default)
     {
-        using IConnection connection = _connectionFactory.CreateConnection();
-        using IModel model = connection.CreateModel();
-
-        PublishSingle(message, model, routingKey);
-
-        return Task.CompletedTask;
+        using IConnection lConnection = (await _connectionFactory.Value).CreateConnection();
+        using IModel lModel = lConnection.CreateModel(); 
+        PublishSingle(aMessage, lModel, aRoutingKey);
     }
 
-    public Task PublishMany(IEnumerable<TMessage> messages, string? routingKey = null, CancellationToken cancellationToken = default)
+    public async Task PublishMany(IEnumerable<TMessage> aMessages, string? aRoutingKey = null, CancellationToken aCancellationToken = default)
     {
-        using IConnection connection = _connectionFactory.CreateConnection();
-        using IModel model = connection.CreateModel();
-        foreach (TMessage message in messages)
-        {
-            PublishSingle(message, model, routingKey);
-        }
-
-        return Task.CompletedTask;
+        using IConnection lConnection = (await _connectionFactory.Value).CreateConnection();
+        using IModel lModel = lConnection.CreateModel();
+        foreach (TMessage lMessage in aMessages)
+            PublishSingle(lMessage, lModel, aRoutingKey);
     }
 
-
-
-    private void PublishSingle(TMessage message, IModel model, string? routingKey)
+    private async void PublishSingle(TMessage aMessage, IModel aModel, string? aRoutingKey)
     {
-        var properties = model.CreateBasicProperties();
-        properties.Persistent = true;
-        properties.Type = RemoveVersion(message.GetType());
+        var lProperties = aModel.CreateBasicProperties();
+        lProperties.Persistent = true;
+        lProperties.Type = RemoveVersion(aMessage.GetType());
+        var lCorrectExchange = await GetCorrectExchange();
 
-        model.BasicPublish(exchange: GetCorrectExchange(),
-            routingKey: routingKey ?? "",
-            basicProperties: properties,
-            body: _serializer.SerializeObjectToByteArray(message));
+        aModel.BasicPublish(exchange: lCorrectExchange,
+            routingKey: aRoutingKey ?? "",
+            basicProperties: lProperties,
+            body: _serializer.SerializeObjectToByteArray(aMessage));
     }
 
-    private string GetCorrectExchange()
+    private async Task<string> GetCorrectExchange()
     {
         return (typeof(TMessage) == typeof(IntegrationMessage)
-            ? _settings.Publisher?.IntegrationExchange
-            : _settings.Publisher?.DomainExchange)
-               ?? throw new ArgumentException("please configure the Exchanges on the appsettings");
+            ? (await _settings.Value).Publisher?.IntegrationExchange
+            : (await _settings.Value).Publisher?.DomainExchange)
+               ?? throw new ArgumentException("Please configure the Exchanges on the appsettings.");
     }
 
     /// <summary>
     /// there is a limit of 255 characters on the type in RabbitMQ.
     /// in top of that the version will cause issues if it gets updated and the payload contains the old and so on.  
     /// </summary>
-    private string RemoveVersion(Type type)
+    private string RemoveVersion(Type aType)
     {
-        return RemoveVersionFromQualifiedName(type.AssemblyQualifiedName ?? "", 0);
+        return RemoveVersionFromQualifiedName(aType.AssemblyQualifiedName ?? "", 0);
     }
 
-    private string RemoveVersionFromQualifiedName(string assemblyQualifiedName, int indexStart)
+    private string RemoveVersionFromQualifiedName(string aAssemblyQualifiedName, int aIndexStart)
     {
-        var stringBuilder = new StringBuilder();
-        var indexOfGenericClose = assemblyQualifiedName.IndexOf("]]", indexStart + 1, StringComparison.Ordinal);
-        var indexOfVersion = assemblyQualifiedName.IndexOf(", Version", indexStart + 1, StringComparison.Ordinal);
+        var lStringBuilder = new StringBuilder();
+        var lIndexOfGenericClose = aAssemblyQualifiedName.IndexOf("]]", aIndexStart + 1, StringComparison.Ordinal);
+        var lIndexOfVersion = aAssemblyQualifiedName.IndexOf(", Version", aIndexStart + 1, StringComparison.Ordinal);
 
-        if (indexOfVersion < 0)
-            return assemblyQualifiedName;
+        if (lIndexOfVersion < 0)
+            return aAssemblyQualifiedName;
 
-        stringBuilder.Append(assemblyQualifiedName.Substring(indexStart, indexOfVersion - indexStart));
+        lStringBuilder.Append(aAssemblyQualifiedName.Substring(aIndexStart, lIndexOfVersion - aIndexStart));
 
-        if (indexOfGenericClose > 0)
-            stringBuilder.Append(RemoveVersionFromQualifiedName(assemblyQualifiedName, indexOfGenericClose));
+        if (lIndexOfGenericClose > 0)
+            lStringBuilder.Append(RemoveVersionFromQualifiedName(aAssemblyQualifiedName, lIndexOfGenericClose));
+        
+        return lStringBuilder.ToString();
+    }
 
-        return stringBuilder.ToString();
+    private async Task<ConnectionFactory> GetConnectionFactory()
+    {
+        var lSettings = await _settings.Value;
+        return new()
+        {
+            HostName = lSettings.Hostname,
+            Password = lSettings.Credentials!.Password,
+            UserName = lSettings.Credentials!.Username
+        };
     }
 }
