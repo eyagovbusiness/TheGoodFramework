@@ -17,18 +17,18 @@ public static class RabbitMQ_DI
         aServiceCollection.AddTransient<IRabbitMQSettingsFactory, RabbitMQSettingsFactory>();
 
         //// Retrieve the connection string using our helper method
-        //ServiceProvider sp = aServiceCollection.BuildServiceProvider();
-        //string connectionString = GenerateRabbitMqConnectionString(sp);
+        //ServiceProvider lServiceProvider = aServiceCollection.BuildServiceProvider();
+        //string lConnectionString = GenerateRabbitMqConnectionString(lServiceProvider);
 
         //aServiceCollection.AddHealthChecks()
-        //    .AddRabbitMQ(connectionString, name: aHealthCheckName, failureStatus: HealthStatus.Unhealthy);
+        //    .AddRabbitMQ(lConnectionString, name: aHealthCheckName, failureStatus: HealthStatus.Unhealthy);
     }
 
-    private static string GenerateRabbitMqConnectionString(IServiceProvider aServiceProvider)
-    {
-        RabbitMQSettings settings = aServiceProvider.GetRequiredService<IOptions<RabbitMQSettings>>().Value;
-        return $"amqp://{settings.Credentials?.Username}:{settings.Credentials?.Password}@{settings.Hostname}/";
-    }
+    //private static string GenerateRabbitMqConnectionString(IServiceProvider aServiceProvider)
+    //{
+    //    RabbitMQSettings lSettings = aServiceProvider.GetRequiredService<IOptions<RabbitMQSettings>>().Value;
+    //    return $"amqp://{lSettings.Credentials?.Username}:{lSettings.Credentials?.Password}@{lSettings.Hostname}/";
+    //}
 
     public static void AddRabbitMqConsumer<TMessage>(this IServiceCollection aServiceCollection)
         where TMessage : IMessage
