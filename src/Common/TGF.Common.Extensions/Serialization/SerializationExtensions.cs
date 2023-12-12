@@ -44,10 +44,7 @@ namespace TGF.Common.Extensions.Serialization
             where T : class, new()
         {
             if (aFilePathString.IsNullOrWhiteSpace()
-            && !(typeof(T).IsSerializable
-                    || typeof(ISerializable)
-                    .IsAssignableFrom(typeof(T))
-            ))
+                && !IsTypeSerializable(typeof(T)))
                 return new T();
 
             string lJson = string.Empty;
@@ -70,10 +67,7 @@ namespace TGF.Common.Extensions.Serialization
              where T : class, new()
         {
             if (aFilePathString.IsNullOrWhiteSpace()
-            && !(typeof(T).IsSerializable
-                 || typeof(ISerializable)
-                    .IsAssignableFrom(typeof(T))
-            ))
+                && !IsTypeSerializable(typeof(T)))
                 return new T();
 
             using Stream lStream = File.OpenRead(aFilePathString);
@@ -90,10 +84,7 @@ namespace TGF.Common.Extensions.Serialization
         public static void SerializeToFile<T>(this T aJsonObject, string aFilePathString, bool aOverride = false)
             where T : class, new()
         {
-            if (!(typeof(T).IsSerializable
-                  || typeof(ISerializable)
-                     .IsAssignableFrom(typeof(T))
-               ))
+            if (!IsTypeSerializable(typeof(T)))
                 throw new InvalidDataException("Error trying to serialize to file..");
 
             if (File.Exists(aFilePathString) && !aOverride)
@@ -115,7 +106,7 @@ namespace TGF.Common.Extensions.Serialization
         public static async Task SerializeToFileAsync<T>(this T aJsonObject, string aFilePathString, bool aOverride = false, bool aConfigureAwait = true)
             where T : class, new()
         {
-            if (!(typeof(T).IsSerializable || typeof(ISerializable).IsAssignableFrom(typeof(T))))
+            if (!IsTypeSerializable(typeof(T)))
                 throw new InvalidDataException("Error trying to serialize async to file..");
 
             FileMode fileMode = aOverride ? FileMode.Create : FileMode.CreateNew;
@@ -124,6 +115,13 @@ namespace TGF.Common.Extensions.Serialization
         }
 
         #endregion
+
+        // Custom method to check for serializability
+        private static bool IsTypeSerializable(Type aType)
+        {
+            return aType.GetCustomAttributes(typeof(SerializableAttribute), false).Length > 0
+                || typeof(ISerializable).IsAssignableFrom(aType);
+        }
 
     }
 }
