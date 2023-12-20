@@ -1,11 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using TGF.Common.ROP;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
-using TGF.Common.ROP;
 using TGF.Common.ROP.Result;
-#pragma warning disable CA1068 // CancellationToken parameters must come last
+
 namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 {
     /// <summary>
@@ -156,7 +156,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         {
             try
             {
-                if(aSaveResultOverride == default)
+                if (aSaveResultOverride == default)
                     return DefaultSaveResultFunc(
                         await _context.SaveChangesAsync(aCancellationToken)
                         , aResult);

@@ -1,5 +1,5 @@
-﻿using TGF.CA.Infrastructure.Discovery;
-using TGF.CA.Application;
+﻿using TGF.CA.Application;
+using TGF.CA.Infrastructure.Discovery;
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Settings
 {
     /// <summary>

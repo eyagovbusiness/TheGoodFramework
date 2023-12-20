@@ -1,6 +1,4 @@
-﻿using TGF.CA.Domain.Events;
-
-namespace TGF.CA.Domain.Primitives
+﻿namespace TGF.CA.Domain.Primitives
 {
     /// <summary>
     /// Represents the aggregate root.

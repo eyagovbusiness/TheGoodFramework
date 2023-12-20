@@ -104,7 +104,7 @@ namespace TGF.CA.Infrastructure.Security.Secrets.Vault
             }
             catch (Exception ex)
             {
-                _logger.LogError("Error initializing Vault client.", ex);
+                _logger.LogError(ex, "Error initializing Vault client.");
                 throw;
             }
         }

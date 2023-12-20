@@ -1,6 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Options;
 using TGF.CA.Infrastructure.Communication.Consumer;
 using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.Publisher;
