@@ -38,7 +38,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <param name="aObjectToValidate">The object to validate.</param>
         /// <param name="aValidator">The validator to use.</param>
         /// <returns>Either the original result or a failure, depending on the validation result.</returns>
-        public static IHttpResult<T> Validate<T,Tval>(this IHttpResult<T> aThisResult, Tval aObjectToValidate, FluentValidation.IValidator<Tval> aValidator)
+        public static IHttpResult<T> Validate<T, Tval>(this IHttpResult<T> aThisResult, Tval aObjectToValidate, FluentValidation.IValidator<Tval> aValidator)
         {
             var lValidationResult = aValidator.Validate(aObjectToValidate);
             return aThisResult.IsSuccess && lValidationResult.IsValid

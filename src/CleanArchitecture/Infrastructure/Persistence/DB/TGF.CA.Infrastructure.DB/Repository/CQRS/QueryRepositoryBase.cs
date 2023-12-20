@@ -11,7 +11,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
     /// </summary>
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    public abstract class QueryRepositoryBase<TRepository,TDbContext> : IQueryRepository
+    public abstract class QueryRepositoryBase<TRepository, TDbContext> : IQueryRepository
     where TDbContext : DbContext
     where TRepository : class
     {

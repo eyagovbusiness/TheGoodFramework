@@ -26,7 +26,7 @@ public class RabbitMQMessagePublisher<TMessage> : IExternalMessagePublisher<TMes
     public async Task Publish(TMessage aMessage, string? aRoutingKey = null, CancellationToken aCancellationToken = default)
     {
         using IConnection lConnection = (await _connectionFactory.Value).CreateConnection();
-        using IModel lModel = lConnection.CreateModel(); 
+        using IModel lModel = lConnection.CreateModel();
         PublishSingle(aMessage, lModel, aRoutingKey);
     }
 
@@ -81,7 +81,7 @@ public class RabbitMQMessagePublisher<TMessage> : IExternalMessagePublisher<TMes
 
         if (lIndexOfGenericClose > 0)
             lStringBuilder.Append(RemoveVersionFromQualifiedName(aAssemblyQualifiedName, lIndexOfGenericClose));
-        
+
         return lStringBuilder.ToString();
     }
 
