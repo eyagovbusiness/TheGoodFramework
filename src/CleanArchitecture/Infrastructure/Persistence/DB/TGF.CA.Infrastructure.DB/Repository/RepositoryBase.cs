@@ -1,10 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using TGF.Common.ROP.HttpResult;
-using TGF.Common.ROP;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using TGF.CA.Infrastructure.DB.Repository.CQRS;
-#pragma warning disable CA1068 // CancellationToken parameters must come last
+using TGF.Common.ROP;
+using TGF.Common.ROP.HttpResult;
+
 namespace TGF.CA.Infrastructure.DB.Repository
 {
     /// <summary>
@@ -37,16 +37,16 @@ namespace TGF.CA.Infrastructure.DB.Repository
             => await _commandRepository.TryCommandAsync(aCommandAsyncAction, aCancellationToken, aSaveResultOverride);
         public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<IHttpResult<T>> aCommandAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
             => await _commandRepository.TryCommandAsync(aCommandAction, aCancellationToken, aSaveResultOverride);
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<T> aCommandAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default) 
+        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<T> aCommandAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
             => await _commandRepository.TryCommandAsync(aCommandAction, aCancellationToken, aSaveResultOverride);
 
-        public async Task<IHttpResult<T>> TryQueryAsync<T>(Func<CancellationToken, Task<IHttpResult<T>>> aQueryAsyncAction, CancellationToken aCancellationToken = default) 
+        public async Task<IHttpResult<T>> TryQueryAsync<T>(Func<CancellationToken, Task<IHttpResult<T>>> aQueryAsyncAction, CancellationToken aCancellationToken = default)
             => await _queryRepository.TryQueryAsync(aQueryAsyncAction, aCancellationToken);
-        public async Task<IHttpResult<T>> TryQueryAsync<T>(Func<CancellationToken, Task<T>> aQueryAction, CancellationToken aCancellationToken = default) 
+        public async Task<IHttpResult<T>> TryQueryAsync<T>(Func<CancellationToken, Task<T>> aQueryAction, CancellationToken aCancellationToken = default)
             => await _queryRepository.TryQueryAsync(aQueryAction, aCancellationToken);
-        public IHttpResult<T> TryQuery<T>(Func<IHttpResult<T>> aQueryAction) 
+        public IHttpResult<T> TryQuery<T>(Func<IHttpResult<T>> aQueryAction)
             => _queryRepository.TryQuery(aQueryAction);
-        public IHttpResult<T> TryQuery<T>(Func<T> aQueryAction) 
+        public IHttpResult<T> TryQuery<T>(Func<T> aQueryAction)
             => _queryRepository.TryQuery(aQueryAction);
 
         #endregion
@@ -97,7 +97,7 @@ namespace TGF.CA.Infrastructure.DB.Repository
             {
             }
         }
-        private class InternalQueryRepository : QueryRepositoryBase<TRepository,TDbContext>
+        private class InternalQueryRepository : QueryRepositoryBase<TRepository, TDbContext>
         {
             internal InternalQueryRepository(TDbContext aContext, ILogger<TRepository> aLogger) : base(aContext, aLogger)
             {
