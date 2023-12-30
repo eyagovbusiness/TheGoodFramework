@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using System.Net;
+using System.Text.Json;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
 
@@ -11,6 +14,8 @@ namespace TGF.CA.Presentation
     /// </summary>
     public static class ROP_ResultsExtensions
     {
+        private static JsonSerializerOptions? _cachedJsonOptions;
+
         /// <summary>
         /// Gets a new instance of an <see cref="IResult"/> created from the provided <paramref name="aHttpResult"/>.
         /// </summary>
@@ -52,16 +57,16 @@ namespace TGF.CA.Presentation
                 _httpStatusCode = (int)aHttpStatusCode;
             }
 
-            public Task ExecuteAsync(HttpContext httpContext)
+            public async Task ExecuteAsync(HttpContext httpContext)
             {
                 httpContext.Response.ContentType = "application/json";
                 httpContext.Response.StatusCode = _httpStatusCode;
 
-                // Serialize the JSON data and write it to the response
-                var json = JsonConvert.SerializeObject(_resultValue);
-                return httpContext.Response.WriteAsync(json);
-            }
+                _cachedJsonOptions ??= httpContext.RequestServices.GetService<IOptions<JsonOptions>>()?.Value?.JsonSerializerOptions;
 
+                var lJson = System.Text.Json.JsonSerializer.Serialize(_resultValue, _cachedJsonOptions);
+                await httpContext.Response.WriteAsync(lJson);
+            }
         }
 
         #region ProblemDetail building
