@@ -2,6 +2,8 @@
 
 namespace TGF.CA.Domain.Events
 {
+    //to-do: IMPLEMENT WITH RABBITMQ
+
     /// <summary>
     /// Represents a domain event handler interface.
     /// </summary>

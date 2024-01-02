@@ -1,4 +1,5 @@
 ﻿using TGF.CA.Domain.Primitives;
+using TGF.Common.ROP.Errors;
 
 namespace TGF.CA.Domain.Core.Exceptions
 {
@@ -11,13 +12,13 @@ namespace TGF.CA.Domain.Core.Exceptions
         /// Initializes a new instance of the <see cref="DomainException"/> class.
         /// </summary>
         /// <param name="error">The error containing the information about what happened.</param>
-        public DomainException(Error error)
+        public DomainException(IError error)
             : base(error.Message)
             => Error = error;
 
         /// <summary>
         /// Gets the error.
         /// </summary>
-        public Error Error { get; }
+        public IError Error { get; }
     }
 }

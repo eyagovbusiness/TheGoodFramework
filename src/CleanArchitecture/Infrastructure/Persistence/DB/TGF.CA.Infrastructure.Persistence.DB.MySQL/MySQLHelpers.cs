@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Application;
+using TGF.CA.Domain.External;
 using TGF.CA.Infrastructure.Discovery;
 
 namespace TGF.CA.Infrastructure.DB.MySQL
@@ -49,7 +50,7 @@ namespace TGF.CA.Infrastructure.DB.MySQL
                .Get<MySQLSecrets>("mysql")
                 ?? throw new Exception("Error loading retrieving the MySQL secrets!!");
 
-        private record MySQLSecrets
+        private record MySQLSecrets : IBasicCredentials
         {
             public string? Username { get; set; }
             public string? Password { get; set; }

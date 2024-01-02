@@ -1,4 +1,6 @@
-﻿namespace TGF.CA.Application
+﻿using TGF.CA.Domain.External;
+
+namespace TGF.CA.Application
 {
     public interface ISecretsManager
     {

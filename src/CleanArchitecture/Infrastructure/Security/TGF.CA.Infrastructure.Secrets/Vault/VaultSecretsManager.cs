@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using TGF.CA.Application;
+using TGF.CA.Domain.External;
 using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Infrastructure.Security.Secrets.Common;
 using VaultSharp;
@@ -10,7 +11,7 @@ using VaultSharp.V1.SecretsEngines;
 namespace TGF.CA.Infrastructure.Security.Secrets.Vault
 {
     /// <summary>
-    /// Represents username and password credentials specifically for internal usage.
+    /// Represents username and password credentials specifically for internal usage.DO NOT DELETE, seems not used but it is to allow matching between the interface and the base class
     /// </summary>
     internal class InternalUsernamePasswordCredentials : UsernamePasswordCredentials, IBasicCredentials { }
 
