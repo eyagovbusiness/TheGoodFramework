@@ -9,25 +9,25 @@ namespace TGF.CA.Infrastructure.Communication.RabbitMQ
     {
         public static void AddServiceBusIntegrationPublisher(this IServiceCollection aServiceCollection)
         {
-            aServiceCollection.AddRabbitMQ("IntegrationPublisher");
+            aServiceCollection.AddRabbitMQInfrastructureServices("IntegrationPublisher");
             aServiceCollection.AddRabbitMQPublisher<IntegrationMessage>();
         }
 
         public static void AddServiceBusIntegrationConsumer(this IServiceCollection aServiceCollection)
         {
-            aServiceCollection.AddRabbitMQ("IntegrationConsumer");
+            aServiceCollection.AddRabbitMQInfrastructureServices("IntegrationConsumer");
             aServiceCollection.AddRabbitMqConsumer<IntegrationMessage>();
         }
 
         public static void AddServiceBusDomainPublisher(this IServiceCollection aServiceCollection)
         {
-            aServiceCollection.AddRabbitMQ("DomainPublisher");
+            aServiceCollection.AddRabbitMQInfrastructureServices("DomainPublisher");
             aServiceCollection.AddRabbitMQPublisher<DomainMessage>();
         }
 
         public static void AddServiceBusDomainConsumer(this IServiceCollection aServiceCollection)
         {
-            aServiceCollection.AddRabbitMQ("DomainConsumer");
+            aServiceCollection.AddRabbitMQInfrastructureServices("DomainConsumer");
             aServiceCollection.AddRabbitMqConsumer<DomainMessage>();
         }
 
