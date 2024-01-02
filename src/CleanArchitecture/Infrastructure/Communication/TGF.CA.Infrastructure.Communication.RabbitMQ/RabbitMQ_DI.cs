@@ -1,3 +1,4 @@
+using HealthChecks.RabbitMQ;
 using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Infrastructure.Communication.Consumer;
 using TGF.CA.Infrastructure.Communication.Messages;
@@ -10,23 +11,13 @@ using TGF.CA.Infrastructure.Communication.RabbitMQ.Settings;
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ;
 public static class RabbitMQ_DI
 {
-    public static void AddRabbitMQ(this IServiceCollection aServiceCollection, string aHealthCheckName)
+    public static void AddRabbitMQInfrastructureServices(this IServiceCollection aServiceCollection, string aHealthCheckName)
     {
         aServiceCollection.AddTransient<IRabbitMQSettingsFactory, RabbitMQSettingsFactory>();
 
-        //// Retrieve the connection string using our helper method
-        //ServiceProvider lServiceProvider = aServiceCollection.BuildServiceProvider();
-        //string lConnectionString = GenerateRabbitMqConnectionString(lServiceProvider);
-
-        //aServiceCollection.AddHealthChecks()
-        //    .AddRabbitMQ(lConnectionString, name: aHealthCheckName, failureStatus: HealthStatus.Unhealthy);
+        aServiceCollection.AddHealthChecks()
+        .AddCheck<CusomRabbitMQHealthCheck>(aHealthCheckName);
     }
-
-    //private static string GenerateRabbitMqConnectionString(IServiceProvider aServiceProvider)
-    //{
-    //    RabbitMQSettings lSettings = aServiceProvider.GetRequiredService<IOptions<RabbitMQSettings>>().Value;
-    //    return $"amqp://{lSettings.Credentials?.Username}:{lSettings.Credentials?.Password}@{lSettings.Hostname}/";
-    //}
 
     public static void AddRabbitMqConsumer<TMessage>(this IServiceCollection aServiceCollection)
         where TMessage : IMessage

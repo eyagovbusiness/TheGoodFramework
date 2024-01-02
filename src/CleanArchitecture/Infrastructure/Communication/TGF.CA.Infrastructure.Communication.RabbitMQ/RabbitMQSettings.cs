@@ -16,6 +16,16 @@ public class RabbitMQSettings
     {
         Hostname = hostname;
     }
+
+    public string GetConnectionString()
+    {
+        if (string.IsNullOrEmpty(Hostname) || Credentials == null || string.IsNullOrEmpty(Credentials.Username) || string.IsNullOrEmpty(Credentials.Password))
+        {
+            throw new InvalidOperationException("Error building the connection string: RabbitMQ settings are incomplete.");
+        }
+
+        return $"amqp://{Credentials.Username}:{Credentials.Password}@{Hostname}";
+    }
 }
 
 public record RabbitMQCredentials
