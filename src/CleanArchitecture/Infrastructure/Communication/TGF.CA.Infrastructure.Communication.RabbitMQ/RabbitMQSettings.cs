@@ -1,5 +1,7 @@
+using TGF.CA.Domain.External;
+
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ;
-//CODE FROM https://github.com/ElectNewt/Distribt
+//code inspired from https://github.com/ElectNewt/Distribt
 public class RabbitMQSettings
 {
     public string? Hostname { get; private set; }
@@ -28,10 +30,10 @@ public class RabbitMQSettings
     }
 }
 
-public record RabbitMQCredentials
+public record RabbitMQCredentials : IBasicCredentials
 {
-    public string? Username { get; init; }
-    public string? Password { get; init; }
+    public string? Username { get; set; }
+    public string? Password { get; set; }
 }
 
 public record PublisherSettings
