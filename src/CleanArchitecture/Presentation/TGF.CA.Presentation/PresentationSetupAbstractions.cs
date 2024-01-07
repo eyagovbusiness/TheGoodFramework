@@ -59,7 +59,7 @@ namespace TGF.CA.Presentation
                 ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings. Please add this configuration.");
             aWebApplicationBuilder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowFrontCorsPolicy", builder => builder.WithOrigins(lFrontUrl)
+                options.AddPolicy("AllowFrontCorsPolicy", builder => builder.SetIsOriginAllowedToAllowWildcardSubdomains().WithOrigins(lFrontUrl)
                                                                     .AllowAnyHeader().AllowAnyMethod().AllowCredentials());
             });
             return aWebApplicationBuilder;
