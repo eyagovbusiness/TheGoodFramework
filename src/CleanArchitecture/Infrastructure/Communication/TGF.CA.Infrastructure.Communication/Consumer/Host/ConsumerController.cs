@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using TGF.CA.Infrastructure.Communication.Consumer.Manager;
 
 namespace TGF.CA.Infrastructure.Communication.Consumer.Host;
-//CODE FROM https://github.com/ElectNewt/Distribt
+
 public class ConsumerController<TMessage> : ControllerBase
 {
     private readonly IConsumerManager<TMessage> _consumerManager;

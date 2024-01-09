@@ -2,7 +2,7 @@
 using TGF.CA.Infrastructure.Communication.Consumer.Handler;
 using TGF.CA.Infrastructure.Communication.Messages;
 
-//code inspired from https://github.com/ElectNewt/Distribt
+
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ
 {
     public static class ServiceBus_DI

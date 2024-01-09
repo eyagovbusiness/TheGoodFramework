@@ -7,7 +7,7 @@ using TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
 using TGF.CA.Infrastructure.Communication.RabbitMQ.Publisher;
 using TGF.CA.Infrastructure.Communication.RabbitMQ.Settings;
 
-//code inspired from https://github.com/ElectNewt/Distribt
+
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ;
 public static class RabbitMQ_DI
 {

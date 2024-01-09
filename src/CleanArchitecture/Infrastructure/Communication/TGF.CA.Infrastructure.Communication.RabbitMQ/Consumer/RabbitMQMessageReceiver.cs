@@ -4,7 +4,7 @@ using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.Common.Serialization;
 
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
-//CODE FROM https://github.com/ElectNewt/Distribt
+
 public class RabbitMQMessageReceiver : DefaultBasicConsumer
 {
     private readonly IModel _channel;

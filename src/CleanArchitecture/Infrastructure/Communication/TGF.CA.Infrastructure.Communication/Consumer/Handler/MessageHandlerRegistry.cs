@@ -1,7 +1,7 @@
 using System.Collections.Concurrent;
 
 namespace TGF.CA.Infrastructure.Communication.Consumer.Handler;
-//CODE FROM https://github.com/ElectNewt/Distribt
+
 public interface IMessageHandlerRegistry
 {
     IEnumerable<IMessageHandler> GetMessageHandlerForType(Type messageHandlerType, Type messageType);

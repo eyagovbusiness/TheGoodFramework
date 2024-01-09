@@ -1,7 +1,7 @@
 using TGF.CA.Domain.External;
 
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ;
-//code inspired from https://github.com/ElectNewt/Distribt
+
 public class RabbitMQSettings
 {
     public string? Hostname { get; private set; }

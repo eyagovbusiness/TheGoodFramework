@@ -1,13 +1,22 @@
-﻿//using MediatR;
+﻿//using TGF.CA.Domain.Primitives;
 
 namespace TGF.CA.Domain.Events
 {
-    //TO-DO: IMPLEMENT WITH RABBITMQ
+    /// <summary>
+    /// Part of EventSourcing. Represents the interface for an event that is raised within the domain.
+    /// Any domain event should implement this interface.
+    /// </summary>
+    public interface IDomainEvent
+    {
+    }
 
     /// <summary>
-    /// Represents the interface for an event that is raised within the domain.
+    /// Part of EventSourcing. Represents the interface for an event that is raised within the domain.
+    /// Any domain event should implement this interface.
     /// </summary>
-    //public interface IDomainEvent : INotification
+    /// <remarks>No use for now!!</remarks>
+    //public interface IDomainEvent<TEntity>
+    //where TEntity : Entity
     //{
     //}
 }

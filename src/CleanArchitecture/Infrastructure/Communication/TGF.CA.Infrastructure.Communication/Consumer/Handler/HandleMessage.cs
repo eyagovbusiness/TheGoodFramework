@@ -1,6 +1,6 @@
 using System.Reflection;
 using TGF.CA.Infrastructure.Communication.Messages;
-//CODE FROM https://github.com/ElectNewt/Distribt
+
 namespace TGF.CA.Infrastructure.Communication.Consumer.Handler;
 
 public interface IHandleMessage
