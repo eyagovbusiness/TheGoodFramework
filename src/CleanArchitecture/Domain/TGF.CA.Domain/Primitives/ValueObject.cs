@@ -5,43 +5,31 @@
     /// </summary>
     public abstract class ValueObject : IEquatable<ValueObject>
     {
-        public static bool operator ==(ValueObject a, ValueObject b)
+        public static bool operator ==(ValueObject aFirstObject, ValueObject aSecondObject)
         {
-            if (a is null && b is null)
-            {
+            if (aFirstObject is null && aSecondObject is null)
                 return true;
-            }
 
-            if (a is null || b is null)
-            {
+            if (aFirstObject is null || aSecondObject is null)
                 return false;
-            }
 
-            return a.Equals(b);
+            return aFirstObject.Equals(aSecondObject);
         }
 
-        public static bool operator !=(ValueObject a, ValueObject b) => !(a == b);
+        public static bool operator !=(ValueObject aFirstObject, ValueObject aSecondObject) => !(aFirstObject == aSecondObject);
 
-        /// <inheritdoc />
-        public bool Equals(ValueObject other) => !(other is null) && GetAtomicValues().SequenceEqual(other.GetAtomicValues());
+        public bool Equals(ValueObject aOtherObject) => aOtherObject is not null && GetAtomicValues().SequenceEqual(aOtherObject.GetAtomicValues());
 
-        /// <inheritdoc />
-        public override bool Equals(object obj)
+        public override bool Equals(object aObject)
         {
-            if (obj == null)
-            {
+            if (aObject == null)
                 return false;
-            }
 
-            if (GetType() != obj.GetType())
-            {
+            if (GetType() != aObject.GetType())
                 return false;
-            }
 
-            if (!(obj is ValueObject valueObject))
-            {
+            if (aObject is not ValueObject valueObject)
                 return false;
-            }
 
             return GetAtomicValues().SequenceEqual(valueObject.GetAtomicValues());
         }
@@ -49,14 +37,12 @@
         /// <inheritdoc />
         public override int GetHashCode()
         {
-            HashCode hashCode = default;
+            HashCode lHashCode = default;
 
-            foreach (object obj in GetAtomicValues())
-            {
-                hashCode.Add(obj);
-            }
+            foreach (object lObject in GetAtomicValues())
+                lHashCode.Add(lObject);
 
-            return hashCode.ToHashCode();
+            return lHashCode.ToHashCode();
         }
 
         /// <summary>
@@ -64,5 +50,6 @@
         /// </summary>
         /// <returns>The collection of objects representing the value object values.</returns>
         protected abstract IEnumerable<object> GetAtomicValues();
+
     }
 }
