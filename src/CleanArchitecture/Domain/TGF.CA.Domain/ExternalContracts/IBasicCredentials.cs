@@ -3,9 +3,9 @@
 namespace TGF.CA.Domain.External
 {
     /// <summary>
-    /// Represents credentials with a username and password.
+    /// Interface for classes that represent credentials with a username and password.
     /// </summary>
-    public interface IUsernamePasswordCredentials
+    public interface IBasicCredentials
     {
         /// <summary>
         /// Gets or sets the username.

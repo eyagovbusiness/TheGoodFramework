@@ -2,7 +2,7 @@ using System.Reflection;
 using TGF.CA.Infrastructure.Communication.Messages;
 
 namespace TGF.CA.Infrastructure.Communication.Publisher.Domain;
-//CODE FROM https://github.com/ElectNewt/Distribt
+
 public class DomainMessageMapper
 {
     public static DomainMessage MapToMessage(object message, Metadata metadata)

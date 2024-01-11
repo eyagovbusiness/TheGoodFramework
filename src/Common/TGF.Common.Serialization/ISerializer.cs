@@ -1,6 +1,5 @@
 namespace TGF.Common.Serialization;
 
-//CODE FROM https://github.com/ElectNewt/Distribt
 public interface ISerializer
 {
     T DeserializeObject<T>(string input);

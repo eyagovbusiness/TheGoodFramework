@@ -5,7 +5,6 @@ using TGF.CA.Infrastructure.Communication.Publisher;
 using TGF.CA.Infrastructure.Communication.RabbitMQ.Settings;
 using TGF.Common.Serialization;
 
-//code inspired from https://github.com/ElectNewt/Distribt
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Publisher;
 public class RabbitMQMessagePublisher<TMessage> : IExternalMessagePublisher<TMessage>
     where TMessage : IMessage

@@ -1,7 +1,7 @@
 using TGF.CA.Infrastructure.Communication.Messages;
 
 namespace TGF.CA.Infrastructure.Communication.Publisher.Domain;
-//CODE FROM https://github.com/ElectNewt/Distribt
+
 public interface IDomainMessagePublisher
 {
     Task Publish(object message, Metadata? metadata = null, string? routingKey = null, CancellationToken cancellationToken = default);

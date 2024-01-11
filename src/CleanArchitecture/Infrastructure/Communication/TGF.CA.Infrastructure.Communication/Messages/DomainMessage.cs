@@ -1,6 +1,6 @@
 
 namespace TGF.CA.Infrastructure.Communication.Messages;
-//CODE FROM https://github.com/ElectNewt/Distribt
+
 public record DomainMessage : IMessage
 {
     public string MessageIdentifier { get; }

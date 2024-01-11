@@ -2,7 +2,7 @@ using Microsoft.Extensions.Hosting;
 using TGF.CA.Infrastructure.Communication.Consumer.Manager;
 
 namespace TGF.CA.Infrastructure.Communication.Consumer.Host;
-//CODE FROM https://github.com/ElectNewt/Distribt
+
 public class ConsumerHostedService<TMessage> : IHostedService
 {
     private readonly IConsumerManager<TMessage> _consumerManager;

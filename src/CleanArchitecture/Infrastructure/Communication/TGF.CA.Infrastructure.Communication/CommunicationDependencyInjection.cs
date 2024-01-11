@@ -7,7 +7,7 @@ using TGF.CA.Infrastructure.Communication.Publisher.Domain;
 using TGF.CA.Infrastructure.Communication.Publisher.Integration;
 
 namespace TGF.CA.Infrastructure.Communication;
-//CODE FROM https://github.com/ElectNewt/Distribt
+
 public static class CommunicationDependencyInjection
 {
     public static void AddConsumer<TMessage>(this IServiceCollection serviceCollection)

@@ -5,7 +5,7 @@ using TGF.CA.Infrastructure.Communication.Messages;
 using TGF.CA.Infrastructure.Communication.RabbitMQ.Settings;
 using ISerializer = TGF.Common.Serialization.ISerializer;
 
-//code inspired from https://github.com/ElectNewt/Distribt
+
 namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Consumer;
 public class RabbitMQMessageConsumer<TMessage> : IMessageConsumer<TMessage>
 {

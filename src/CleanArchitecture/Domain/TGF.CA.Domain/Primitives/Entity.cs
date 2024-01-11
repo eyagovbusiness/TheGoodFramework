@@ -1,100 +1,72 @@
 ﻿
-using TGF.CA.Domain.Utility;
-
 namespace TGF.CA.Domain.Primitives
 {
     /// <summary>
-    /// Represents the base class that all entities derive from.
+    /// Represents the base class for all entities in the domain model.
+    /// This class introduces a generic approach to handling entity keys,
+    /// allowing for flexibility in the choice of key type while ensuring
+    /// certain type constraints are met.
     /// </summary>
-    public abstract class Entity : IEquatable<Entity>
+    /// <typeparam name="TKey">
+    /// The type of the primary key for the entity. TKey must be a value type
+    /// (struct) and implement IEquatable<TKey> for efficient equality comparison.
+    /// Examples of valid types include int, long, Guid, etc.
+    /// </typeparam>
+    public abstract class Entity<TKey>
+        where TKey : struct, IEquatable<TKey>
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="Entity"/> class.
+        /// The unique identifier for the Entity.
         /// </summary>
-        /// <param name="id">The entity identifier.</param>
-        protected Entity(Guid id)
-            : this()
-        {
-            Ensure.NotEmpty(id, "The identifier is required.", nameof(id));
+        public TKey Id { get; protected set; }
 
-            Id = id;
+        protected Entity() { }
+
+        /// <summary>
+        /// Determines whether the specified object is equal to the current object.
+        /// Equality is based solely on the entity's identifier.
+        /// </summary>
+        /// <param name="aObject">The object to compare with the current object.</param>
+        /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
+#pragma warning disable CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
+        public override bool Equals(object aOtherObject)
+#pragma warning restore CS8765 // Nullability of type of parameter doesn't match overridden member (possibly because of nullability attributes).
+        => aOtherObject is Entity<TKey> lOtherObject && Id.Equals(lOtherObject.Id);
+
+
+        /// <summary>
+        /// Serves as the default hash function.
+        /// The hash code is based on the entity's identifier.
+        /// </summary>
+        /// <returns>A hash code for the current object.</returns>
+        public override int GetHashCode()
+        => Id.GetHashCode();
+
+        /// <summary>
+        /// Determines whether two specified instances of Entity<TKey> are equal.
+        /// </summary>
+        /// <param name="aFirstEntity">The first object to compare.</param>
+        /// <param name="aSecondEntity">The second object to compare.</param>
+        /// <returns>true if <see cref="aFirstEntity"/> and <see cref="aSecondEntity"/> represent the same object or both are null; otherwise, false.</returns>
+        public static bool operator ==(Entity<TKey> aFirstEntity, Entity<TKey> aSecondEntity)
+        {
+            if (ReferenceEquals(aFirstEntity, aSecondEntity))
+                return true;
+
+            if (ReferenceEquals(aFirstEntity, null) || ReferenceEquals(aSecondEntity, null))
+                return false;
+
+            return aFirstEntity.Equals(aSecondEntity);
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Entity"/> class.
+        /// Determines whether two specified instances of Entity<TKey> are not equal.
         /// </summary>
-        /// <remarks>
-        /// Required by EF Core.
-        /// </remarks>
-        protected Entity()
-        {
-        }
+        /// <param name="aFirstEntity">The first object to compare.</param>
+        /// <param name="aSecondEntity">The second object to compare.</param>
+        /// <returns>true if a and b do not represent the same object; otherwise, false.</returns>
+        public static bool operator !=(Entity<TKey> aFirstEntity, Entity<TKey> aSecondEntity)
+        => !(aFirstEntity == aSecondEntity);
 
-        /// <summary>
-        /// Gets or sets the entity identifier.
-        /// </summary>
-        public Guid Id { get; private set; }
-
-        public static bool operator ==(Entity a, Entity b)
-        {
-            if (a is null && b is null)
-            {
-                return true;
-            }
-
-            if (a is null || b is null)
-            {
-                return false;
-            }
-
-            return a.Equals(b);
-        }
-
-        public static bool operator !=(Entity a, Entity b) => !(a == b);
-
-        /// <inheritdoc />
-        public bool Equals(Entity other)
-        {
-            if (other is null)
-            {
-                return false;
-            }
-
-            return ReferenceEquals(this, other) || Id == other.Id;
-        }
-
-        /// <inheritdoc />
-        public override bool Equals(object obj)
-        {
-            if (obj is null)
-            {
-                return false;
-            }
-
-            if (ReferenceEquals(this, obj))
-            {
-                return true;
-            }
-
-            if (obj.GetType() != GetType())
-            {
-                return false;
-            }
-
-            if (!(obj is Entity other))
-            {
-                return false;
-            }
-
-            if (Id == Guid.Empty || other.Id == Guid.Empty)
-            {
-                return false;
-            }
-
-            return Id == other.Id;
-        }
-
-        /// <inheritdoc />
-        public override int GetHashCode() => Id.GetHashCode() * 41;
     }
 }
