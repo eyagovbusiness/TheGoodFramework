@@ -1,12 +1,23 @@
-﻿namespace TGF.CA.Domain.Aggregate
+﻿using TGF.CA.Domain.Primitives;
+
+namespace TGF.CA.Domain.Aggregate
 {
     /// <summary>
     /// Represents the aggregate root with event sourcing.
     /// </summary>
-    public class AggregateRoot
+    /// <typeparam name="TKey">
+    /// The type of the primary key for the entity. TKey must be a value type
+    /// (struct) and implement IEquatable<TKey> for efficient equality comparison.
+    /// Examples of valid types include int, long, Guid, etc.
+    /// </typeparam>
+    public class Aggregate<TKey>
+        where TKey : struct, IEquatable<TKey>
     {
-        private List<AggregateChange> _changes = [];
-        public Guid Id { get; internal set; }
+        private List<AggregateChange<TKey>> _changes = [];
+
+        //public Entity<TKey> RootEntitiy { get; internal set; }
+        //public TKey Id => RootEntitiy.Id;
+        public TKey Id { get; set; }
 
         private string AggregateType => GetType().Name;
         public int Version { get; set; } = 0;
@@ -17,16 +28,16 @@
         /// </summary>
         private bool ReadingFromHistory { get; set; } = false;
 
-        protected AggregateRoot(Guid aId)
+        protected Aggregate(TKey aId)
         => Id = aId;
 
-        internal void Initialize(Guid aId)
+        internal void Initialize(TKey aId)
         {
             Id = aId;
             _changes = [];
         }
 
-        public List<AggregateChange> GetUncommittedChanges()
+        public List<AggregateChange<TKey>> GetUncommittedChanges()
         => _changes.Where(change => change.IsNew).ToList();
 
         public void MarkChangesAsCommitted()
@@ -39,7 +50,7 @@
 
             Version++;
 
-            var lChange = new AggregateChange(
+            var lChange = new AggregateChange<TKey>(
                 aEventObject,
                 Id,
                 aEventObject.GetType(),
@@ -52,7 +63,7 @@
         }
 
 
-        public void LoadFromHistory(IList<AggregateChange> aHistory)
+        public void LoadFromHistory(IList<AggregateChange<TKey>> aHistory)
         {
             if (!aHistory.Any())
                 return;

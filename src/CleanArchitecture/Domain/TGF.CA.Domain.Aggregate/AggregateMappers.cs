@@ -3,8 +3,9 @@ namespace TGF.CA.Domain.Aggregate
 {
     public static class AggregateMappers
     {
-        public static AggregateChange ToAggregateChange(AggregateChangeEntity aChange)
-        =>new(
+        public static AggregateChange<TKey> ToAggregateChange<TKey>(AggregateChangeEntity<TKey> aChange)
+            where TKey : struct, IEquatable<TKey>
+        => new (
             aChange.Content,
             aChange.AggregateId,
             aChange.GetType(),
@@ -13,7 +14,8 @@ namespace TGF.CA.Domain.Aggregate
             false
         );
 
-        public static AggregateChangeEntity ToTypedAggregateChangeDto(Guid aId, string aAggregateType, AggregateChange aChange)
+        public static AggregateChangeEntity<TKey> ToTypedAggregateChangeDto<TKey>(TKey aId, string aAggregateType, AggregateChange<TKey> aChange)
+            where TKey : struct, IEquatable<TKey>
         => new(
             aId,
             aChange.Content,

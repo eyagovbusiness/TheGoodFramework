@@ -4,3 +4,8 @@ Model Conventions:
 https://community.abp.io/posts/model-building-conventions-in-entity-framework-core-7.0-vo0hk68e
 https://learn.microsoft.com/en-us/dotnet/api/microsoft.entityframeworkcore.metadata.conventions.iconvention?view=efcore-7.0
 
+Best practices working with Aggregates: 
+-References: Reference other aggregates by identity, not by holding direct references to other aggregates.
+-Transactions: Transactions should not span multiple aggregates to maintain consistency without excessive locking.
+-Size of Aggregates: Keep aggregates as small as possible. Large aggregates can lead to complex transactions and performance issues.
+
