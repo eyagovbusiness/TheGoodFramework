@@ -1,13 +1,13 @@
-# BASE IMAGE for runtime
-FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine as base
-EXPOSE 8080 8081
+FROM registry.guildswarm.org/base-images/alpine-base:latest as base
 
-#FROM gswi-base:latest as base
-#USER root
-# Add some libs required by .NET runtime 
-#RUN apk add --no-cache libstdc++ libintl icu
-#USER guildswarm
+ARG ASPNET_VERSION=8.0.1
 
+# Install ASP.NET Core
+RUN wget -O aspnetcore.tar.gz https://dotnetcli.azureedge.net/dotnet/aspnetcore/Runtime/$ASPNET_VERSION/aspnetcore-runtime-$ASPNET_VERSION-linux-musl-x64.tar.gz \
+    && aspnetcore_sha512='b749398f5ad059c9d51e3153c9f41ac23145aea38e83a736259c4206fdb920c245685a60a6d4bcf74ce41c70f751fd133219fb66b263018ae53025e129535063' \
+    && echo "$aspnetcore_sha512  aspnetcore.tar.gz" | sha512sum -c - \
+    && tar -oxzf aspnetcore.tar.gz -C /usr/share/dotnet ./shared/Microsoft.AspNetCore.App \
+    && rm aspnetcore.tar.gz
 
 # BUILD IMAGE
 FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
@@ -31,4 +31,5 @@ FROM base AS final
 WORKDIR /app/BasePackages
 ## Copy NuGet packages and other necessary files from the build stage
 COPY --from=build /src/TGFPackages ./TGF
-
+USER guildswarm
+CMD ["/bin/sh"]

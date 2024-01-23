@@ -1,4 +1,3 @@
-harbor-base-images #id harbor
 pipeline {
     agent {
         label 'frontdockeragent'
