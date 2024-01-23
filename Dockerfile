@@ -2,6 +2,7 @@ FROM registry.guildswarm.org/base-images/alpine-base:latest as base
 
 ARG ASPNET_VERSION=8.0.1
 
+USER root
 # Install ASP.NET Core
 RUN wget -O aspnetcore.tar.gz https://dotnetcli.azureedge.net/dotnet/aspnetcore/Runtime/$ASPNET_VERSION/aspnetcore-runtime-$ASPNET_VERSION-linux-musl-x64.tar.gz \
     && aspnetcore_sha512='b749398f5ad059c9d51e3153c9f41ac23145aea38e83a736259c4206fdb920c245685a60a6d4bcf74ce41c70f751fd133219fb66b263018ae53025e129535063' \
