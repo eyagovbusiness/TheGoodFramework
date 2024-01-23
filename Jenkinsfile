@@ -10,6 +10,7 @@ pipeline {
             steps {
                 script {
                     container ('dockertainer'){
+                    if (env.CHANGE_ID != null) {
                           def version = readFile('version').trim()
                           env.VERSION = version
                           sh''' find . \\( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.config" \\) -print0 \
@@ -20,6 +21,7 @@ pipeline {
                         }
                     }
                 }
+            }
         stage('Push Docker Images') {
             steps {
                 script {
