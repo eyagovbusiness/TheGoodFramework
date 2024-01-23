@@ -45,6 +45,7 @@ pipeline {
                         if (env.CHANGE_ID == null) {
                             sh "docker rmi registry.guildswarm.org/base-images/thegoodframework:$version"
                             sh "docker rmi registry.guildswarm.org/base-images/thegoodframework:latest"
+                            sh "docker rmi registry.guildswarm.org/base-images/alpine-base:latest"
                             }
                         }
                     }
