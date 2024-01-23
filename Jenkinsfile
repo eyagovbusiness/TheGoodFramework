@@ -26,7 +26,7 @@ pipeline {
             steps {
                 script {
                     container ('dockertainer'){
-                        if (env.CHANGE_ID == null) {
+                        if (env.CHANGE_ID == null) { // this is for just the build once is passed
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harbor-base-images', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
                                     sh "docker login -u \'${DOCKER_USERNAME}' -p $DOCKER_PASSWORD $REGISTRY"
                                     sh "docker push registry.guildswarm.org/base-images/thegoodframework:$version"
