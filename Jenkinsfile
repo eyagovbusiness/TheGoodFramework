@@ -26,11 +26,13 @@ pipeline {
             steps {
                 script {
                     container ('dockertainer'){
-                            withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harbor-base-images', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
-                                sh "docker login -u \'${DOCKER_USERNAME}' -p $DOCKER_PASSWORD $REGISTRY"
-                                sh "docker push registry.guildswarm.org/base-images/thegoodframework:$version"
-                                sh "docker push registry.guildswarm.org/base-images/thegoodframework:latest"
-                                sh 'docker logout'
+                        if (env.CHANGE_ID == null) {
+                                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harbor-base-images', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
+                                    sh "docker login -u \'${DOCKER_USERNAME}' -p $DOCKER_PASSWORD $REGISTRY"
+                                    sh "docker push registry.guildswarm.org/base-images/thegoodframework:$version"
+                                    sh "docker push registry.guildswarm.org/base-images/thegoodframework:latest"
+                                    sh 'docker logout'
+                                }
                             }
                         }
                     }
@@ -40,8 +42,10 @@ pipeline {
             steps {
                 script {
                     container ('dockertainer'){
-                        sh "docker rmi registry.guildswarm.org/base-images/thegoodframework:$version"
-                        sh "docker rmi registry.guildswarm.org/base-images/thegoodframework:latest"
+                        if (env.CHANGE_ID == null) {
+                            sh "docker rmi registry.guildswarm.org/base-images/thegoodframework:$version"
+                            sh "docker rmi registry.guildswarm.org/base-images/thegoodframework:latest"
+                            }
                         }
                     }
                 }
