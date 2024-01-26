@@ -1,4 +1,4 @@
-@Library('standard-library@latest') _
+@Library('standard-library') _
 pipeline {
     agent {
         label 'imagechecker'
