@@ -34,7 +34,11 @@ pipeline {
         stage('Test Vulnerabilities'){
             steps{
                 container('dockertainer'){
-                    sh "trivy image --quiet ${REGISTRY}/${REPO}/${IMAGE}:latest"
+                    if (env.CHANGE_ID == null) {
+                        sh "trivy image --quiet ${REGISTRY}/${REPO}/${IMAGE}:latest"
+                    } else {
+                        echo "Avoiding Scan in PR"
+                    }
                 }
             }
         }
