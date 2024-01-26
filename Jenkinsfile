@@ -1,3 +1,4 @@
+@Library('standard-library@latest') _
 pipeline {
     agent {
         label 'imagechecker'
@@ -12,7 +13,6 @@ pipeline {
             steps {
                 script {
                     container ('dockertainer'){
-                    if (env.CHANGE_ID != null) {
                           def version = readFile('version').trim()
                           env.VERSION = version
                           sh''' find . \\( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.docker.config" \\) -print0 \
@@ -27,7 +27,6 @@ pipeline {
 						  } finally {
 							    sh "rm -f projectfiles.tar"
 							  }
-                           }
                         }
                     }
                 }
@@ -43,7 +42,7 @@ pipeline {
             steps {
                 script {
                     container ('dockertainer'){
-                                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harbor-base-images', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
+                                withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harbor-staging', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
                                     sh "docker login -u \'${DOCKER_USERNAME}' -p $DOCKER_PASSWORD $REGISTRY"
                                     sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:$version"
                                     sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:latest"
@@ -69,7 +68,7 @@ pipeline {
             sh 'rm -rf *'
         }
         failure {
-            echo "Pipeline failed. Do any necessary cleanup here."
+            pga.slack_webhook("backend")
         }
     }
 }
