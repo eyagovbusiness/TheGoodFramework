@@ -13,10 +13,14 @@ pipeline {
                     if (env.CHANGE_ID != null) {
                           def version = readFile('version').trim()
                           env.VERSION = version
-                          sh''' find . \\( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.config" \\) -print0 \
+                          sh''' find . \\( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.docker.config" \\) -print0 \
                            | tar -cvf projectfiles.tar --null -T -
                            '''
-                          sh "docker build . -t registry.guildswarm.org/base-images/thegoodframework:${version} -t registry.guildswarm.org/base-images/thegoodframework:latest"
+						  try {
+							sh "docker build . -t registry.guildswarm.org/base-images/thegoodframework:${version} -t registry.guildswarm.org/base-images/thegoodframework:latest"
+						  } finally {
+							    sh "rm -f projectfiles.tar"
+							  }
                            }
                         }
                     }
