@@ -1,4 +1,4 @@
-@Library('standard-library@latest') _
+@Library('standard-library') _
 pipeline {
     agent {
         label 'imagechecker'
@@ -68,7 +68,9 @@ pipeline {
             sh 'rm -rf *'
         }
         failure {
-            pga.slack_webhook("backend")
+            script{
+                pga.slack_webhook("backend")
+            }
         }
     }
 }
