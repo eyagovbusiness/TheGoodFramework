@@ -16,10 +16,14 @@ pipeline {
                           def version = readFile('version').trim()
                           env.VERSION = version
                           sh''' find . \\( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.docker.config" \\) -print0 \
-                           | tar -cvf projectfiles.tar --null -T -
+                           | tar -cvf projectfiles.tar -T -
                            '''
 						  try {
-							sh "docker build . -t ${REGISTRY}/${REPO}/${IMAGE}:${version} -t ${REGISTRY}/${REPO}/${IMAGE}:latest"
+						    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harbor-base-images', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
+                                sh "docker login -u \'${DOCKER_USERNAME}' -p \'$DOCKER_PASSWORD' $REGISTRY"
+							    sh "docker build . --build-arg ENVIRONMENT='baseimages' -t ${REGISTRY}/${REPO}/${IMAGE}:${version} -t ${REGISTRY}/${REPO}/${IMAGE}:latest"
+							    sh 'docker logout'
+						    }
 						  } finally {
 							    sh "rm -f projectfiles.tar"
 							  }
@@ -39,7 +43,6 @@ pipeline {
             steps {
                 script {
                     container ('dockertainer'){
-                        if (env.CHANGE_ID == null) { // this is for just the build once is passed
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harbor-base-images', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
                                     sh "docker login -u \'${DOCKER_USERNAME}' -p $DOCKER_PASSWORD $REGISTRY"
                                     sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:$version"
@@ -50,20 +53,17 @@ pipeline {
                         }
                     }
                 }
-            }
         stage('Remove Docker Images') {
             steps {
                 script {
                     container ('dockertainer'){
-                        if (env.CHANGE_ID == null) {
                             sh "docker rmi ${REGISTRY}/${REPO}/${IMAGE}:$version"
                             sh "docker rmi ${REGISTRY}/${REPO}/${IMAGE}:latest"
                             }
                         }
                     }
                 }
-            }
-        }  
+            }  
     post {
         always{
             sh 'rm -rf *'

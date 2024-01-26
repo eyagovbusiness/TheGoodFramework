@@ -22,5 +22,4 @@ WORKDIR /app/BasePackages
 # Copy NuGet packages and other necessary files from the build stage
 COPY --from=build /src/TGFPackages ./TGFPackages
 COPY --from=build /root/.nuget/packages ./TGFRestored
-USER guildswarm
 CMD ["/bin/sh"]

@@ -1,7 +1,6 @@
 **/.classpath
 **/.dockerignore
 **/.env
-**/.git
 **/.gitignore
 **/.project
 **/.settings
@@ -24,4 +23,3 @@
 LICENSE
 README.md
 deploy.sh
-.github
