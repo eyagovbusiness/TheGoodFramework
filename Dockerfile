@@ -1,5 +1,5 @@
-ARG BUILD_CONFIGURATION=Release
-FROM registry.guildswarm.org/base-images/alpine-base:latest as base
+ARG BUILD_CONFIGURATION=Release ENVIRONMENT=staging
+FROM registry.guildswarm.org/$ENVIRONMENT/alpine_base:latest as base
 
 # BUILD IMAGE
 FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
