@@ -5,8 +5,8 @@ pipeline {
     }
     environment {
         REGISTRY='registry.guildswarm.org'
-        IMAGE='the_good_framework'
         REPO='staging'
+        IMAGE='the_good_framework'
     }
     stages{
         stage('Build Docker Images') {
@@ -20,7 +20,7 @@ pipeline {
                            '''
 						  try {
 						    withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harbor-base-images', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
-                                sh "docker login -u \'${DOCKER_USERNAME}' -p \'$DOCKER_PASSWORD' $REGISTRY"
+                                sh "docker login -u \'${DOCKER_USERNAME}' -p \'${DOCKER_PASSWORD}' ${REGISTRY}"
 							    sh "docker build . --build-arg ENVIRONMENT='baseimages' -t ${REGISTRY}/${REPO}/${IMAGE}:${version} -t ${REGISTRY}/${REPO}/${IMAGE}:latest"
 							    sh 'docker logout'
 						    }
@@ -50,7 +50,7 @@ pipeline {
                     container ('dockertainer'){
                         if (env.CHANGE_ID == null) {
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harbor-staging', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
-                                    sh "docker login -u \'${DOCKER_USERNAME}' -p $DOCKER_PASSWORD $REGISTRY"
+                                    sh "docker login -u \'${DOCKER_USERNAME}' -p \'${DOCKER_PASSWORD}' ${REGISTRY}"
                                     sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:$version"
                                     sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:latest"
                                     sh 'docker logout'
