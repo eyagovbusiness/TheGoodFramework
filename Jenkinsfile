@@ -1,9 +1,11 @@
 pipeline {
     agent {
-        label 'frontdockeragent'
+        label 'imagechecker'
     }
     environment {
         REGISTRY='registry.guildswarm.org'
+        IMAGE='the_good_framework'
+        REPO='staging'
     }
     stages{
         stage('Build Docker Images') {
@@ -17,7 +19,7 @@ pipeline {
                            | tar -cvf projectfiles.tar --null -T -
                            '''
 						  try {
-							sh "docker build . -t registry.guildswarm.org/base-images/thegoodframework:${version} -t registry.guildswarm.org/base-images/thegoodframework:latest"
+							sh "docker build . -t ${REGISTRY}/${REPO}/${IMAGE}:${version} -t ${REGISTRY}/${REPO}/${IMAGE}:latest"
 						  } finally {
 							    sh "rm -f projectfiles.tar"
 							  }
@@ -26,6 +28,13 @@ pipeline {
                     }
                 }
             }
+        stage('Test Vulnerabilities'){
+            steps{
+                container('dockertainer'){
+                    sh "trivy image --quiet ${REGISTRY}/${REPO}/${IMAGE}:latest"
+                }
+            }
+        }
         stage('Push Docker Images') {
             steps {
                 script {
@@ -33,8 +42,8 @@ pipeline {
                         if (env.CHANGE_ID == null) { // this is for just the build once is passed
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harbor-base-images', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
                                     sh "docker login -u \'${DOCKER_USERNAME}' -p $DOCKER_PASSWORD $REGISTRY"
-                                    sh "docker push registry.guildswarm.org/base-images/thegoodframework:$version"
-                                    sh "docker push registry.guildswarm.org/base-images/thegoodframework:latest"
+                                    sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:$version"
+                                    sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:latest"
                                     sh 'docker logout'
                                 }
                             }
@@ -47,9 +56,8 @@ pipeline {
                 script {
                     container ('dockertainer'){
                         if (env.CHANGE_ID == null) {
-                            sh "docker rmi registry.guildswarm.org/base-images/thegoodframework:$version"
-                            sh "docker rmi registry.guildswarm.org/base-images/thegoodframework:latest"
-                            sh "docker rmi registry.guildswarm.org/base-images/alpine-base:latest"
+                            sh "docker rmi ${REGISTRY}/${REPO}/${IMAGE}:$version"
+                            sh "docker rmi ${REGISTRY}/${REPO}/${IMAGE}:latest"
                             }
                         }
                     }
