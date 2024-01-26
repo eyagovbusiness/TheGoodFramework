@@ -42,16 +42,20 @@ pipeline {
             steps {
                 script {
                     container ('dockertainer'){
+                        if (env.CHANGE_ID == null) {
                                 withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harbor-staging', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
                                     sh "docker login -u \'${DOCKER_USERNAME}' -p $DOCKER_PASSWORD $REGISTRY"
                                     sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:$version"
                                     sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:latest"
                                     sh 'docker logout'
                                 }
+                            } else {
+                                echo "Avoiding push for PR"
                             }
                         }
                     }
                 }
+            }
         stage('Remove Docker Images') {
             steps {
                 script {
