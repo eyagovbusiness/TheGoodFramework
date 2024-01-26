@@ -68,7 +68,9 @@ pipeline {
             sh 'rm -rf *'
         }
         failure {
-            pga.slack_webhook("backend")
+            script{
+                pga.slack_webhook("backend")
+            }
         }
     }
 }
