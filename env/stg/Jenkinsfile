@@ -37,7 +37,7 @@ pipeline {
                 script{
                     container('dockertainer'){
                         if (env.CHANGE_ID == null) {
-                            sh "trivy image --quiet ${REGISTRY}/${REPO}/${IMAGE}:latest"
+                            sh "trivy image --quiet --exit-code 1 ${REGISTRY}/${REPO}/${IMAGE}:latest"
                         } else {
                             echo "Avoiding Scan in PR"
                         }
@@ -77,6 +77,9 @@ pipeline {
     post {
         always{
             sh 'rm -rf *'
+        }
+        success{
+            build job: "base-images/backend/STG/libraries/common/integration", wait: false
         }
         failure {
             script{
