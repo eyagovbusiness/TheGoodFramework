@@ -78,6 +78,9 @@ pipeline {
         always{
             sh 'rm -rf *'
         }
+        success{
+            build job: "base-images/backend/STG/libraries/common/integration", wait: false
+        }
         failure {
             script{
                 pga.slack_webhook("backend")
