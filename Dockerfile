@@ -23,6 +23,7 @@ WORKDIR /app/BasePackages
 COPY --from=build /src/TGFPackages ./TGFPackages
 COPY --from=build /root/.nuget/packages ./TGFRestored
 USER root 
-RUN chown -R guildswarm:guildswarm /app/
+RUN chown -R guildswarm:guildswarm /app/ && \
+    chmod -R 700 /app/ 
 USER guildswarm 
 CMD ["/bin/sh"]
