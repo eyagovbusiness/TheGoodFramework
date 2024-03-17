@@ -24,7 +24,7 @@ namespace TGF.Common.ROP.HttpResult
             var lFailedValidationResults = aValidationResults.Where(res => !res.IsValid).ToArray();
             return lThisResult.IsSuccess && lFailedValidationResults.Length == 0
                 ? lThisResult
-                : Result.Result.Failure<T>(lFailedValidationResults.SelectMany(validationResult => validationResult.Errors.Select(e => GetValidationError(e.ErrorMessage)))
+                : Result.Result.Failure<T>(lFailedValidationResults.SelectMany(validationResult => validationResult.Errors.Select(e => GetValidationError(e.ErrorCode, e.ErrorMessage)))
                             .ToImmutableArray());
         }
 
@@ -43,7 +43,7 @@ namespace TGF.Common.ROP.HttpResult
             var lValidationResult = aValidator.Validate(aObjectToValidate);
             return aThisResult.IsSuccess && lValidationResult.IsValid
                 ? aThisResult
-                : Result.Result.Failure<T>(lValidationResult.Errors.Select(e => GetValidationError(e.ErrorMessage))
+                : Result.Result.Failure<T>(lValidationResult.Errors.Select(e => GetValidationError(e.ErrorCode, e.ErrorMessage))
                                            .ToImmutableArray());
         }
 
@@ -60,18 +60,22 @@ namespace TGF.Common.ROP.HttpResult
             var lFailedValidationResults = aValidationResults.Where(res => !res.IsValid).ToArray();
             return aThisResult.IsSuccess && lFailedValidationResults.Length == 0
                 ? aThisResult
-                : Result.Result.Failure<T>(lFailedValidationResults.SelectMany(validationResult => validationResult.Errors.Select(e => GetValidationError(e.ErrorMessage)))
+                : Result.Result.Failure<T>(lFailedValidationResults.SelectMany(validationResult => validationResult.Errors.Select(e => GetValidationError(e.ErrorCode, e.ErrorMessage)))
                             .ToImmutableArray());
         }
 
-        private static IHttpError GetValidationError(string aValidationErrorString)
+        private static IHttpError GetValidationError(string? aErrorCode, string aValidationErrorString)
         {
-            var lParts = aValidationErrorString.Split(new[] { ':' }, 2);
-            var lError = lParts.Length == 2
-                ? new ValidationError(lParts[0].Trim(), lParts[1].Trim())
-                : new ValidationError("Unknown", aValidationErrorString);
+            if(string.IsNullOrWhiteSpace(aErrorCode))
+            {
+                var lParts = aValidationErrorString.Split([':'], 2);
+                var lError = lParts.Length == 2
+                    ? new ValidationError(lParts[0].Trim(), lParts[1].Trim())
+                    : new ValidationError("Unknown", aValidationErrorString);
+                return new HttpError(lError, HttpStatusCode.BadRequest);
+            }
 
-            return new HttpError(lError, HttpStatusCode.BadRequest);
+            return new HttpError(new ValidationError(aErrorCode, aValidationErrorString), HttpStatusCode.BadRequest);
         }
 
     }
