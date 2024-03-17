@@ -1,4 +1,6 @@
-﻿namespace TGF.Common.ROP.Errors
+﻿using FluentValidation;
+
+namespace TGF.Common.ROP.Errors
 {
     public static class ErrorExtensions
     {
@@ -14,5 +16,16 @@
             => aError is ValidationError;
         public static bool IsValidationError(this IHttpError aHttpError)
             => aHttpError.Error is ValidationError;
+
+        /// <summary>
+        /// Specifies a custom ROP IError to use when validation fails. Only applies to the rule that directly precedes it.
+        /// </summary>
+        /// <param name="aFluentValidationRule">The current rule</param>
+        /// <param name="aROPError">The ROP IError to use</param>
+        /// <returns></returns>
+        public static IRuleBuilderOptions<T, TProperty> WithROPError<T, TProperty>(this IRuleBuilderOptions<T, TProperty> aFluentValidationRule, IError aROPError)
+        => aFluentValidationRule.WithErrorCode(aROPError.Code)
+                .WithMessage(aROPError.Message);
+
     }
 }
