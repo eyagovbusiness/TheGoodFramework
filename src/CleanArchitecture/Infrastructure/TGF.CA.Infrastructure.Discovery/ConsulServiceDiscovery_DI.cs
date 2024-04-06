@@ -19,13 +19,14 @@ namespace TGF.CA.Infrastructure.Discovery
         /// <returns>The updated service collection.</returns>
         public static IServiceCollection AddDiscoveryService(this IServiceCollection aServiceList, IConfiguration aConfiguration)
         {
+            var lConfiguredUriAddress = new Uri(aConfiguration["Discovery:Address"] 
+                ?? throw new Exception("Error: while adding DiscoveryService, could not get the address from appsettings!!"));
             return aServiceList.AddSingleton<IConsulClient, ConsulClient>(provider => new ConsulClient(consulConfig =>
             {
-                var lAddress = aConfiguration["Discovery:Address"] ?? throw new Exception("Error: while adding DiscoveryService, could not get the address from appsettings!!");
-                consulConfig.Address = new Uri(lAddress);
+                consulConfig.Address = lConfiguredUriAddress;
             }))
             .AddSingleton<IServiceDiscovery, ConsulServiceDiscovery>()
-            .AddConsulHealthChecks("consul", 8500, "ServiceRegistry");
+            .AddConsulHealthChecks(lConfiguredUriAddress.Host, lConfiguredUriAddress.Port, "ServiceRegistry");
         }
 
         /// <summary>
