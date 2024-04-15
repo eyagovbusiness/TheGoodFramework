@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using FluentValidation;
+using System.Collections.Immutable;
 using System.Net;
 using TGF.Common.ROP.Errors;
 
@@ -44,6 +45,26 @@ namespace TGF.Common.ROP.HttpResult
             return aThisResult.IsSuccess && lValidationResult.IsValid
                 ? aThisResult
                 : Result.Result.Failure<T>(lValidationResult.Errors.Select(e => GetValidationError(e.ErrorCode, e.ErrorMessage))
+                                           .ToImmutableArray());
+        }
+
+        /// <summary>
+        /// Performs a validation of this result Value. If the validation fails, 
+        /// it returns a failure with the resulting validation errors. Otherwise, it returns the original result.
+        /// </summary>
+        /// <typeparam name="T">The type of the result value.</typeparam>
+        /// <param name="aThisResult">The <see cref="IHttpResult{T}"/> to verify.</param>
+        /// <param name="aValidator">The validator to use.</param>
+        /// <returns>Either the original result or a failure, depending on the validation result.</returns>
+        public static IHttpResult<T> ValidateResult<T>(this IHttpResult<T> aThisResult, FluentValidation.IValidator<T> aValidator)
+        {
+            if(!aThisResult.IsSuccess)
+                return aThisResult;
+
+            var lValidationResult = aValidator.Validate(aThisResult.Value);
+            return aThisResult.IsSuccess && lValidationResult.IsValid
+                ? aThisResult
+                : Result.Result.Failure<T>(aValidator.Validate(aThisResult.Value).Errors.Select(e => GetValidationError(e.ErrorCode, e.ErrorMessage))
                                            .ToImmutableArray());
         }
 
