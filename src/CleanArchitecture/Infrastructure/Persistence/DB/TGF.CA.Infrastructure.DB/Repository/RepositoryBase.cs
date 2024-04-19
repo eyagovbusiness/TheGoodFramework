@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using TGF.CA.Application.Contracts.Repositories;
 using TGF.CA.Infrastructure.DB.Repository.CQRS;
 using TGF.Common.ROP;
 using TGF.Common.ROP.HttpResult;
@@ -12,7 +13,7 @@ namespace TGF.CA.Infrastructure.DB.Repository
     /// </summary>
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    public abstract class RepositoryBase<TRepository, TDbContext> : ICommandRepository, IQueryRepository
+    public abstract class RepositoryBase<TRepository, TDbContext> : ICommandRepository, IQueryRepository, IRepositoryBase
     where TDbContext : DbContext
     where TRepository : class
     {
@@ -56,9 +57,10 @@ namespace TGF.CA.Infrastructure.DB.Repository
             where T : class
         => await _commandRepository.AddAsync(aEntity, aCancellationToken);
 
-        public virtual async Task<IHttpResult<T>> GetByIdAsync<T>(object aEntityId, CancellationToken aCancellationToken = default)
+        public virtual async Task<IHttpResult<T>> GetByIdAsync<T, TKey>(TKey aEntityId, CancellationToken aCancellationToken = default)
             where T : class
-        => await _queryRepository.GetByIdAsync<T>(aEntityId, aCancellationToken);
+            where TKey : struct, IEquatable<TKey>
+        => await _queryRepository.GetByIdAsync<T, TKey>(aEntityId, aCancellationToken);
 
         public virtual async Task<IHttpResult<T>> UpdateAsync<T>(T aEntity, CancellationToken aCancellationToken = default)
             where T : class

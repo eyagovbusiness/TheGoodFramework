@@ -85,7 +85,7 @@ namespace TGF.Common.ROP.HttpResult
                             .ToImmutableArray());
         }
 
-        private static IHttpError GetValidationError(string? aErrorCode, string aValidationErrorString)
+        public static IHttpError GetValidationError(string? aErrorCode, string aValidationErrorString)
         {
             if(string.IsNullOrWhiteSpace(aErrorCode))
             {

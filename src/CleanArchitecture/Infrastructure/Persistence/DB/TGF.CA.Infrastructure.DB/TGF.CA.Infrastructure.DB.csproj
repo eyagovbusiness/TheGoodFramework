@@ -25,6 +25,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\Common\TGF.Common.ROP\TGF.Common.ROP.csproj" />
+    <ProjectReference Include="..\..\..\TGF.CA.Infrastructure\TGF.CA.Infrastructure.csproj" />
   </ItemGroup>
   
 </Project>

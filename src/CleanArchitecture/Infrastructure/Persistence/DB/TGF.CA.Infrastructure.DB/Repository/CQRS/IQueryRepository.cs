@@ -48,7 +48,9 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         /// <param name="aEntityId">The identifier of the entity.</param>
         /// <param name="aCancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <returns>A task that represents the asynchronous operation, containing the result of retrieving the entity.</returns>
-        Task<IHttpResult<T>> GetByIdAsync<T>(object aEntityId, CancellationToken aCancellationToken = default) where T : class;
+        Task<IHttpResult<T>> GetByIdAsync<T, TKey>(TKey aEntityId, CancellationToken aCancellationToken = default)
+            where T : class
+            where TKey : struct, IEquatable<TKey>;
 
     }
 

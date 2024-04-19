@@ -83,11 +83,12 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         #endregion
 
         #region Read
-        public virtual async Task<IHttpResult<T>> GetByIdAsync<T>(object aEntityId, CancellationToken aCancellationToken = default)
+        public virtual async Task<IHttpResult<T>> GetByIdAsync<T, TKey>(TKey aEntityId, CancellationToken aCancellationToken = default)
             where T : class
+            where TKey : struct, IEquatable<TKey>
         => await TryQueryAsync(async (aCancellationToken) =>
         {
-            var lEntity = await _context.Set<T>().FindAsync(new object[] { aEntityId }, aCancellationToken);
+            var lEntity = await _context.Set<T>().FindAsync([aEntityId], aCancellationToken);
             return lEntity != null ? Result.SuccessHttp(lEntity!) : Result.Failure<T>(DBErrors.Repository.Entity.NotFound);
 
         }, aCancellationToken);
