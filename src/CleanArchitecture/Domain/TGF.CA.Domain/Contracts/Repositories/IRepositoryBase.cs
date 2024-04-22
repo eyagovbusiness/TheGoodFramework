@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TGF.Common.ROP.HttpResult;
 
-namespace TGF.CA.Application.Contracts.Repositories
+namespace TGF.CA.Domain.Contracts.Repositories
 {
     /// <summary>
     /// Interface of the base default CRUD implementations in TGF.CA.Infrastructure.DB.Repository.RepositoryBase class.
@@ -17,6 +17,11 @@ namespace TGF.CA.Application.Contracts.Repositories
         public Task<IHttpResult<T>> GetByIdAsync<T,TKey>(TKey aEntityId, CancellationToken aCancellationToken = default)
             where T : class
             where TKey : struct, IEquatable<TKey>;
+
+        Task<IHttpResult<List<T>>> GetByIdListAsync<T, TKey>(IEnumerable<TKey> aEntityIdList, CancellationToken aCancellationToken = default)
+            where T : class, IEntity<TKey>
+            where TKey : struct, IEquatable<TKey>;
+
         public Task<IHttpResult<T>> UpdateAsync<T>(T aEntity, CancellationToken aCancellationToken = default)
             where T : class;
         public Task<IHttpResult<T>> DeleteAsync<T>(T aEntity, CancellationToken aCancellationToken = default)

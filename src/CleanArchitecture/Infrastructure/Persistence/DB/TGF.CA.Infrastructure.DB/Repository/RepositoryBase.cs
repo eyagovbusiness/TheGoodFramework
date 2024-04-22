@@ -1,7 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
-using TGF.CA.Application.Contracts.Repositories;
+using TGF.CA.Domain.Contracts;
+using TGF.CA.Domain.Contracts.Repositories;
 using TGF.CA.Infrastructure.DB.Repository.CQRS;
 using TGF.Common.ROP;
 using TGF.Common.ROP.HttpResult;
@@ -61,6 +62,11 @@ namespace TGF.CA.Infrastructure.DB.Repository
             where T : class
             where TKey : struct, IEquatable<TKey>
         => await _queryRepository.GetByIdAsync<T, TKey>(aEntityId, aCancellationToken);
+
+        public virtual async Task<IHttpResult<List<T>>> GetByIdListAsync<T, TKey>(IEnumerable<TKey> aEntityIdList, CancellationToken aCancellationToken = default)
+            where T : class, IEntity<TKey>
+            where TKey : struct, IEquatable<TKey>
+        => await _queryRepository.GetByIdListAsync<T, TKey>(aEntityIdList, aCancellationToken);
 
         public virtual async Task<IHttpResult<T>> UpdateAsync<T>(T aEntity, CancellationToken aCancellationToken = default)
             where T : class

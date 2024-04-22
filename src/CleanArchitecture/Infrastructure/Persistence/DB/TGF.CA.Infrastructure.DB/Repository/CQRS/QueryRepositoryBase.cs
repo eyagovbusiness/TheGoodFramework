@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TGF.CA.Domain.Contracts;
+using TGF.CA.Domain.Primitives;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.Result;
@@ -92,6 +94,34 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             return lEntity != null ? Result.SuccessHttp(lEntity!) : Result.Failure<T>(DBErrors.Repository.Entity.NotFound);
 
         }, aCancellationToken);
+
+        public virtual async Task<IHttpResult<List<T>>> GetByIdListAsync<T, TKey>(IEnumerable<TKey> entityIds, CancellationToken cancellationToken = default)
+            where T : class, IEntity<TKey> 
+            where TKey : struct, IEquatable<TKey>
+        {
+            return await TryQueryAsync(async cancellationToken =>
+            {
+                // Convert the enumerable to a list to prevent multiple enumeration
+                var entityIdList = entityIds as List<TKey> ?? entityIds.ToList();
+
+                if (!entityIdList.Any())
+                {
+                    return Result.SuccessHttp(new List<T>()); // Return an empty list if no IDs were provided
+                }
+
+                // Query the database for entities with IDs that match those in the provided list
+                var entities = await _context.Set<T>()
+                    .Where(entity => entityIdList.Contains(entity.Id)) // Directly access the Id property
+                    .ToListAsync(cancellationToken);
+
+                return entities.Any()
+                    ? Result.SuccessHttp(entities)
+                    : Result.Failure<List<T>>(DBErrors.Repository.Entity.NotFound);
+
+            }, cancellationToken);
+        }
+
+
 
         #endregion
 

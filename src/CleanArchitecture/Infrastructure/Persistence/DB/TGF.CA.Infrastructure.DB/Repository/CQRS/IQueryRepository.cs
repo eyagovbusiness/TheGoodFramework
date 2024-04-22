@@ -1,4 +1,5 @@
-﻿using TGF.Common.ROP.HttpResult;
+﻿using TGF.CA.Domain.Contracts;
+using TGF.Common.ROP.HttpResult;
 
 namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 {
@@ -50,6 +51,18 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         /// <returns>A task that represents the asynchronous operation, containing the result of retrieving the entity.</returns>
         Task<IHttpResult<T>> GetByIdAsync<T, TKey>(TKey aEntityId, CancellationToken aCancellationToken = default)
             where T : class
+            where TKey : struct, IEquatable<TKey>;
+
+        /// <summary>
+        /// Retrieves a list of entities by its identifiers asynchronously.
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TKey"></typeparam>
+        /// <param name="aEntityIdList"></param>
+        /// <param name="aCancellationToken"></param>
+        /// <returns></returns>
+        Task<IHttpResult<List<T>>> GetByIdListAsync<T, TKey>(IEnumerable<TKey> aEntityIdList, CancellationToken aCancellationToken = default)
+            where T : class, IEntity<TKey>
             where TKey : struct, IEquatable<TKey>;
 
     }
