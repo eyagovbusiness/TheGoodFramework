@@ -37,6 +37,7 @@ namespace TGF.CA.Presentation.Swagger
         => aOptions.ConfigureJWTBearerAuth()
             .ConfigureEndpointDescriptions(aXmlCommentFileList)
             .ConfigureBehindProxy(aBaseSwaggerPath)
+            .RenameSchemas()
             .ConfigureExcludingPrivateEndpoints();
 
         #region Private
@@ -97,6 +98,36 @@ namespace TGF.CA.Presentation.Swagger
             if (!string.IsNullOrEmpty(aBaseSwaggerPath))
                 aOptions.DocumentFilter<BasePathDocumentFilter>(aBaseSwaggerPath);
             return aOptions;
+        }
+
+        /// <summary>
+        /// Ensures all schema types end by Schema and removes DTO from the names.
+        /// </summary>
+        private static SwaggerGenOptions RenameSchemas(this SwaggerGenOptions aOptions)
+        {
+            aOptions.CustomSchemaIds(CustomSchemaIdStrategy);
+            return aOptions;
+        }
+
+        /// <summary>
+        /// Custom schemaId strategy that ensures all schema types end by Schema and removes DTO from the names.
+        /// </summary>
+        /// <param name="aCurrentType"></param>
+        /// <returns></returns>
+        private static string CustomSchemaIdStrategy(Type aCurrentType)
+        {
+            var lTypeName = aCurrentType.Name;
+
+            if (aCurrentType.IsGenericType && lTypeName.Contains("PaginatedListDTO"))
+            {
+                var genericArgs = aCurrentType.GetGenericArguments();
+                if (genericArgs.Length > 0)
+                    return $"Paginated{genericArgs[0].Name.Replace("DTO", "")}ListSchema";
+            }
+            else if (lTypeName.EndsWith("DTO"))
+                return lTypeName.Replace("DTO", "Schema");
+
+            return lTypeName + "Schema";
         }
 
         /// <summary>
