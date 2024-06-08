@@ -1,4 +1,4 @@
-ARG BUILD_CONFIGURATION=Release ENVIRONMENT=staging
+ARG BUILD_CONFIGURATION=Release ENVIRONMENT=testportal
 FROM registry.guildswarm.org/baseimages/alpine_base:latest as base
 
 # BUILD IMAGE
