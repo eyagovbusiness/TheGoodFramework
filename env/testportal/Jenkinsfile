@@ -79,7 +79,7 @@ pipeline {
             sh 'rm -rf *'
         }
         success{
-            build job: "base-images/backend/STG/libraries/common/integration", wait: false
+            build job: "base-images/backend/${REPO}/libraries/common/${REPO}", wait: false
         }
         failure {
             script{
