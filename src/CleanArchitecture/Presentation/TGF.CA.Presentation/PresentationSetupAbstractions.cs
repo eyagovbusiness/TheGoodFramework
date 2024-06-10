@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using TGF.CA.Presentation.MinimalAPI;
 using TGF.CA.Presentation.Swagger;
 using TGF.Common.Logging;
@@ -23,23 +24,42 @@ namespace TGF.CA.Presentation
         /// <param name="aBaseSwaggerPath">The base path for Swagger, should to be set when swagger runs behind a reverse proxy.</param>
         /// <param name="aScanMarkerList">The types to be scanned looking for any <see cref="IEndpointDefinition"/> implementation in the assemply, registering all the required enpoints. For every assembly which has endpoint deffinitions which should be included in this builder, at least one type of each assembly must be added to this list.</param>
         /// <returns>The configured <see cref=" WebApplicationBuilder"/>.</returns>
-        public static WebApplicationBuilder ConfigureDefaultPresentation(this WebApplicationBuilder aWebApplicationBuilder, IEnumerable<string>? aXmlCommentFileList = default, string? aBaseSwaggerPath = default, params Type[] aScanMarkerList)
+        public static WebApplicationBuilder ConfigureDefaultPresentation(
+            this WebApplicationBuilder aWebApplicationBuilder,
+            IEnumerable<string>? aXmlCommentFileList = default,
+            string? aBaseSwaggerPath = default,
+            bool aUseStringEnums = true,
+            params Type[] aScanMarkerList)
         {
+            if (aUseStringEnums)
+            {
+                // Configure JSON options for Minimal API
+                aWebApplicationBuilder.Services.ConfigureHttpJsonOptions(options =>
+                {
+                    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
+
+                // Additional configuration for Swagger to reflect enums as strings
+                aWebApplicationBuilder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
+            }
 
             aWebApplicationBuilder.Services.Configure<JsonOptions>(options =>
             {
                 options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
+
             aWebApplicationBuilder.Services.AddSerializer();
             aWebApplicationBuilder.Services.AddEndpointsApiExplorer();
-
             aWebApplicationBuilder.Services.AddSwaggerGen(opt => opt.ConfigureSwagger(aXmlCommentFileList, aBaseSwaggerPath));
             aWebApplicationBuilder.Services.AddEndpointDefinitions(aScanMarkerList);
 
             #region Infrastructure
             aWebApplicationBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck(aWebApplicationBuilder.Configuration));
             aWebApplicationBuilder.Services.AddHealthChecks();
-            aWebApplicationBuilder.Services.AddHealthChecksUI().AddInMemoryStorage(); 
+            aWebApplicationBuilder.Services.AddHealthChecksUI().AddInMemoryStorage();
             aWebApplicationBuilder.Host.ConfigureSerilog();
             #endregion
 
@@ -47,6 +67,7 @@ namespace TGF.CA.Presentation
 
             return aWebApplicationBuilder;
         }
+
 
         /// <summary>
         /// Configures a CORS policy to allow cross origin requests from the frontend domain.
