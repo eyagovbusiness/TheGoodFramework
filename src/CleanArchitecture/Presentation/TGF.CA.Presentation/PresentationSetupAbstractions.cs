@@ -70,20 +70,44 @@ namespace TGF.CA.Presentation
 
 
         /// <summary>
-        /// Configures a CORS policy to allow cross origin requests from the frontend domain.
+        /// Configures CORS to allow requests from the specified frontend URL pattern, supporting dynamic subdomains.
         /// </summary>
-        /// <param name="aConfiguration">Configuration with the expected "FrontendURL" section with a string representing the frontend url to be allowed by CORS policy.</param>
-        /// <exception cref="Exception">Thros an exception if FrontendURL is not configured in appsettings.</exception>
+        /// <param name="aWebApplicationBuilder">The WebApplicationBuilder instance.</param>
+        /// <param name="aConfiguration">The configuration instance.</param>
+        /// <returns>The modified WebApplicationBuilder instance.</returns>
+        /// <exception cref="Exception">Thrown when CORSFrontendURL configuration is not found.</exception>
         public static WebApplicationBuilder ConfigureFrontendCORS(this WebApplicationBuilder aWebApplicationBuilder, IConfiguration aConfiguration)
         {
-            var lFrontUrl = aConfiguration.GetValue<string>("FrontendURL")
+            var lCORSFrontUrl = aConfiguration.GetValue<string>("FrontendURL")
                 ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings. Please add this configuration.");
+
             aWebApplicationBuilder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowFrontCorsPolicy", builder => builder.SetIsOriginAllowedToAllowWildcardSubdomains().WithOrigins(lFrontUrl)
-                                                                    .AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+                options.AddPolicy("AllowFrontCorsPolicy", builder =>
+                    builder.SetIsOriginAllowed(origin => IsOriginAllowed(origin, lCORSFrontUrl))
+                           .AllowAnyHeader()
+                           .AllowAnyMethod()
+                           .AllowCredentials());
             });
+
             return aWebApplicationBuilder;
+        }
+
+        /// <summary>
+        /// Determines if the specified origin is allowed based on the allowed origin pattern.
+        /// </summary>
+        /// <param name="origin">The origin URL to check.</param>
+        /// <param name="allowedOriginPattern">The allowed origin pattern.</param>
+        /// <returns>True if the origin is allowed; otherwise, false.</returns>
+        private static bool IsOriginAllowed(string origin, string allowedOriginPattern)
+        {
+            if (Uri.TryCreate(origin, UriKind.Absolute, out var originUri) &&
+                Uri.TryCreate(allowedOriginPattern, UriKind.Absolute, out var allowedUri))
+            {
+                return originUri.Scheme == allowedUri.Scheme &&
+                       originUri.Host.EndsWith(allowedUri.Host, StringComparison.OrdinalIgnoreCase);
+            }
+            return false;
         }
 
         /// <summary>
