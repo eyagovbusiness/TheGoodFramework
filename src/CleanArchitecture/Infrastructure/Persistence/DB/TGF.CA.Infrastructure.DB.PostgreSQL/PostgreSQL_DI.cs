@@ -23,7 +23,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
             var lConnectionString = await PostgreSQLHelpers.GetConnectionString(aServiceCollection.BuildServiceProvider(), aDatabaseName);
             return aServiceCollection
                 .AddDbContext<TDbContext>(options => options.UseNpgsql(lConnectionString))
-                .AddPostgresHealthCheckFromConnectionString(lConnectionString);
+                .AddPostgresHealthCheckFromConnectionString(lConnectionString, aDatabasename: aDatabaseName);
         }
 
         /// <summary>
@@ -31,11 +31,12 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
         /// </summary>
         /// <param name="aServiceCollection">Target <see cref="IServiceCollection"/>.</param>
         /// <param name="aConnectionString">PostgreSQL database connection string.</param>
+        /// <param name="aDatabasename">Used to name the healthCheck</param>
         /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
-        public static IServiceCollection AddPostgresHealthCheckFromConnectionString(this IServiceCollection aServiceCollection, string aConnectionString)
+        public static IServiceCollection AddPostgresHealthCheckFromConnectionString(this IServiceCollection aServiceCollection, string aConnectionString, string? aDatabasename = default)
             => aServiceCollection
                 .AddHealthChecks()
-                .AddNpgSql(aConnectionString, name: "Database")
+                .AddNpgSql(aConnectionString, name: aDatabasename ?? "Database")
                 .Services;
 
     }

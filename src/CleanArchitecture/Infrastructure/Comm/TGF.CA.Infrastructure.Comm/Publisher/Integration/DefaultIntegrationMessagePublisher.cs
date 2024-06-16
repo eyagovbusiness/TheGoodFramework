@@ -33,6 +33,6 @@ public class DefaultIntegrationMessagePublisher : IIntegrationMessagePublisher
 
     private Metadata CalculateMetadata(Metadata? metadata)
     {
-        return metadata ?? new Metadata(Guid.NewGuid().ToString(), DateTime.UtcNow);
+        return metadata ?? new Metadata(Guid.NewGuid().ToString(), DateTimeOffset.Now);
     }
 }

@@ -3,11 +3,11 @@ namespace TGF.CA.Infrastructure.Communication.Messages;
 public record Metadata
 {
     public string CorrelationId { get; }
-    public DateTime CreatedUtc { get; }
+    public DateTimeOffset CreatedAt { get; }
 
-    public Metadata(string correlationId, DateTime createdUtc)
+    public Metadata(string aCorrelationId, DateTimeOffset aCreatedAt)
     {
-        CorrelationId = correlationId;
-        CreatedUtc = createdUtc;
+        CorrelationId = aCorrelationId;
+        CreatedAt = aCreatedAt;
     }
 }
