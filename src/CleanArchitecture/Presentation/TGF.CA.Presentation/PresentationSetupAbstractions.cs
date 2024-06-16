@@ -68,7 +68,6 @@ namespace TGF.CA.Presentation
             return aWebApplicationBuilder;
         }
 
-
         /// <summary>
         /// Configures CORS to allow requests from the specified frontend URL pattern, supporting dynamic subdomains.
         /// </summary>
@@ -81,16 +80,24 @@ namespace TGF.CA.Presentation
             var lCORSFrontUrl = aConfiguration.GetValue<string>("FrontendURL")
                 ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings. Please add this configuration.");
 
+            var lLocalDevelopmentUrl = aConfiguration.GetValue<string>("DevelopmentDomain"); // Replace with your local development URL if different
+
             aWebApplicationBuilder.Services.AddCors(options =>
             {
                 options.AddPolicy("AllowFrontCorsPolicy", builder =>
-                    builder.SetIsOriginAllowed(origin => IsOriginAllowed(origin, lCORSFrontUrl))
+                    builder.SetIsOriginAllowed(origin => IsOriginAllowed(origin, lCORSFrontUrl, lLocalDevelopmentUrl))
                            .AllowAnyHeader()
                            .AllowAnyMethod()
                            .AllowCredentials());
             });
 
             return aWebApplicationBuilder;
+        }
+
+        private static bool IsOriginAllowed(string aOrigin, string aFrontendUrl, string? aLocalDevelopmentUrl)
+        {
+            // Check if the origin matches the frontend URL or the local development URL
+            return aOrigin == aFrontendUrl || aOrigin == aLocalDevelopmentUrl;
         }
 
         /// <summary>
