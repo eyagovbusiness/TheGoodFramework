@@ -8,12 +8,12 @@
         /// <summary>
         /// Creation date of this object.
         /// </summary>
-        DateTime? TOC { get; set; }
+        DateTimeOffset TOC { get; set; }
 
         /// <summary>
         /// Last modification date of this object.
         /// </summary>
-        DateTime? TOM { get; set; }
+        DateTimeOffset? TOM { get; set; }
 
     }
 
@@ -39,7 +39,7 @@
         /// <param name="aUserIdC">Id of the user who created this object.</param>
         void AuditCreation(TKey aUserIdC)
         {
-            TOC = DateTime.Now;
+            TOC = DateTimeOffset.Now;
             UserIdC = aUserIdC;
         }
 
@@ -49,7 +49,7 @@
         /// <param name="aUserIdM">Id of the user who made the last modification of this object.</param>
         void AuditModification(TKey aUserIdM)
         {
-            TOM = DateTime.UtcNow;
+            TOM = DateTimeOffset.Now;
             UserIdM = aUserIdM;
         }
 

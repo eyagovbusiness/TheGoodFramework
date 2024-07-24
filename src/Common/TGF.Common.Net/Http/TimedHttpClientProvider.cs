@@ -11,7 +11,7 @@
         private readonly TimeSpan _replacementInterval;
         private readonly string _baseAddress;
         private TimeSpan mTimeout;
-        private DateTime mLastReplacementTime;
+        private DateTimeOffset mLastReplacementTime;
         private HttpClient mHttpClient;
 
         /// <summary>
@@ -26,7 +26,7 @@
         {
             _httpClientFactory = aHttpClientFactory;
             _replacementInterval = aReplacementInterval;
-            mLastReplacementTime = DateTime.Now;
+            mLastReplacementTime = DateTimeOffset.Now;
             _baseAddress = aBaseAddress;
             mTimeout = aTimeOut;
 
@@ -39,10 +39,10 @@
         /// <exception cref="NullReferenceException">Throws null reference exception if the method was not able to get a valid HttpClient to return.</exception>
         public HttpClient GetHttpClient()
         {
-            if (DateTime.Now - mLastReplacementTime >= _replacementInterval || mHttpClient == null)
+            if (DateTimeOffset.Now - mLastReplacementTime >= _replacementInterval || mHttpClient == null)
             {
                 ReplaceHttpClient();
-                mLastReplacementTime = DateTime.Now;
+                mLastReplacementTime = DateTimeOffset.Now;
             }
             if (mHttpClient == null)
                 throw new NullReferenceException("Error: mHttpClient was null!!");

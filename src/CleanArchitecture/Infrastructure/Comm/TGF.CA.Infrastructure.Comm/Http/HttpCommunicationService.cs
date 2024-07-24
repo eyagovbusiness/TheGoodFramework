@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Text;
 using TGF.CA.Infrastructure.Discovery;
 using TGF.Common.ROP.Errors;
@@ -12,58 +13,51 @@ namespace TGF.CA.Infrastructure.Communication.Http
     /// <summary>
     /// Abstract class with logic for communicating with other cloud services via HTTP. Requires <see cref="IHttpClientFactory"/> and <see cref="IServiceDiscovery"/> from DI.
     /// </summary>
-    public abstract class HttpCommunicationService
+    public abstract class HttpCommunicationService(IServiceDiscovery aServiceDiscovery, IHttpClientFactory aHttpClientFactory, string aJsonMediaType = "application/json")
     {
-        protected readonly IServiceDiscovery _serviceDiscovery;
-        protected readonly IHttpClientFactory _httpClientFactory;
-        protected readonly string _jsonMediaType;
-
-        public HttpCommunicationService(IServiceDiscovery aServiceDiscovery, IHttpClientFactory aHttpClientFactory, string aJsonMediaType = "application/json")
-        {
-            _serviceDiscovery = aServiceDiscovery;
-            _httpClientFactory = aHttpClientFactory;
-            _jsonMediaType = aJsonMediaType;
-        }
+        protected readonly IServiceDiscovery _serviceDiscovery = aServiceDiscovery;
+        protected readonly IHttpClientFactory _httpClientFactory = aHttpClientFactory;
+        protected readonly string _jsonMediaType = aJsonMediaType;
 
         #region Protected
 
-        protected async Task<IHttpResult<TResponse>> GetAsync<TResponse>(string aServiceName, string aRequestUri, CancellationToken aCancellationToken = default)
+        protected async Task<IHttpResult<TResponse>> GetAsync<TResponse>(string aServiceName, string aRequestUri, string? aAccessToken = default, CancellationToken aCancellationToken = default)
         {
-            var lResponse = await SendRequestAsync(HttpMethod.Get, aServiceName, aRequestUri, null, aCancellationToken);
+            var lResponse = await SendRequestAsync(HttpMethod.Get, aServiceName, aRequestUri, null, aAccessToken, aCancellationToken);
             return await GetResultAsync<TResponse>(lResponse, aCancellationToken);
         }
 
-        protected async Task PostAsync<TBody>(string aServiceName, string aRequestUri, TBody aRequestBody, CancellationToken aCancellationToken = default)
+        protected async Task PostAsync<TBody>(string aServiceName, string aRequestUri, TBody aRequestBody, string? aAccessToken = default, CancellationToken aCancellationToken = default)
         {
             var lHttpContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(aRequestBody), Encoding.UTF8, _jsonMediaType);
-            await SendRequestAsync(HttpMethod.Post, aServiceName, aRequestUri, lHttpContent, aCancellationToken);
+            await SendRequestAsync(HttpMethod.Post, aServiceName, aRequestUri, lHttpContent, aAccessToken, aCancellationToken);
         }
-        protected async Task<IHttpResult<TResponse>> PostAsync<TBody, TResponse>(string aServiceName, string aRequestUri, TBody aRequestBody, CancellationToken aCancellationToken = default)
+        protected async Task<IHttpResult<TResponse>> PostAsync<TBody, TResponse>(string aServiceName, string aRequestUri, TBody aRequestBody, string? aAccessToken = default, CancellationToken aCancellationToken = default)
         {
             var lHttpContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(aRequestBody), Encoding.UTF8, _jsonMediaType);
-            var lResponse = await SendRequestAsync(HttpMethod.Post, aServiceName, aRequestUri, lHttpContent, aCancellationToken);
+            var lResponse = await SendRequestAsync(HttpMethod.Post, aServiceName, aRequestUri, lHttpContent, aAccessToken, aCancellationToken);
             return await GetResultAsync<TResponse>(lResponse, aCancellationToken);
         }
 
-        protected async Task PutAsync<TBody>(string aServiceName, string aRequestUri, TBody aRequestBody, CancellationToken aCancellationToken = default)
+        protected async Task PutAsync<TBody>(string aServiceName, string aRequestUri, TBody aRequestBody, string? aAccessToken = default, CancellationToken aCancellationToken = default)
         {
             var lHttpContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(aRequestBody), Encoding.UTF8, _jsonMediaType);
-            await SendRequestAsync(HttpMethod.Put, aServiceName, aRequestUri, lHttpContent, aCancellationToken);
+            await SendRequestAsync(HttpMethod.Put, aServiceName, aRequestUri, lHttpContent, aAccessToken, aCancellationToken);
         }
-        protected async Task<IHttpResult<TResponse>> PutAsync<TBody, TResponse>(string aServiceName, string aRequestUri, TBody aRequestBody, CancellationToken aCancellationToken = default)
+        protected async Task<IHttpResult<TResponse>> PutAsync<TBody, TResponse>(string aServiceName, string aRequestUri, TBody aRequestBody, string? aAccessToken = default, CancellationToken aCancellationToken = default)
         {
             var lHttpContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(aRequestBody), Encoding.UTF8, _jsonMediaType);
-            var lResponse = await SendRequestAsync(HttpMethod.Put, aServiceName, aRequestUri, lHttpContent, aCancellationToken);
+            var lResponse = await SendRequestAsync(HttpMethod.Put, aServiceName, aRequestUri, lHttpContent, aAccessToken, aCancellationToken);
             return await GetResultAsync<TResponse>(lResponse, aCancellationToken);
         }
 
-        protected async Task DeleteAsync(string aServiceName, string aRequestUri, CancellationToken aCancellationToken = default)
+        protected async Task DeleteAsync(string aServiceName, string aRequestUri, string? aAccessToken = default, CancellationToken aCancellationToken = default)
         {
-            await SendRequestAsync(HttpMethod.Delete, aServiceName, aRequestUri, null, aCancellationToken);
+            await SendRequestAsync(HttpMethod.Delete, aServiceName, aRequestUri, null, aAccessToken, aCancellationToken);
         }
-        protected async Task<IHttpResult<TResponse>> DeleteAsync<TResponse>(string aServiceName, string aRequestUri, CancellationToken aCancellationToken = default)
+        protected async Task<IHttpResult<TResponse>> DeleteAsync<TResponse>(string aServiceName, string aRequestUri, string? aAccessToken = default, CancellationToken aCancellationToken = default)
         {
-            var lResponse = await SendRequestAsync(HttpMethod.Delete, aServiceName, aRequestUri, null, aCancellationToken);
+            var lResponse = await SendRequestAsync(HttpMethod.Delete, aServiceName, aRequestUri, null, aAccessToken, aCancellationToken);
             return await GetResultAsync<TResponse>(lResponse, aCancellationToken);
         }
 
@@ -71,12 +65,23 @@ namespace TGF.CA.Infrastructure.Communication.Http
 
         #region Private
 
-        private async Task<HttpResponseMessage> SendRequestAsync(HttpMethod method, string aServiceName, string aRequestUri, HttpContent? content = null, CancellationToken aCancellationToken = default)
+        private async Task<HttpResponseMessage> SendRequestAsync(
+            HttpMethod method,
+            string aServiceName,
+            string aRequestUri,
+            HttpContent? content = null,
+            string? aAccessToken = default,
+            CancellationToken aCancellationToken = default)
         {
             var lHttpClient = await GetHttpClientAsync(aServiceName);
             var lRequest = new HttpRequestMessage(method, aRequestUri) { Content = content };
+
+            if (!string.IsNullOrEmpty(aAccessToken))
+                lRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", aAccessToken);
+
             return await lHttpClient.SendAsync(lRequest, aCancellationToken);
         }
+
 
         private static async Task<IHttpResult<TResponse>> GetResultAsync<TResponse>(HttpResponseMessage aResponse, CancellationToken aCancellationToken = default)
         {

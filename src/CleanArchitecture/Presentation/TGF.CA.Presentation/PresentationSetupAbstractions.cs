@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using TGF.CA.Presentation.MinimalAPI;
 using TGF.CA.Presentation.Swagger;
 using TGF.Common.Logging;
@@ -23,23 +24,42 @@ namespace TGF.CA.Presentation
         /// <param name="aBaseSwaggerPath">The base path for Swagger, should to be set when swagger runs behind a reverse proxy.</param>
         /// <param name="aScanMarkerList">The types to be scanned looking for any <see cref="IEndpointDefinition"/> implementation in the assemply, registering all the required enpoints. For every assembly which has endpoint deffinitions which should be included in this builder, at least one type of each assembly must be added to this list.</param>
         /// <returns>The configured <see cref=" WebApplicationBuilder"/>.</returns>
-        public static WebApplicationBuilder ConfigureDefaultPresentation(this WebApplicationBuilder aWebApplicationBuilder, IEnumerable<string>? aXmlCommentFileList = default, string? aBaseSwaggerPath = default, params Type[] aScanMarkerList)
+        public static WebApplicationBuilder ConfigureDefaultPresentation(
+            this WebApplicationBuilder aWebApplicationBuilder,
+            IEnumerable<string>? aXmlCommentFileList = default,
+            string? aBaseSwaggerPath = default,
+            bool aUseStringEnums = true,
+            params Type[] aScanMarkerList)
         {
+            if (aUseStringEnums)
+            {
+                // Configure JSON options for Minimal API
+                aWebApplicationBuilder.Services.ConfigureHttpJsonOptions(options =>
+                {
+                    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
+
+                // Additional configuration for Swagger to reflect enums as strings
+                aWebApplicationBuilder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
+            }
 
             aWebApplicationBuilder.Services.Configure<JsonOptions>(options =>
             {
                 options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
+
             aWebApplicationBuilder.Services.AddSerializer();
             aWebApplicationBuilder.Services.AddEndpointsApiExplorer();
-
             aWebApplicationBuilder.Services.AddSwaggerGen(opt => opt.ConfigureSwagger(aXmlCommentFileList, aBaseSwaggerPath));
             aWebApplicationBuilder.Services.AddEndpointDefinitions(aScanMarkerList);
 
             #region Infrastructure
             aWebApplicationBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck(aWebApplicationBuilder.Configuration));
             aWebApplicationBuilder.Services.AddHealthChecks();
-            aWebApplicationBuilder.Services.AddHealthChecksUI().AddInMemoryStorage(); 
+            aWebApplicationBuilder.Services.AddHealthChecksUI().AddInMemoryStorage();
             aWebApplicationBuilder.Host.ConfigureSerilog();
             #endregion
 
@@ -49,20 +69,52 @@ namespace TGF.CA.Presentation
         }
 
         /// <summary>
-        /// Configures a CORS policy to allow cross origin requests from the frontend domain.
+        /// Configures CORS to allow requests from the specified frontend URL pattern, supporting dynamic subdomains.
         /// </summary>
-        /// <param name="aConfiguration">Configuration with the expected "FrontendURL" section with a string representing the frontend url to be allowed by CORS policy.</param>
-        /// <exception cref="Exception">Thros an exception if FrontendURL is not configured in appsettings.</exception>
+        /// <param name="aWebApplicationBuilder">The WebApplicationBuilder instance.</param>
+        /// <param name="aConfiguration">The configuration instance.</param>
+        /// <returns>The modified WebApplicationBuilder instance.</returns>
+        /// <exception cref="Exception">Thrown when CORSFrontendURL configuration is not found.</exception>
         public static WebApplicationBuilder ConfigureFrontendCORS(this WebApplicationBuilder aWebApplicationBuilder, IConfiguration aConfiguration)
         {
-            var lFrontUrl = aConfiguration.GetValue<string>("FrontendURL")
+            var lCORSFrontUrl = aConfiguration.GetValue<string>("FrontendURL")
                 ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings. Please add this configuration.");
+
+            var lLocalDevelopmentUrl = aConfiguration.GetValue<string>("DevelopmentDomain"); // Replace with your local development URL if different
+
             aWebApplicationBuilder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowFrontCorsPolicy", builder => builder.SetIsOriginAllowedToAllowWildcardSubdomains().WithOrigins(lFrontUrl)
-                                                                    .AllowAnyHeader().AllowAnyMethod().AllowCredentials());
+                options.AddPolicy("AllowFrontCorsPolicy", builder =>
+                    builder.SetIsOriginAllowed(origin => IsOriginAllowed(origin, lCORSFrontUrl, lLocalDevelopmentUrl))
+                           .AllowAnyHeader()
+                           .AllowAnyMethod()
+                           .AllowCredentials());
             });
+
             return aWebApplicationBuilder;
+        }
+
+        private static bool IsOriginAllowed(string aOrigin, string aFrontendUrl, string? aLocalDevelopmentUrl)
+        {
+            // Check if the origin matches the frontend URL or the local development URL
+            return aOrigin == aFrontendUrl || aOrigin == aLocalDevelopmentUrl;
+        }
+
+        /// <summary>
+        /// Determines if the specified origin is allowed based on the allowed origin pattern.
+        /// </summary>
+        /// <param name="origin">The origin URL to check.</param>
+        /// <param name="allowedOriginPattern">The allowed origin pattern.</param>
+        /// <returns>True if the origin is allowed; otherwise, false.</returns>
+        private static bool IsOriginAllowed(string origin, string allowedOriginPattern)
+        {
+            if (Uri.TryCreate(origin, UriKind.Absolute, out var originUri) &&
+                Uri.TryCreate(allowedOriginPattern, UriKind.Absolute, out var allowedUri))
+            {
+                return originUri.Scheme == allowedUri.Scheme &&
+                       originUri.Host.EndsWith(allowedUri.Host, StringComparison.OrdinalIgnoreCase);
+            }
+            return false;
         }
 
         /// <summary>

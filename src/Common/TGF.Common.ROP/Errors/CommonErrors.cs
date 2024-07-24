@@ -27,6 +27,23 @@ namespace TGF.Common.ROP.Errors
                 "The request was cancelled.");
         }
 
+        public static class ContextAccessToken
+        {
+            /// <summary>
+            /// Represents an <see cref="HttpError"/> that should be propagated when the access token in the request's http context is null or empty.
+            /// </summary>
+            public static HttpError NullOrEmpty => new(
+                NullOrEmptyError,
+                HttpStatusCode.BadRequest);
+
+            /// <summary>
+            /// Represents an <see cref="Error"/> that should be propagated when the access token in the request's http context is null or empty.
+            /// </summary>
+            public static Error NullOrEmptyError => new(
+                "ContextAccessToken.NullOrEmpty",
+                "The access token in the request's http context is null or empty.");
+        }
+
         public static class UnhandledException
         {
             public static HttpError Cancelled => new(
