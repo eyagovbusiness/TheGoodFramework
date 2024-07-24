@@ -1,4 +1,5 @@
-﻿using System.Collections.Immutable;
+﻿using Microsoft.AspNetCore.Http;
+using System.Collections.Immutable;
 using System.Net;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
@@ -85,6 +86,15 @@ namespace TGF.Common.ROP.Result
             => aCancellationToken.IsCancellationRequested
                ? Failure<Unit>(CommonErrors.CancellationToken.Cancelled)
                : SuccessHttp(Unit.Value);
+
+        public static IHttpResult<string> ContextAccessTokenResult(HttpContext aHttpContext)
+        {
+            var lAccessToken = aHttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+            return string.IsNullOrEmpty(lAccessToken)
+                ? Failure<string>(CommonErrors.ContextAccessToken.NullOrEmpty)
+                : SuccessHttp(lAccessToken);
+        }
+
 
         public static Task<IHttpResult<Unit>> CancellationTokenResultAsync(CancellationToken aCancellationToken)
             => Task.FromResult(CancellationTokenResult(aCancellationToken));
