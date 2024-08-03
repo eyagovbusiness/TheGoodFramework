@@ -1,22 +1,19 @@
-﻿namespace TGF.CA.Domain.Contracts
-{
-    public interface IEntity<TKey> where TKey : struct, IEquatable<TKey>
-    {
-        /// <summary>
-        /// The unique identifier for the Entity.
-        /// </summary>
-        TKey Id { get; }
+﻿
+using System.ComponentModel.DataAnnotations;
 
+namespace TGF.CA.Domain.Primitives
+{
+    public abstract class EntityBase
+    {
+        [Required]
         /// <summary>
         /// When the entity was created in DB
         /// </summary>
         public DateTimeOffset CreatedAt { get; set; }
+        [Required]
         /// <summary>
         /// The last time when the entitiy was modified, by default it is initially set to <see cref="CreatedAt"/> when the entity is created.
         /// </summary>
         public DateTimeOffset ModifiedAt { get; set; }
-
-        bool Equals(object aOtherObject);
-        int GetHashCode();
     }
 }

@@ -14,14 +14,18 @@ namespace TGF.CA.Domain.Primitives
     /// (struct) and implement IEquatable<TKey> for efficient equality comparison.
     /// Examples of valid types include int, long, Guid, etc.
     /// </typeparam>
-    public abstract class Entity<TKey> : IEntity<TKey> where TKey : struct, IEquatable<TKey>
+    public abstract class Entity<TKey> : EntityBase, IEntity<TKey> where TKey : struct, IEquatable<TKey>
     {
         /// <summary>
         /// The unique identifier for the Entity.
         /// </summary>
         public TKey Id { get; protected set; }
 
-        protected Entity() { }
+        protected Entity()
+        {
+            CreatedAt = DateTimeOffset.UtcNow;
+            ModifiedAt = CreatedAt;
+        }
 
         /// <summary>
         /// Determines whether the specified object is equal to the current object.

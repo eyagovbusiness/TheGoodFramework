@@ -14,7 +14,7 @@ namespace TGF.CA.Infrastructure.DB.MySQL
     /// Production or Staging connection strings will never be used for design-time operations. 
     /// </remarks>
     public abstract class MySQLDesignTimeDbContextFactory<TDbContext> : IDesignTimeDbContextFactory<TDbContext>
-        where TDbContext : DbContext
+        where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     {
 
         /// <summary>

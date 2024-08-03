@@ -14,7 +14,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
     /// Production or Staging connection strings will never be used for design-time operations. 
     /// </remarks>
     public abstract class PostgreSQLDesignTimeDbContextFactory<TDbContext> : IDesignTimeDbContextFactory<TDbContext>
-        where TDbContext : DbContext
+        where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     {
         /// <summary>
         /// Provides the schema name for the PostgreSQL database.

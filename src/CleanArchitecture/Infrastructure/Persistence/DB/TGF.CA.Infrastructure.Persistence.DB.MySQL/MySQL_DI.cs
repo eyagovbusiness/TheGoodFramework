@@ -18,7 +18,7 @@ namespace TGF.CA.Infrastructure.DB.MySQL
         /// <param name="aDatabaseName">Name of the database to connect with.</param>
         /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
         public static async Task<IServiceCollection> AddMySQL<TDbContext>(this IServiceCollection aServiceCollection, string aDatabaseName)
-            where TDbContext : DbContext
+            where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         {
             var lConnectionString = await MySQLHelpers.GetConnectionString(aServiceCollection.BuildServiceProvider(), aDatabaseName);
             return aServiceCollection
