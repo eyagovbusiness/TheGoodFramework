@@ -1,12 +1,16 @@
-﻿using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using TGF.CA.Domain.Primitives;
 
 namespace TGF.CA.Infrastructure.DB.DbContext
 {
-    public class EntitiesDbContext<TDbContext>(DbContextOptions<TDbContext> aOptions) : Microsoft.EntityFrameworkCore.DbContext(aOptions) 
+    public class EntitiesDbContext<TDbContext> : Microsoft.EntityFrameworkCore.DbContext 
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     {
+        public EntitiesDbContext(DbContextOptions options) : base(options)
+        {
+        }
+
         public override int SaveChanges()
         {
             UpdateTimestamps();
