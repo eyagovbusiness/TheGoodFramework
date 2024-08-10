@@ -87,6 +87,13 @@ namespace TGF.Common.ROP.Result
                ? Failure<Unit>(CommonErrors.CancellationToken.Cancelled)
                : SuccessHttp(Unit.Value);
 
+        public static IHttpResult<Unit> ValidationResult(FluentValidation.Results.ValidationResult aValidationResult)
+        => aValidationResult.IsValid
+                ? SuccessHttp(Unit.Value)
+                : Failure<Unit>(aValidationResult.Errors
+                    .Select(error => ValidateSwitchExtensions.GetValidationError(error.ErrorCode, error.ErrorMessage))
+                    .ToImmutableArray());
+
         public static IHttpResult<string> ContextAccessTokenResult(HttpContext aHttpContext)
         {
             var lAccessToken = aHttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
