@@ -47,7 +47,7 @@ pipeline {
             steps {
                 script {
                     if (env.CHANGE_ID == null) {
-                        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "harbor-${ENVIRONMENT}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
+                        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "harbor-${REPO}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
                             sh "docker login -u \'${DOCKER_USERNAME}' -p \'${DOCKER_PASSWORD}' ${REGISTRY}"
                             sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:${version}"
                             sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:latest"
