@@ -12,16 +12,18 @@ namespace TGF.CA.Presentation
         /// </summary>
         /// <param name="aAditionalHealtCheckConfig">Aditional JSON configuration to add in Dictionary format.</param>
         /// <returns><see cref="IConfiguration"/> with added HealthChecksUI configuration from memory.</returns>
-        public static IConfiguration BuildBasicHealthCheck(IConfiguration? aConfiguration = default, bool aIsHttps = false, Dictionary<string, string?>? aAditionalHealtCheckConfig = null)
+        public static IConfiguration BuildBasicHealthCheck(IConfiguration? aConfiguration = default, Dictionary<string, string?>? aAditionalHealtCheckConfig = null)
         {
-            var lPort = aIsHttps ? "5000" : "8080";
+            var lHealthEndpoint = aConfiguration?.GetValue<string>("HealthEndpoint") 
+                ?? throw new Exception("HealthEndpoint is not set in appsettings!! Please add this configuration.");
+
             var lNewConfigurationBuilder =
                 new ConfigurationBuilder()
                 .AddInMemoryCollection(
                 new Dictionary<string, string?>
                 {
                     {"HealthChecksUI:HealthChecks:0:Name", $"{aConfiguration?.GetValue<string>("AppName") ?? "self"}"},
-                    {"HealthChecksUI:HealthChecks:0:Uri", $"http://localhost:{lPort}/health"},
+                    {"HealthChecksUI:HealthChecks:0:Uri", $"{lHealthEndpoint}"},
                     {"HealthChecksUI:EvaluationTimeInSeconds", $"{aConfiguration?.GetValue<string>("HealthCheckTickInSeconds") ?? "60"}" },
                     {"HealthChecksUI:MinimumSecondsBetweenFailureNotifications", "90" }
                 });

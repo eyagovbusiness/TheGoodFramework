@@ -29,7 +29,6 @@ namespace TGF.CA.Presentation
             IEnumerable<string>? aXmlCommentFileList = default,
             string? aBaseSwaggerPath = default,
             bool aUseStringEnums = true,
-            bool aIsHttps = false,
             params Type[] aScanMarkerList)
         {
             if (aUseStringEnums)
@@ -58,7 +57,7 @@ namespace TGF.CA.Presentation
             aWebApplicationBuilder.Services.AddEndpointDefinitions(aScanMarkerList);
 
             #region Infrastructure
-            aWebApplicationBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck(aWebApplicationBuilder.Configuration, aIsHttps));
+            aWebApplicationBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck(aWebApplicationBuilder.Configuration));
             aWebApplicationBuilder.Services.AddHealthChecks();
             aWebApplicationBuilder.Services.AddHealthChecksUI().AddInMemoryStorage();
             aWebApplicationBuilder.Host.ConfigureSerilog();
