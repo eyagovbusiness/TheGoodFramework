@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
+using TGF.CA.Domain.Contracts;
 using TGF.Common.ROP;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
@@ -12,9 +13,11 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
     /// </summary>
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    public abstract class CommandRepositoryBase<TRepository, TDbContext> : ICommandRepository
-    where TDbContext : Microsoft.EntityFrameworkCore.DbContext
-    where TRepository : class
+    public abstract class CommandRepositoryBase<TRepository, TDbContext, T, TKey> : ICommandRepository<T, TKey>
+        where TDbContext : Microsoft.EntityFrameworkCore.DbContext
+        where TRepository : class
+        where T : class, IEntity<TKey>
+         where TKey : struct, IEquatable<TKey>
     {
         protected readonly TDbContext _context;
         protected readonly ILogger<TRepository> _logger;
@@ -28,7 +31,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         #region ICommandRepository
 
         #region Command
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<IHttpResult<T>>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
+        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
         {
             try
             {
@@ -39,11 +42,11 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             catch (Exception lEx)
             {
                 _logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
-                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+                return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
 
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<CancellationToken, Task<T>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
+        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<TResult>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
         {
             try
             {
@@ -54,11 +57,11 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             catch (Exception lEx)
             {
                 _logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
-                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+                return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
 
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<IHttpResult<T>> aCommandAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
+        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<IHttpResult<TResult>> aCommandAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
         {
             try
             {
@@ -69,11 +72,11 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             catch (Exception lEx)
             {
                 _logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
-                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+                return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
 
-        public async Task<IHttpResult<T>> TryCommandAsync<T>(Func<T> aCommandAction, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
+        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<TResult> aCommandAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
         {
             try
             {
@@ -84,23 +87,20 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             catch (Exception lEx)
             {
                 _logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
-                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+                return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
 
         #endregion
 
         #region Create-Update-Delete
-        public virtual async Task<IHttpResult<T>> AddAsync<T>(T aEntity, CancellationToken aCancellationToken = default)
-            where T : class
+        public virtual async Task<IHttpResult<T>> AddAsync(T aEntity, CancellationToken aCancellationToken = default)
         => await TryCommandAsync(async (aCancellationToken) => (await _context.Set<T>().AddAsync(aEntity, aCancellationToken)).Entity, aCancellationToken);
 
-        public virtual async Task<IHttpResult<T>> UpdateAsync<T>(T aEntity, CancellationToken aCancellationToken = default)
-            where T : class
+        public virtual async Task<IHttpResult<T>> UpdateAsync(T aEntity, CancellationToken aCancellationToken = default)
         => await TryCommandAsync(() => _context.Set<T>().Update(aEntity).Entity, aCancellationToken);
 
-        public virtual async Task<IHttpResult<T>> DeleteAsync<T>(T aEntity, CancellationToken aCancellationToken = default)
-            where T : class
+        public virtual async Task<IHttpResult<T>> DeleteAsync(T aEntity, CancellationToken aCancellationToken = default)
         => await TryCommandAsync(() => _context.Set<T>().Remove(aEntity).Entity, aCancellationToken);
 
         #endregion
@@ -151,7 +151,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         #endregion
 
         #region Save
-        public async Task<IHttpResult<T>> TrySaveChangesAsync<T>(T aResult, CancellationToken aCancellationToken = default, Func<int, T, IHttpResult<T>>? aSaveResultOverride = default)
+        public async Task<IHttpResult<TResult>> TrySaveChangesAsync<TResult>(TResult aResult, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
         {
             try
             {
@@ -167,13 +167,13 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             catch (Exception lEx)
             {
                 _logger.LogError(lEx, "An error occurred while saving DB changes: {ErrorMessage}", lEx.Message);
-                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+                return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
-        public virtual IHttpResult<T> DefaultSaveResultFunc<T>(int aChangeCount, T aCommandResult)
+        public virtual IHttpResult<TResult> DefaultSaveResultFunc<TResult>(int aChangeCount, TResult aCommandResult)
         => !_context.ChangeTracker.HasChanges() || aChangeCount > 0
             ? Result.SuccessHttp(aCommandResult)
-            : Result.Failure<T>(DBErrors.Repository.Save.Error);
+            : Result.Failure<TResult>(DBErrors.Repository.Save.Error);
 
         #endregion
 
