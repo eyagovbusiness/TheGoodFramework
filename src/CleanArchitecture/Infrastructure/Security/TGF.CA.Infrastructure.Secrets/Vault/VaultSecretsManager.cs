@@ -36,27 +36,18 @@ namespace TGF.CA.Infrastructure.Security.Secrets.Vault
             where T : new()
         {
             var lVaultClient = await _vaultClient.Value;
-            var lKv1Secret = await lVaultClient.V1.Secrets.KeyValue.V1
+            Secret<SecretData> lKv2Secret = await lVaultClient.V1.Secrets.KeyValue.V2
                 .ReadSecretAsync(path: aPath, mountPoint: "secret");
 
-            return lKv1Secret.Data.ToObject<T>();
+            return lKv2Secret.Data.Data.ToObject<T>();
         }
 
         public async Task<object> GetValueObject(string aPath, string aKey)
         {
             var lVaultClient = await _vaultClient.Value;
-
-            // Use Vault v1 to read the secret
-            var lKv1Secret = await lVaultClient.V1.Secrets.KeyValue.V1
-                .ReadSecretAsync(path: aPath);
-
-            // Retrieve the key's value from the secret data
-            if (!lKv1Secret.Data.TryGetValue(aKey, out var value))
-            {
-                throw new Exception($"Key '{aKey}' not found in secret at path '{aPath}'.");
-            }
-
-            return value;
+            Secret<SecretData> lKv2Secret = await lVaultClient.V1.Secrets.KeyValue.V2
+                .ReadSecretAsync(path: aPath, mountPoint: "secret");
+            return lKv2Secret.Data.Data[aKey];
         }
 
         public async Task<IBasicCredentials> GetRabbitMQCredentials(string aRoleName)
@@ -69,14 +60,14 @@ namespace TGF.CA.Infrastructure.Security.Secrets.Vault
 
         public async Task<string> GetTokenSecret(string aTokenName)
         {
-            var lAPISecret = await GetValueObject("data/tokensecrets", aTokenName)
+            var lAPISecret = await GetValueObject("tokensecrets", aTokenName)
                              ?? throw new Exception("Error loading retrieving the APISecret!!");
             return lAPISecret.ToString()!;
         }
 
         public async Task<string> GetServiceKey(string aServiceName)
         {
-            var lAPISecret = await GetValueObject("data/apisecrets", aServiceName)
+            var lAPISecret = await GetValueObject("apisecrets", aServiceName)
                  ?? throw new Exception($"Error loading retrieving the ApiKey for service {aServiceName}.");
             return lAPISecret.ToString()!;
         }
