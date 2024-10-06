@@ -1,5 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
+﻿using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using TGF.CA.Domain.Contracts;
 using TGF.CA.Domain.Contracts.Repositories;
@@ -15,7 +14,7 @@ namespace TGF.CA.Infrastructure.DB.Repository
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
     public abstract class RepositoryBase<TRepository, TDbContext> : ICommandRepository, IQueryRepository, IRepositoryBase
-    where TDbContext : DbContext
+    where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     where TRepository : class
     {
         private readonly ICommandRepository _commandRepository;

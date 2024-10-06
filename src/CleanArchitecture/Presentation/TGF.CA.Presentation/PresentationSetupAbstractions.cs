@@ -94,11 +94,41 @@ namespace TGF.CA.Presentation
             return aWebApplicationBuilder;
         }
 
+        /// <summary>
+        /// Validates if the origin is allowed for CORS based on the frontend URL and local development URL. Allows origins like https://environment.subdomain.domain.TLD
+        /// </summary>
+        /// <param name="aOrigin">The origin of the incoming request.</param>
+        /// <param name="aFrontendUrl">The configured frontend URL.</param>
+        /// <param name="aLocalDevelopmentUrl">The local development URL (optional, for development environments).</param>
+        /// <returns>True if the origin is allowed; false otherwise.</returns>
+        /// <remarks>
+        /// This method applies the following logic:
+        /// 1. Extracts the main domain from the FrontendURL.
+        /// 2. Allows the request if the origin matches either the FrontendURL or the local development URL.
+        /// 3. Ensures that the origin's domain ends with the main domain.
+        /// 4. Allows the case where there is no subdomain.
+        /// 5. Validates that, if a subdomain exists, it matches the first part of the FrontendURL's domain.
+        /// </remarks>
         private static bool IsOriginAllowed(string aOrigin, string aFrontendUrl, string? aLocalDevelopmentUrl)
         {
-            // Check if the origin matches the frontend URL or the local development URL
-            return aOrigin == aFrontendUrl || aOrigin == aLocalDevelopmentUrl;
+            var lMainDomain = new Uri(aFrontendUrl).Host;
+
+            if (aOrigin == aFrontendUrl || aOrigin == aLocalDevelopmentUrl)
+                return true;
+
+            var lOriginDomain = new Uri(aOrigin).Host;
+            var lHostParts = lOriginDomain.Split('.');
+
+            if (!lOriginDomain.EndsWith(lMainDomain, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (lHostParts.Length == 2)
+                return true;
+
+            return lHostParts[0] == lMainDomain.Split('.')[0];
+
         }
+
 
         /// <summary>
         /// Determines if the specified origin is allowed based on the allowed origin pattern.
