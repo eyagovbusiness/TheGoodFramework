@@ -12,9 +12,11 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
     /// </summary>
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    public abstract class QueryRepositoryBase<TRepository, TDbContext> : IQueryRepository
+    public abstract class QueryRepositoryBase<TRepository, TDbContext, T, TKey> : IQueryRepository<T,TKey>
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     where TRepository : class
+    where T : class, IEntity<TKey>
+    where TKey : struct, IEquatable<TKey>
     {
         protected readonly TDbContext _context;
         protected readonly ILogger<TRepository> _logger;
@@ -27,7 +29,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         #region IQueryRepository
 
         #region Query
-        public async Task<IHttpResult<T>> TryQueryAsync<T>(Func<CancellationToken, Task<IHttpResult<T>>> aQueryAsyncAction, CancellationToken aCancellationToken = default)
+        public async Task<IHttpResult<TResult>> TryQueryAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aQueryAsyncAction, CancellationToken aCancellationToken = default)
         {
             try
             {
@@ -37,11 +39,11 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             catch (Exception lEx)
             {
                 _logger.LogError(lEx, "An error occurred trying to execute a DB query at repository level : {ErrorMessage}", lEx.Message);
-                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+                return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
 
-        public async Task<IHttpResult<T>> TryQueryAsync<T>(Func<CancellationToken, Task<T>> aQueryAsyncAction, CancellationToken aCancellationToken = default)
+        public async Task<IHttpResult<TResult>> TryQueryAsync<TResult>(Func<CancellationToken, Task<TResult>> aQueryAsyncAction, CancellationToken aCancellationToken = default)
         {
             try
             {
@@ -51,11 +53,11 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             catch (Exception lEx)
             {
                 _logger.LogError(lEx, "An error occurred trying to execute a DB query at repository level : {ErrorMessage}", lEx.Message);
-                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+                return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
 
-        public IHttpResult<T> TryQuery<T>(Func<IHttpResult<T>> aQueryAction)
+        public IHttpResult<TResult> TryQuery<TResult>(Func<IHttpResult<TResult>> aQueryAction)
         {
             try
             {
@@ -64,11 +66,11 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             catch (Exception lEx)
             {
                 _logger.LogError(lEx, "An error occurred trying to execute a DB query at repository level : {ErrorMessage}", lEx.Message);
-                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+                return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
 
-        public IHttpResult<T> TryQuery<T>(Func<T> aQueryAction)
+        public IHttpResult<TResult> TryQuery<TResult>(Func<TResult> aQueryAction)
         {
             try
             {
@@ -77,16 +79,15 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             catch (Exception lEx)
             {
                 _logger.LogError(lEx, "An error occurred trying to execute a DB query at repository level : {ErrorMessage}", lEx.Message);
-                return Result.Failure<T>(CommonErrors.UnhandledException.New(lEx.Message));
+                return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
 
         #endregion
 
         #region Read
-        public virtual async Task<IHttpResult<T>> GetByIdAsync<T, TKey>(TKey aEntityId, CancellationToken aCancellationToken = default)
-            where T : class
-            where TKey : struct, IEquatable<TKey>
+        public virtual async Task<IHttpResult<T>> GetByIdAsync(TKey aEntityId, CancellationToken aCancellationToken = default)
+
         => await TryQueryAsync(async (aCancellationToken) =>
         {
             var lEntity = await _context.Set<T>().FindAsync([aEntityId], aCancellationToken);
@@ -94,9 +95,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 
         }, aCancellationToken);
 
-        public virtual async Task<IHttpResult<List<T>>> GetByIdListAsync<T, TKey>(IEnumerable<TKey> entityIds, CancellationToken cancellationToken = default)
-            where T : class, IEntity<TKey> 
-            where TKey : struct, IEquatable<TKey>
+        public virtual async Task<IHttpResult<IEnumerable<T>>> GetByIdListAsync(IEnumerable<TKey> entityIds, CancellationToken cancellationToken = default)
         {
             return await TryQueryAsync(async cancellationToken =>
             {
@@ -105,7 +104,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 
                 if (!entityIdList.Any())
                 {
-                    return Result.SuccessHttp(new List<T>()); // Return an empty list if no IDs were provided
+                    return Result.SuccessHttp(new List<T>() as IEnumerable<T>); // Return an empty list if no IDs were provided
                 }
 
                 // Query the database for entities with IDs that match those in the provided list
@@ -114,8 +113,8 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
                     .ToListAsync(cancellationToken);
 
                 return entities.Any()
-                    ? Result.SuccessHttp(entities)
-                    : Result.Failure<List<T>>(DBErrors.Repository.Entity.NotFound);
+                    ? Result.SuccessHttp(entities as IEnumerable<T>)
+                    : Result.Failure<IEnumerable<T>>(DBErrors.Repository.Entity.NotFound);
 
             }, cancellationToken);
         }
