@@ -13,25 +13,19 @@ namespace TGF.CA.Infrastructure.DB.Repository
     /// </summary>
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    public abstract class RepositoryBase<TRepository, TDbContext, T, TKey> : ICommandRepository<T, TKey>, IQueryRepository<T, TKey>, IRepositoryBase<T, TKey>
+    public abstract class RepositoryBase<TRepository, TDbContext, T, TKey>(TDbContext context, ILogger<TRepository> logger)
+        : ICommandRepository<T, TKey>, IQueryRepository<T, TKey>, IRepositoryBase<T, TKey>
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         where TRepository : class
         where T : class, IEntity<TKey>
         where TKey : struct, IEquatable<TKey>
     {
-        private readonly ICommandRepository<T, TKey> _commandRepository;
-        private readonly IQueryRepository<T, TKey> _queryRepository;
 
-        protected readonly TDbContext _context;
-        protected readonly ILogger<TRepository> _logger;
+        private readonly InternalCommandRepository _commandRepository = new(context, logger);
+        private readonly InternalQueryRepository _queryRepository = new(context, logger);
 
-        public RepositoryBase(TDbContext aContext, ILogger<TRepository> aLogger)
-        {
-            _commandRepository = new InternalCommandRepository(aContext, aLogger);
-            _queryRepository = new InternalQueryRepository(aContext, aLogger);
-            _context = aContext;
-            _logger = aLogger;
-        }
+        protected readonly TDbContext _context = context;
+        protected readonly ILogger<TRepository> _logger = logger;
 
         #region Command-Query
         public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
@@ -63,6 +57,9 @@ namespace TGF.CA.Infrastructure.DB.Repository
 
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetByIdListAsync(IEnumerable<TKey> aEntityIdList, CancellationToken aCancellationToken = default)
         => await _queryRepository.GetByIdListAsync(aEntityIdList, aCancellationToken);
+
+        public virtual async Task<IHttpResult<IEnumerable<T>>> GetListAsync(CancellationToken cancellationToken = default)
+        => await _queryRepository.GetListAsync(cancellationToken);
 
         public virtual async Task<IHttpResult<T>> UpdateAsync(T aEntity, CancellationToken aCancellationToken = default)
         => await _commandRepository.UpdateAsync(aEntity, aCancellationToken);

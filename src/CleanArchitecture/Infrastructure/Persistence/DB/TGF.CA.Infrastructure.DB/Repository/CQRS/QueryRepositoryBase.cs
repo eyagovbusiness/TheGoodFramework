@@ -12,20 +12,14 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
     /// </summary>
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    public abstract class QueryRepositoryBase<TRepository, TDbContext, T, TKey> : IQueryRepository<T,TKey>
+    public abstract class QueryRepositoryBase<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger) : IQueryRepositoryInternal<T,TKey>
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     where TRepository : class
     where T : class, IEntity<TKey>
     where TKey : struct, IEquatable<TKey>
     {
-        protected readonly TDbContext _context;
-        protected readonly ILogger<TRepository> _logger;
-
-        public QueryRepositoryBase(TDbContext aContext, ILogger<TRepository> aLogger)
-        {
-            _context = aContext;
-            _logger = aLogger;
-        }
+        protected readonly TDbContext _context = aContext;
+        protected readonly ILogger<TRepository> _logger = aLogger;
         #region IQueryRepository
 
         #region Query
@@ -94,6 +88,16 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             return lEntity != null ? Result.SuccessHttp(lEntity!) : Result.Failure<T>(DBErrors.Repository.Entity.NotFound);
 
         }, aCancellationToken);
+
+        public virtual async Task<IHttpResult<IEnumerable<T>>> GetListAsync(CancellationToken cancellationToken = default)
+        {
+            return await TryQueryAsync(async cancellationToken => {
+                var entities = await _context.Set<T>().ToListAsync(cancellationToken);
+                return entities.Count != 0
+                    ? Result.SuccessHttp(entities as IEnumerable<T>)
+                    : Result.Failure<IEnumerable<T>>(DBErrors.Repository.Entity.NotFound);
+            }, cancellationToken);
+        }
 
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetByIdListAsync(IEnumerable<TKey> entityIds, CancellationToken cancellationToken = default)
         {

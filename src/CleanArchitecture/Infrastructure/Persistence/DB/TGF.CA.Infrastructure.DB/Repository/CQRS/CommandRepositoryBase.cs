@@ -13,20 +13,14 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
     /// </summary>
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    public abstract class CommandRepositoryBase<TRepository, TDbContext, T, TKey> : ICommandRepository<T, TKey>
+    public abstract class CommandRepositoryBase<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger) : ICommandRepositoryInternal<T, TKey>
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         where TRepository : class
         where T : class, IEntity<TKey>
          where TKey : struct, IEquatable<TKey>
     {
-        protected readonly TDbContext _context;
-        protected readonly ILogger<TRepository> _logger;
-
-        public CommandRepositoryBase(TDbContext aContext, ILogger<TRepository> aLogger)
-        {
-            _context = aContext;
-            _logger = aLogger;
-        }
+        protected readonly TDbContext context = aContext;
+        protected readonly ILogger<TRepository> logger = aLogger;
 
         #region ICommandRepository
 
@@ -41,7 +35,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             }
             catch (Exception lEx)
             {
-                _logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
+                logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
                 return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
@@ -56,7 +50,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             }
             catch (Exception lEx)
             {
-                _logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
+                logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
                 return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
@@ -71,7 +65,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             }
             catch (Exception lEx)
             {
-                _logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
+                logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
                 return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
@@ -86,7 +80,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             }
             catch (Exception lEx)
             {
-                _logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
+                logger.LogError(lEx, "An error occurred trying to execute a DB command at repository level : {ErrorMessage}", lEx.Message);
                 return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
@@ -95,13 +89,13 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 
         #region Create-Update-Delete
         public virtual async Task<IHttpResult<T>> AddAsync(T aEntity, CancellationToken aCancellationToken = default)
-        => await TryCommandAsync(async (aCancellationToken) => (await _context.Set<T>().AddAsync(aEntity, aCancellationToken)).Entity, aCancellationToken);
+        => await TryCommandAsync(async (aCancellationToken) => (await context.Set<T>().AddAsync(aEntity, aCancellationToken)).Entity, aCancellationToken);
 
         public virtual async Task<IHttpResult<T>> UpdateAsync(T aEntity, CancellationToken aCancellationToken = default)
-        => await TryCommandAsync(() => _context.Set<T>().Update(aEntity).Entity, aCancellationToken);
+        => await TryCommandAsync(() => context.Set<T>().Update(aEntity).Entity, aCancellationToken);
 
         public virtual async Task<IHttpResult<T>> DeleteAsync(T aEntity, CancellationToken aCancellationToken = default)
-        => await TryCommandAsync(() => _context.Set<T>().Remove(aEntity).Entity, aCancellationToken);
+        => await TryCommandAsync(() => context.Set<T>().Remove(aEntity).Entity, aCancellationToken);
 
         #endregion
 
@@ -110,12 +104,12 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         {
             try
             {
-                var lTransaction = await _context.Database.BeginTransactionAsync(aCancellationToken);
+                var lTransaction = await context.Database.BeginTransactionAsync(aCancellationToken);
                 return Result.SuccessHttp(lTransaction);
             }
             catch (Exception lEx)
             {
-                _logger.LogError(lEx, "An error occurred while beggining back the DB transaction: {ErrorMessage}", lEx.Message);
+                logger.LogError(lEx, "An error occurred while beggining back the DB transaction: {ErrorMessage}", lEx.Message);
                 return Result.Failure<IDbContextTransaction>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
@@ -129,7 +123,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             }
             catch (Exception lEx)
             {
-                _logger.LogError(lEx, "An error occurred while commiting the DB transaction: {ErrorMessage}", lEx.Message);
+                logger.LogError(lEx, "An error occurred while commiting the DB transaction: {ErrorMessage}", lEx.Message);
                 return Result.Failure<Unit>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
@@ -143,7 +137,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             }
             catch (Exception lEx)
             {
-                _logger.LogError(lEx, "An error occurred while rolling back the DB transaction: {ErrorMessage}", lEx.Message);
+                logger.LogError(lEx, "An error occurred while rolling back the DB transaction: {ErrorMessage}", lEx.Message);
                 return Result.Failure<Unit>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
@@ -157,29 +151,27 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             {
                 if (aSaveResultOverride == default)
                     return DefaultSaveResultFunc(
-                        await _context.SaveChangesAsync(aCancellationToken)
+                        await context.SaveChangesAsync(aCancellationToken)
                         , aResult);
 
                 return aSaveResultOverride(
-                    await _context.SaveChangesAsync(aCancellationToken)
+                    await context.SaveChangesAsync(aCancellationToken)
                     , aResult);
             }
             catch (Exception lEx)
             {
-                _logger.LogError(lEx, "An error occurred while saving DB changes: {ErrorMessage}", lEx.Message);
+                logger.LogError(lEx, "An error occurred while saving DB changes: {ErrorMessage}", lEx.Message);
                 return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
             }
         }
         public virtual IHttpResult<TResult> DefaultSaveResultFunc<TResult>(int aChangeCount, TResult aCommandResult)
-        => !_context.ChangeTracker.HasChanges() || aChangeCount > 0
+        => !context.ChangeTracker.HasChanges() || aChangeCount > 0
             ? Result.SuccessHttp(aCommandResult)
             : Result.Failure<TResult>(DBErrors.Repository.Save.Error);
 
         #endregion
 
         #endregion
-
-
 
     }
 }
