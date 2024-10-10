@@ -52,8 +52,8 @@ namespace TGF.CA.Infrastructure.DB.MySQL
 
         private record MySQLSecrets : IBasicCredentials
         {
-            public string? Username { get; set; }
-            public string? Password { get; set; }
+            public string Username { get; set; } = default!;
+            public string Password { get; set; } = default!;
         }
 
         #endregion

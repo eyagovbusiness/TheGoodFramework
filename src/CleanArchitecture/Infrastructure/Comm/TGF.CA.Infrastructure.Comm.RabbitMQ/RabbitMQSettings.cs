@@ -32,8 +32,8 @@ public class RabbitMQSettings
 
 public record RabbitMQCredentials : IBasicCredentials
 {
-    public string? Username { get; set; }
-    public string? Password { get; set; }
+    public string Username { get; set; } = default!;
+    public string Password { get; set; } = default!;
 }
 
 public record PublisherSettings

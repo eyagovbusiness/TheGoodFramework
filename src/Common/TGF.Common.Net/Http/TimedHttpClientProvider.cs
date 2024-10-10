@@ -5,32 +5,22 @@
     /// providing a single method(<see cref="GetHttpClient"/>) to get a new single instance of <see cref="HttpClient"/> 
     /// that will be disposed and replaced by a new one every given interval from the constructor.
     /// </summary>
-    public class TimedHttpClientProvider
+    /// <remarks>
+    /// Composition class of <see cref="IHttpClientFactory"/> that wraps the factory 
+    /// providing a single method(<see cref="GetHttpClient"/>) to get a new single instance of <see cref="HttpClient"/> 
+    /// that will be disposed and replaced by a new one every given interval from the constructor.
+    /// </remarks>
+    /// <param name="aHttpClientFactory"></param>
+    /// <param name="aReplacementInterval"><see cref="TimeSpan"/> representing the interval of time this class will use to replace the HttpClient returned from <see cref="GetHttpClient"/></param>
+    /// <param name="aBaseAddress">If this parameter is provided, it will be used to define <see cref="HttpClient.BaseAddress"/> <see cref="Uri"/> address used by the returned <see cref="HttpClient"/> instance.</param>
+    public class TimedHttpClientProvider(IHttpClientFactory aHttpClientFactory, TimeSpan aReplacementInterval, string aBaseAddress = default!, TimeSpan aTimeOut = default)
     {
-        private readonly IHttpClientFactory _httpClientFactory;
-        private readonly TimeSpan _replacementInterval;
-        private readonly string _baseAddress;
-        private TimeSpan mTimeout;
-        private DateTimeOffset mLastReplacementTime;
-        private HttpClient mHttpClient;
-
-        /// <summary>
-        /// Composition class of <see cref="IHttpClientFactory"/> that wraps the factory 
-        /// providing a single method(<see cref="GetHttpClient"/>) to get a new single instance of <see cref="HttpClient"/> 
-        /// that will be disposed and replaced by a new one every given interval from the constructor.
-        /// </summary>
-        /// <param name="aHttpClientFactory"></param>
-        /// <param name="aReplacementInterval"><see cref="TimeSpan"/> representing the interval of time this class will use to replace the HttpClient returned from <see cref="GetHttpClient"/></param>
-        /// <param name="aBaseAddress">If this parameter is provided, it will be used to define <see cref="HttpClient.BaseAddress"/> <see cref="Uri"/> address used by the returned <see cref="HttpClient"/> instance.</param>
-        public TimedHttpClientProvider(IHttpClientFactory aHttpClientFactory, TimeSpan aReplacementInterval, string aBaseAddress = default, TimeSpan aTimeOut = default)
-        {
-            _httpClientFactory = aHttpClientFactory;
-            _replacementInterval = aReplacementInterval;
-            mLastReplacementTime = DateTimeOffset.Now;
-            _baseAddress = aBaseAddress;
-            mTimeout = aTimeOut;
-
-        }
+        private readonly IHttpClientFactory _httpClientFactory = aHttpClientFactory;
+        private readonly TimeSpan _replacementInterval = aReplacementInterval;
+        private readonly string _baseAddress = aBaseAddress;
+        private TimeSpan mTimeout = aTimeOut;
+        private DateTimeOffset mLastReplacementTime = DateTimeOffset.Now;
+        private HttpClient? mHttpClient;
 
         /// <summary>
         /// Gets a single instance of <see cref="HttpClient"/> that is replaced preiodically by a new one.
