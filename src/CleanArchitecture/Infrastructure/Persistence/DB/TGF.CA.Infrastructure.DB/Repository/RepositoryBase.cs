@@ -1,6 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore.Storage;
+﻿using Ardalis.Specification;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
-using TGF.CA.Domain.Contracts;
 using TGF.CA.Domain.Contracts.Repositories;
 using TGF.CA.Infrastructure.DB.Repository.CQRS;
 using TGF.Common.ROP;
@@ -13,19 +13,19 @@ namespace TGF.CA.Infrastructure.DB.Repository
     /// </summary>
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    public abstract class RepositoryBase<TRepository, TDbContext, T, TKey>(TDbContext context, ILogger<TRepository> logger)
+    public abstract class RepositoryBase<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger)
         : ICommandRepository<T, TKey>, IQueryRepository<T, TKey>, IRepositoryBase<T, TKey>
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         where TRepository : class
-        where T : class, IEntity<TKey>
+        where T : class, Domain.Contracts.IEntity<TKey>
         where TKey : struct, IEquatable<TKey>
     {
 
-        private readonly InternalCommandRepository _commandRepository = new(context, logger);
-        private readonly InternalQueryRepository _queryRepository = new(context, logger);
+        private readonly InternalCommandRepository _commandRepository = new(aContext, aLogger);
+        private readonly InternalQueryRepository _queryRepository = new(aContext, aLogger);
 
-        protected readonly TDbContext _context = context;
-        protected readonly ILogger<TRepository> _logger = logger;
+        protected readonly TDbContext _context = aContext;
+        protected readonly ILogger<TRepository> _logger = aLogger;
 
         #region Command-Query
         public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
@@ -58,8 +58,11 @@ namespace TGF.CA.Infrastructure.DB.Repository
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetByIdListAsync(IEnumerable<TKey> aEntityIdList, CancellationToken aCancellationToken = default)
         => await _queryRepository.GetByIdListAsync(aEntityIdList, aCancellationToken);
 
-        public virtual async Task<IHttpResult<IEnumerable<T>>> GetListAsync(CancellationToken cancellationToken = default)
-        => await _queryRepository.GetListAsync(cancellationToken);
+        public virtual async Task<IHttpResult<IEnumerable<T>>> GetListAsync(ISpecification<T> specification, CancellationToken cancellationToken = default)
+        => await _queryRepository.GetListAsync(specification, cancellationToken);
+
+        public async Task<IHttpResult<int>> GetCountAsync(CancellationToken cancellationToken = default)
+        => await _queryRepository.GetCountAsync(cancellationToken);
 
         public virtual async Task<IHttpResult<T>> UpdateAsync(T aEntity, CancellationToken aCancellationToken = default)
         => await _commandRepository.UpdateAsync(aEntity, aCancellationToken);
