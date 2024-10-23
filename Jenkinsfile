@@ -1,4 +1,4 @@
-//@Library('standard-library') _
+@Library('standard-library') _
 pipeline {
     agent {
         label 'imagechecker'
@@ -6,8 +6,7 @@ pipeline {
     environment {
         REGISTRY='registry.guildswarm.org'
         //TBD - Change this to the environment name with branch name in the future
-        ENVIRONMENT="Testportal"
-        REPO="${env.BRANCH_NAME}"
+        ENVIRONMENT = "${env.BRANCH_NAME == 'integration' ? 'staging' : (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') ? 'production' : env.BRANCH_NAME}"
         IMAGE='the_good_framework'
     }
     stages {
@@ -75,10 +74,10 @@ pipeline {
         success {
             build job: "backend/GSWB.Common/${REPO}", wait: false
         }
-        //failure {
-        //    script{
-        //        pga.slack_webhook("backend")
-        //    }
-        //}
+        failure {
+            script{
+                pga.slack_webhook("backend")
+            }
+        }
     }
 }
