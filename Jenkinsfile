@@ -6,6 +6,7 @@ pipeline {
     environment {
         REGISTRY='registry.guildswarm.org'
         //TBD - Change this to the environment name with branch name in the future
+        ENVIRONMENT_JOB = "${env.BRANCH_NAME}"
         ENVIRONMENT = "${env.BRANCH_NAME == 'integration' ? 'staging' : (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master') ? 'production' : env.BRANCH_NAME}"
         IMAGE='the_good_framework'
     }
@@ -72,7 +73,7 @@ pipeline {
             sh 'rm -rf *'
         }
         success {
-            build job: "backend/GSWB.Common/${ENVIRONMENT}", wait: false
+            build job: "backend/GSWB.Common/${ENVIRONMENT_JOB}", wait: false
         }
         failure {
             script{
