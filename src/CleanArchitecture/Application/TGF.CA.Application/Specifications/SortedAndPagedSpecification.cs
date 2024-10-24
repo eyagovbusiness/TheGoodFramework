@@ -4,7 +4,7 @@ using TGF.CA.Application.Validation;
 using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Specifications
+namespace TGF.CA.Application.Specifications
 {
     public class SortedAndPagedSpecification<T>(
         int? page, int? pageSize,

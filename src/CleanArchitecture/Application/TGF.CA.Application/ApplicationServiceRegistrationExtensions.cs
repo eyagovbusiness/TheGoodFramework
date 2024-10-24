@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
+using TGF.CA.Application.Contracts.Services;
 
-namespace TGF.CA.Application.Services
+namespace TGF.CA.Application
 {
     /// <summary>
     /// Provides extension methods for registering application services in the dependency injection container.

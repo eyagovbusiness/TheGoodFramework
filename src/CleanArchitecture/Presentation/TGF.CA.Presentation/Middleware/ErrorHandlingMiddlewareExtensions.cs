@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using System.Diagnostics;
-using TGF.CA.Application;
+using TGF.CA.Application.Contracts.Routing;
 
 namespace TGF.CA.Presentation.Middleware
 {

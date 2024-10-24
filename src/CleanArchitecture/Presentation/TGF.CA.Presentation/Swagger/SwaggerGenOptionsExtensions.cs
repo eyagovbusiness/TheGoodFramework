@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
-using TGF.CA.Infrastructure.Middleware.Security;
+using TGF.CA.Application.Contracts.Routing;
 
 namespace TGF.CA.Presentation.Swagger
 {

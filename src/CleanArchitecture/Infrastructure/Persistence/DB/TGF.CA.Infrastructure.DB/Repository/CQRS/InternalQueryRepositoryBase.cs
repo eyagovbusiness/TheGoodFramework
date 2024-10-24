@@ -2,7 +2,6 @@
 using Ardalis.Specification.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using TGF.CA.Infrastructure.DB.DbContext;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.Result;
@@ -13,8 +12,8 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
     /// </summary>
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    public abstract class QueryRepositoryBase<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : IQueryRepositoryInternal<T, TKey>
-    where TDbContext : IReadOnlyDbContext
+    internal abstract class QueryRepositoryBaseInternal<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : IQueryRepositoryInternal<T, TKey>
+    where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     where TRepository : class
     where T : class, Domain.Contracts.IEntity<TKey>
     where TKey : struct, IEquatable<TKey>
@@ -23,7 +22,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         protected readonly ILogger<TRepository> _logger = aLogger;
         protected readonly ISpecificationEvaluator _specificationEvaluator = specificationEvaluator;
 
-        public QueryRepositoryBase(TDbContext aContext, ILogger<TRepository> aLogger)
+        public QueryRepositoryBaseInternal(TDbContext aContext, ILogger<TRepository> aLogger)
             : this(aContext, aLogger, SpecificationEvaluator.Default)
         {
             _context = aContext;
@@ -91,7 +90,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         #region Read
         public virtual async Task<IHttpResult<T>> GetByIdAsync(TKey aEntityId, CancellationToken aCancellationToken = default)
         => await TryQueryAsync(async (aCancellationToken) => {
-            var lEntity = await _context.FindAsync<T>(new object[] { aEntityId }, aCancellationToken);
+            var lEntity = await _context.Set<T>().FindAsync([aEntityId], aCancellationToken);
             return lEntity != null ? Result.SuccessHttp(lEntity!) : Result.Failure<T>(DBErrors.Repository.Entity.NotFound);
 
         }, aCancellationToken);
@@ -108,7 +107,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
                 }
 
                 // Query the database for entities with IDs that match those in the provided list
-                var entities = await _context.Query<T>()
+                var entities = await _context.Set<T>()
                     .Where(entity => entityIdList.Contains(entity.Id)) // Directly access the Id property
                     .ToListAsync(cancellationToken);
 
@@ -122,7 +121,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetListAsync(CancellationToken cancellationToken = default)
         {
             return await TryQueryAsync(async cancellationToken => {
-                var entities = await _context.Query<T>().ToListAsync(cancellationToken);
+                var entities = await _context.Set<T>().ToListAsync(cancellationToken);
 
                 return entities.Count != 0
                     ? Result.SuccessHttp(entities as IEnumerable<T>)
@@ -135,7 +134,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
             return await TryQueryAsync(async cancellationToken =>
                 Result.SuccessHttp(
                     await _specificationEvaluator
-                    .GetQuery(_context.Query<T>().AsQueryable(), specification)
+                    .GetQuery(_context.Set<T>().AsQueryable(), specification)
                     .ToListAsync(cancellationToken) as IEnumerable<T>
                 )
             , cancellationToken);
@@ -143,7 +142,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 
         public async Task<IHttpResult<int>> GetCountAsync(CancellationToken cancellationToken = default)
         => await TryQueryAsync(async (aCancellationToken) =>
-            Result.SuccessHttp(await _context.Query<T>().CountAsync(aCancellationToken))
+            Result.SuccessHttp(await _context.Set<T>().CountAsync(aCancellationToken))
         , cancellationToken);
 
         #endregion

@@ -1,4 +1,5 @@
 ﻿using Ardalis.Specification;
+using Ardalis.Specification.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using TGF.CA.Domain.Contracts.Repositories;
@@ -13,19 +14,26 @@ namespace TGF.CA.Infrastructure.DB.Repository
     /// </summary>
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    public abstract class RepositoryBase<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger)
+    public abstract class RepositoryBase<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator)
         : ICommandRepository<T, TKey>, IQueryRepository<T, TKey>, IRepositoryBase<T, TKey>
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         where TRepository : class
         where T : class, Domain.Contracts.IEntity<TKey>
         where TKey : struct, IEquatable<TKey>
     {
+        public RepositoryBase(TDbContext aContext, ILogger<TRepository> aLogger)
+            : this(aContext, aLogger, SpecificationEvaluator.Default)
+        {
+            _context = aContext;
+            _logger = aLogger;
+        }
 
         private readonly InternalCommandRepository _commandRepository = new(aContext, aLogger);
-        private readonly InternalQueryRepository _queryRepository = new(aContext, aLogger);
+        private readonly InternalQueryRepository _queryRepository = new(aContext, aLogger, specificationEvaluator);
 
         protected readonly TDbContext _context = aContext;
         protected readonly ILogger<TRepository> _logger = aLogger;
+        protected readonly ISpecificationEvaluator _specificationEvaluator = specificationEvaluator;
 
         #region Command-Query
         public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
@@ -36,7 +44,6 @@ namespace TGF.CA.Infrastructure.DB.Repository
             => await _commandRepository.TryCommandAsync(aCommandAction, aCancellationToken, aSaveResultOverride);
         public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<TResult> aCommandAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
             => await _commandRepository.TryCommandAsync(aCommandAction, aCancellationToken, aSaveResultOverride);
-
         public async Task<IHttpResult<TResult>> TryQueryAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aQueryAsyncAction, CancellationToken aCancellationToken = default)
             => await _queryRepository.TryQueryAsync(aQueryAsyncAction, aCancellationToken);
         public async Task<IHttpResult<TResult>> TryQueryAsync<TResult>(Func<CancellationToken, Task<TResult>> aQueryAction, CancellationToken aCancellationToken = default)
@@ -99,9 +106,9 @@ namespace TGF.CA.Infrastructure.DB.Repository
             {
             }
         }
-        private class InternalQueryRepository : QueryRepositoryBase<TRepository, TDbContext, T, TKey>
+        private class InternalQueryRepository : QueryRepositoryBaseInternal<TRepository, TDbContext, T, TKey>
         {
-            internal InternalQueryRepository(TDbContext aContext, ILogger<TRepository> aLogger) : base(aContext, aLogger)
+            internal InternalQueryRepository(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : base(aContext, aLogger, specificationEvaluator)
             {
             }
         }

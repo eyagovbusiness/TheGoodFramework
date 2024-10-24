@@ -1,4 +1,5 @@
 using System.Reflection;
+using TGF.CA.Application.Contracts.Communication;
 using TGF.CA.Infrastructure.Communication.Messages;
 
 namespace TGF.CA.Infrastructure.Communication.Publisher.Integration;

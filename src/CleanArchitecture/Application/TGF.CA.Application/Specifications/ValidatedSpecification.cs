@@ -1,7 +1,7 @@
 ﻿using Ardalis.Specification;
 using TGF.Common.ROP.HttpResult;
 
-namespace TGF.CA.Infrastructure.DB.Specifications
+namespace TGF.CA.Application.Specifications
 {
     public abstract class ValidatedSpecification<T, TSpecValidator>(TSpecValidator validationRules)
         : Specification<T>, IValidatedSpecification<T, TSpecValidator>

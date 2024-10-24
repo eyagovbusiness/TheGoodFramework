@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using TGF.CA.Application.Contracts.Communication;
 using TGF.CA.Infrastructure.Communication.Consumer.Host;
 using TGF.CA.Infrastructure.Communication.Consumer.Manager;
 using TGF.CA.Infrastructure.Communication.Messages;

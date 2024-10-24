@@ -6,7 +6,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
     /// <summary>
     /// Provides a set of methods for executing queries and retrieving entities in a read only repository(CQRS friendly).
     /// </summary>
-    public interface IQueryRepositoryInternal<T, TKey> : IQueryRepository<T, TKey>
+    internal interface IQueryRepositoryInternal<T, TKey> : IQueryRepository<T, TKey>
         where T : class, IEntity<TKey>
         where TKey : struct, IEquatable<TKey>
     {

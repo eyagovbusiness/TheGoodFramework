@@ -15,5 +15,5 @@ namespace TGF.CA.Application.DTOs
     /// <param name="PageSize">The page size</param>
     /// <param name="TotalCount">The total count of items in this list.</param>
     /// <param name="List">The list of paginated items.</param>
-    public record PaginatedListDTO<T>(int CurrentPage, int TotalPages, int PageSize, int TotalCount, T[] List);
+    public record PagedListDTO<T>(int CurrentPage, int TotalPages, int PageSize, int TotalCount, T[] List);
 }

@@ -11,6 +11,7 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using TGF.CA.Application.Contracts.Routing;
 using TGF.CA.Infrastructure.Security.Identity.Authentication;
 
 namespace TGF.CA.Application.Setup

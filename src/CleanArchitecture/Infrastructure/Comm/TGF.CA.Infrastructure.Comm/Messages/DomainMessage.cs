@@ -1,4 +1,6 @@
 
+using TGF.CA.Application.Contracts.Communication;
+
 namespace TGF.CA.Infrastructure.Communication.Messages;
 
 public record DomainMessage : IMessage

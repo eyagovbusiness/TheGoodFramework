@@ -1,12 +1,7 @@
+using TGF.CA.Application.Contracts.Communication;
 using TGF.CA.Infrastructure.Communication.Messages;
 
 namespace TGF.CA.Infrastructure.Communication.Publisher.Integration;
-
-public interface IIntegrationMessagePublisher
-{
-    Task Publish(object message, Metadata? metadata = null, string? routingKey = null, CancellationToken cancellationToken = default);
-    Task PublishMany(IEnumerable<object> messages, Metadata? metadata = null, string? routingKey = null, CancellationToken cancellationToken = default);
-}
 
 public class DefaultIntegrationMessagePublisher : IIntegrationMessagePublisher
 {
