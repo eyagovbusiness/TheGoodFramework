@@ -34,6 +34,13 @@ namespace TGF.CA.Infrastructure.Communication.Http
             var lHttpContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(aRequestBody), Encoding.UTF8, _jsonMediaType);
             await SendRequestAsync(HttpMethod.Post, aServiceName, aRequestUri, authForwardings, lHttpContent, aCancellationToken);
         }
+
+        protected async Task<IHttpResult<TResponse>> PostAsync<TResponse>(string aServiceName, string aRequestUri, IEnumerable<AuthenticationForwardingDTO>? authForwardings = default, CancellationToken aCancellationToken = default)
+        {
+            var lResponse = await SendRequestAsync(HttpMethod.Post, aServiceName, aRequestUri, authForwardings, null, aCancellationToken);
+            return await GetResultAsync<TResponse>(lResponse, aCancellationToken);
+        }
+
         protected async Task<IHttpResult<TResponse>> PostAsync<TBody, TResponse>(string aServiceName, string aRequestUri, TBody aRequestBody, IEnumerable<AuthenticationForwardingDTO>? authForwardings = default, CancellationToken aCancellationToken = default)
         {
             var lHttpContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(aRequestBody), Encoding.UTF8, _jsonMediaType);
@@ -46,6 +53,13 @@ namespace TGF.CA.Infrastructure.Communication.Http
             var lHttpContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(aRequestBody), Encoding.UTF8, _jsonMediaType);
             await SendRequestAsync(HttpMethod.Put, aServiceName, aRequestUri, authForwardings, lHttpContent, aCancellationToken);
         }
+
+        protected async Task<IHttpResult<TResponse>> PutAsync<TResponse>(string aServiceName, string aRequestUri, IEnumerable<AuthenticationForwardingDTO>? authForwardings = default, CancellationToken aCancellationToken = default)
+        {
+            var lResponse = await SendRequestAsync(HttpMethod.Put, aServiceName, aRequestUri, authForwardings, null, aCancellationToken);
+            return await GetResultAsync<TResponse>(lResponse, aCancellationToken);
+        }
+
         protected async Task<IHttpResult<TResponse>> PutAsync<TBody, TResponse>(string aServiceName, string aRequestUri, TBody aRequestBody, IEnumerable<AuthenticationForwardingDTO>? authForwardings = default, CancellationToken aCancellationToken = default)
         {
             var lHttpContent = new StringContent(System.Text.Json.JsonSerializer.Serialize(aRequestBody), Encoding.UTF8, _jsonMediaType);
