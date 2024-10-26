@@ -22,7 +22,7 @@ pipeline {
                     try {
                         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "harbor-base-images", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
                             sh "docker login -u \'${DOCKER_USERNAME}' -p \'${DOCKER_PASSWORD}' ${REGISTRY}"
-                            sh "docker build . --build-arg ENVIRONMENT=\"${ENVIRONMENT}\" -t ${REGISTRY}/${REPO}/${IMAGE}:${version} -t ${REGISTRY}/${REPO}/${IMAGE}:latest"
+                            sh "docker build . --build-arg ENVIRONMENT=\"${ENVIRONMENT}\" -t ${REGISTRY}/${ENVIRONMENT}/${IMAGE}:${version} -t ${REGISTRY}/${ENVIRONMENT}/${IMAGE}:latest"
                             sh 'docker logout'
                         }
                     } finally {
@@ -35,7 +35,7 @@ pipeline {
             steps {
                 script {
                     if (env.CHANGE_ID == null) {
-                        sh "trivy image --quiet --exit-code 1 ${REGISTRY}/${REPO}/${IMAGE}:latest"
+                        sh "trivy image --quiet --exit-code 1 ${REGISTRY}/${ENVIRONMENT}/${IMAGE}:latest"
                     } else {
                         echo "Avoiding Scan in PR"
                     }
@@ -46,10 +46,10 @@ pipeline {
             steps {
                 script {
                     if (env.CHANGE_ID == null) {
-                        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "harbor-${REPO}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
+                        withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: "harbor-${ENVIRONMENT}", usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD']]) {
                             sh "docker login -u \'${DOCKER_USERNAME}' -p \'${DOCKER_PASSWORD}' ${REGISTRY}"
-                            sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:${version}"
-                            sh "docker push ${REGISTRY}/${REPO}/${IMAGE}:latest"
+                            sh "docker push ${REGISTRY}/${ENVIRONMENT}/${IMAGE}:${version}"
+                            sh "docker push ${REGISTRY}/${ENVIRONMENT}/${IMAGE}:latest"
                             sh 'docker logout'
                         }
                     } else {
@@ -61,8 +61,8 @@ pipeline {
         stage('Remove Docker Images') {
             steps {
                 script {
-                    sh "docker rmi ${REGISTRY}/${REPO}/${IMAGE}:$version"
-                    sh "docker rmi ${REGISTRY}/${REPO}/${IMAGE}:latest"
+                    sh "docker rmi ${REGISTRY}/${ENVIRONMENT}/${IMAGE}:$version"
+                    sh "docker rmi ${REGISTRY}/${ENVIRONMENT}/${IMAGE}:latest"
                 }
             }
         }
@@ -72,7 +72,7 @@ pipeline {
             sh 'rm -rf *'
         }
         success {
-            build job: "backend/GSWB.Common/${REPO}", wait: false
+            build job: "backend/GSWB.Common/${ENVIRONMENT}", wait: false
         }
         failure {
             script{
