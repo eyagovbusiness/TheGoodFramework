@@ -6,7 +6,7 @@ using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal
 {   /// <summary>
     /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
     /// </summary>
@@ -89,7 +89,8 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 
         #region Read
         public virtual async Task<IHttpResult<T>> GetByIdAsync(TKey aEntityId, CancellationToken aCancellationToken = default)
-        => await TryQueryAsync(async (aCancellationToken) => {
+        => await TryQueryAsync(async (aCancellationToken) =>
+        {
             var lEntity = await _context.Set<T>().FindAsync([aEntityId], aCancellationToken);
             return lEntity != null ? Result.SuccessHttp(lEntity!) : Result.Failure<T>(DBErrors.Repository.Entity.NotFound);
 
@@ -97,7 +98,8 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetByIdListAsync(IEnumerable<TKey> entityIds, CancellationToken cancellationToken = default)
         {
-            return await TryQueryAsync(async cancellationToken => {
+            return await TryQueryAsync(async cancellationToken =>
+            {
                 // Convert the enumerable to a list to prevent multiple enumeration
                 var entityIdList = entityIds as List<TKey> ?? entityIds.ToList();
 
@@ -120,7 +122,8 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
 
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetListAsync(CancellationToken cancellationToken = default)
         {
-            return await TryQueryAsync(async cancellationToken => {
+            return await TryQueryAsync(async cancellationToken =>
+            {
                 var entities = await _context.Set<T>().ToListAsync(cancellationToken);
 
                 return entities.Count != 0

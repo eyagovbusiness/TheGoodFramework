@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using TGF.CA.Domain.Contracts.Repositories;
 using TGF.CA.Infrastructure.DB.Repository.CQRS;
+using TGF.CA.Infrastructure.DB.Repository.CQRS.Internal;
 using TGF.Common.ROP;
 using TGF.Common.ROP.HttpResult;
 
