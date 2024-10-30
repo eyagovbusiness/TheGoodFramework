@@ -6,7 +6,7 @@ namespace TGF.CA.Application.UseCases
     /// <summary>
     /// Provides extension methods for registering use cases in the dependency injection container.
     /// </summary>
-    public static class UseCaseRegistrationExtensions
+    public static class UseCase_DI
     {
         /// <summary>
         /// Registers all implementations of <see cref="IUseCase{TResponse, TRequest}"/> in the specified assembly with the dependency injection container.
