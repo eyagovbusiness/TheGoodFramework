@@ -11,22 +11,18 @@ using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using TGF.CA.Application;
 using TGF.CA.Application.Contracts.Routing;
-using TGF.CA.Infrastructure.Security.Identity.Authentication;
 
-namespace TGF.CA.Application.Setup
-{
+namespace TGF.CA.Infrastructure.Identity.Authentication {
     /// <summary>
     /// Extension class to add custom authentication logic to our <see cref="IServiceCollection"/> from our WebApplicationBuilder
     /// </summary>
     /// <remarks>REQUIERES <see cref="ISecretsManager"/> service registered.</remarks>
-    public static class Authentication_DI
-    {
-        public static async Task AddBasicJWTAuthentication(this IServiceCollection aServiceCollection)
-        {
+    public static class Authentication_DI {
+        public static async Task AddBasicJWTAuthentication(this IServiceCollection aServiceCollection) {
             var lAPISecret = await GetAPISecret(aServiceCollection);
-            aServiceCollection.AddAuthentication(authOptions =>
-            {
+            aServiceCollection.AddAuthentication(authOptions => {
                 authOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 authOptions.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
                 authOptions.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -34,27 +30,23 @@ namespace TGF.CA.Application.Setup
             .AddCustomJwtBearer(lAPISecret);
         }
 
-        public static async Task AddDiscordOAuthPlusJWTAuthentication(this IServiceCollection aServiceCollection, IConfiguration aConfiguration, IWebHostEnvironment aEnvironment)
-        {
+        public static async Task AddDiscordOAuthPlusJWTAuthentication(this IServiceCollection aServiceCollection, IConfiguration aConfiguration, IWebHostEnvironment aEnvironment) {
             var lAPISecret = await GetAPISecret(aServiceCollection);
             var lDiscordUserAuth = await GetDiscordUserAuth(aServiceCollection);
 
-            aServiceCollection.AddAuthentication(authOptions =>
-            {
+            aServiceCollection.AddAuthentication(authOptions => {
                 authOptions.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 authOptions.DefaultChallengeScheme = CookieAuthenticationDefaults.AuthenticationScheme;
                 authOptions.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
             })
-            .AddCookie(options =>
-            {
+            .AddCookie(options => {
                 options.Cookie.Name = "PreAuthCookie";
                 options.Cookie.SameSite = SameSiteMode.Lax;
                 options.Cookie.Domain = aConfiguration.GetValue<string>("CookieDomain");
             })
             .AddCustomJwtBearer(lAPISecret)
             .AddOAuth(AuthenticationSchemes.DiscordAuthSchemeName,
-                options =>
-                {
+                options => {
                     options.AuthorizationEndpoint = "https://discord.com/oauth2/authorize";
                     options.Scope.Add("identify");
                     options.CallbackPath = new PathString(TGFEndpointRoutes.auth_OAuthCallback);
@@ -90,10 +82,8 @@ namespace TGF.CA.Application.Setup
                .GetDiscordUserAuth();
 
         private static AuthenticationBuilder AddCustomJwtBearer(this AuthenticationBuilder aAuthenticationBuilder, string aAPISecret)
-        => aAuthenticationBuilder.AddJwtBearer(jwtBearerOptions =>
-        {
-            jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
-            {
+        => aAuthenticationBuilder.AddJwtBearer(jwtBearerOptions => {
+            jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters {
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(aAPISecret)),
                 ValidateIssuerSigningKey = true,
                 //ValidIssuer = string.Empty,
@@ -105,10 +95,8 @@ namespace TGF.CA.Application.Setup
         });
 
         private static OAuthEvents GetMyDiscordOAuthEvents()
-        => new()
-        {
-            OnCreatingTicket = async context =>
-            {
+        => new() {
+            OnCreatingTicket = async context => {
                 var lRequest = new HttpRequestMessage(HttpMethod.Get, context.Options.UserInformationEndpoint);
                 lRequest.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 lRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", context.AccessToken);

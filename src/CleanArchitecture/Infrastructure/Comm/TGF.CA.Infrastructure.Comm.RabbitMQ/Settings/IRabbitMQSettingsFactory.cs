@@ -1,12 +1,11 @@
 ﻿using TGF.CA.Application;
+using TGF.CA.Infrastructure.Comm.RabbitMQ;
 using TGF.CA.Infrastructure.Discovery;
-namespace TGF.CA.Infrastructure.Communication.RabbitMQ.Settings
-{
+namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Settings {
     /// <summary>
     /// RabbitMQ settings factory where settings are built reading hostname from the <see cref="IServiceDiscovery"/> and credentials from the <see cref="ISecretsManager"/>.
     /// </summary>
-    public interface IRabbitMQSettingsFactory
-    {
+    public interface IRabbitMQSettingsFactory {
         /// <summary>
         /// Get the <see cref="RabbitMQSettings"/>.
         /// </summary>

@@ -1,7 +1,6 @@
-namespace TGF.CA.Infrastructure.Communication.Messages;
+namespace TGF.CA.Infrastructure.Comm.Messages;
 
-public interface IMessage
-{
+public interface IMessage {
     /// <summary>
     /// Must be unique;
     /// </summary>

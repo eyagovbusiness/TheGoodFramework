@@ -6,14 +6,14 @@ using TGF.CA.Infrastructure.DB.DbContext;
 using TGF.CA.Infrastructure.DB.Repository.CQRS.Internal;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
+using TGF.Common.ROP.HttpResult.RailwaySwitches;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS
-{   /// <summary>
-    /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
-    /// </summary>
-    /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
-    /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS {   /// <summary>
+                                                       /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
+                                                       /// </summary>
+                                                       /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
+                                                       /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
     public abstract class QueryRepositoryBase<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : IQueryRepositoryInternal<T, TKey>
     where TDbContext : IReadOnlyDbContext
     where TRepository : class

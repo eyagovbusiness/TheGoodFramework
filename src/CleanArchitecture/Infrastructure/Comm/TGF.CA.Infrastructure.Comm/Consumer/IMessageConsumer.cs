@@ -1,10 +1,8 @@
-namespace TGF.CA.Infrastructure.Communication.Consumer;
+namespace TGF.CA.Infrastructure.Comm.Consumer;
 
-public interface IMessageConsumer
-{
+public interface IMessageConsumer {
     Task StartAsync(CancellationToken cancelToken = default);
 }
 
-public interface IMessageConsumer<T> : IMessageConsumer
-{
+public interface IMessageConsumer<T> : IMessageConsumer {
 }

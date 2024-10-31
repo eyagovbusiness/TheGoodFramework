@@ -1,13 +1,11 @@
 using System.Reflection;
 using TGF.CA.Application.Contracts.Communication;
-using TGF.CA.Infrastructure.Communication.Messages;
+using TGF.CA.Infrastructure.Comm.Messages;
 
-namespace TGF.CA.Infrastructure.Communication.Publisher.Integration;
+namespace TGF.CA.Infrastructure.Comm.Publisher.Integration;
 
-public static class IntegrationMessageMapper
-{
-    public static IntegrationMessage MapToMessage(object message, Metadata metadata)
-    {
+public static class IntegrationMessageMapper {
+    public static IntegrationMessage MapToMessage(object message, Metadata metadata) {
         if (message is IntegrationMessage)
             throw new ArgumentException("Message should not be of type IntegrationMessage, it should be a plain type");
 
@@ -29,8 +27,7 @@ public static class IntegrationMessageMapper
     }
 
 
-    private static IntegrationMessage<T> ToTypedIntegrationEvent<T>(T message, Metadata metadata)
-    {
+    private static IntegrationMessage<T> ToTypedIntegrationEvent<T>(T message, Metadata metadata) {
         return new IntegrationMessage<T>(Guid.NewGuid().ToString(), typeof(T).Name, message, metadata);
     }
 }

@@ -1,11 +1,8 @@
-﻿
-namespace TGF.Common.ROP.HttpResult
-{
+﻿namespace TGF.Common.ROP.HttpResult.RailwaySwitches {
     /// <summary>
     /// Provides extension methods to Map the happy path of <see cref="IHttpResult{T}"/> instances.
     /// </summary>
-    public static class MapSwitchExtensions
-    {
+    public static class MapSwitchExtensions {
 
         /// <summary>
         /// Maps the value of a successful <see cref="IHttpResult{T1}"/> to another value of type <typeparamref name="T2"/> using the provided asynchronous mapping function.
@@ -18,8 +15,7 @@ namespace TGF.Common.ROP.HttpResult
         /// A task producing an <see cref="IHttpResult{T2}"/>, containing the mapped value if the original result was successful, or the original error(s) and status code otherwise.
         /// </returns>
         /// <remarks>From Async with Async mapping.</remarks>
-        public static async Task<IHttpResult<T2>> Map<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction)
-        {
+        public static async Task<IHttpResult<T2>> Map<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction) {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
                 ? Result.Result.Success(await aMapSuccessFunction(lThisResult.Value), lThisResult.StatusCode)
@@ -38,8 +34,7 @@ namespace TGF.Common.ROP.HttpResult
         /// A task producing an <see cref="IHttpResult{T2}"/>, containing the mapped value if the original result was successful, or the original error(s) and status code otherwise.
         /// </returns>
         /// <remarks>From Async with Sync mapping, IDEALLY IT SHOULD NEVER BE USED. Although the result is wrapped in a task due to the async nature of the first result.</remarks>
-        public static async Task<IHttpResult<T2>> Map<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, T2> aMapSuccessFunction)
-        {
+        public static async Task<IHttpResult<T2>> Map<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, T2> aMapSuccessFunction) {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
                 ? Result.Result.Success(aMapSuccessFunction(lThisResult.Value), lThisResult.StatusCode)
@@ -58,8 +53,7 @@ namespace TGF.Common.ROP.HttpResult
         /// An <see cref="IHttpResult{T2}"/> containing the mapped value if the original result was successful, or the original error(s) and status code otherwise.
         /// </returns>
         /// <remarks>From Sync with Async mapping.</remarks>
-        public static async Task<IHttpResult<T2>> Map<T1, T2>(this IHttpResult<T1> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction)
-        {
+        public static async Task<IHttpResult<T2>> Map<T1, T2>(this IHttpResult<T1> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction) {
             return aThisResult.IsSuccess
                 ? Result.Result.Success(await aMapSuccessFunction(aThisResult.Value), aThisResult.StatusCode)
                 : Result.Result.Failure<T2>(aThisResult.ErrorList, aThisResult.StatusCode);
@@ -77,8 +71,7 @@ namespace TGF.Common.ROP.HttpResult
         /// An <see cref="IHttpResult{T2}"/> containing the mapped value if the original result was successful, or the original error(s) and status code otherwise.
         /// </returns>
         /// <remarks>From Sync with Sync mapping.</remarks>
-        public static IHttpResult<T2> Map<T1, T2>(this IHttpResult<T1> aThisResult, Func<T1, T2> aMapSuccessFunction)
-        {
+        public static IHttpResult<T2> Map<T1, T2>(this IHttpResult<T1> aThisResult, Func<T1, T2> aMapSuccessFunction) {
             return aThisResult.IsSuccess
                 ? Result.Result.Success(aMapSuccessFunction(aThisResult.Value), aThisResult.StatusCode)
                 : Result.Result.Failure<T2>(aThisResult.ErrorList, aThisResult.StatusCode);

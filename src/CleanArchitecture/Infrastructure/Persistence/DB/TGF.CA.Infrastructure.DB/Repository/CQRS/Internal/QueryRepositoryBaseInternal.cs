@@ -4,14 +4,14 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
+using TGF.Common.ROP.HttpResult.RailwaySwitches;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal
-{   /// <summary>
-    /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
-    /// </summary>
-    /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
-    /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal {   /// <summary>
+                                                                /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
+                                                                /// </summary>
+                                                                /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
+                                                                /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
     internal abstract class QueryRepositoryBaseInternal<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : IQueryRepositoryInternal<T, TKey>
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     where TRepository : class

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using BGSFX.CA.Presentation.MinimalAPI;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace TGF.CA.Presentation.MinimalAPI
@@ -15,18 +16,18 @@ namespace TGF.CA.Presentation.MinimalAPI
         /// <param name="aScanMarkerList"></param>
         public static void AddEndpointDefinitions(this IServiceCollection aServiceCollection, params Type[] aScanMarkerList)
         {
-            var lEndpointDefinitionList = new List<IEndpointDefinition>();
+            var lEndpointDefinitionList = new List<IEndpointsDefinition>();
             foreach (var lMarker in aScanMarkerList)
             {
                 lEndpointDefinitionList.AddRange(
                     lMarker.Assembly.ExportedTypes
-                        .Where(x => typeof(IEndpointDefinition).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
-                        .Select(Activator.CreateInstance).Cast<IEndpointDefinition>()
+                        .Where(x => typeof(IEndpointsDefinition).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface)
+                        .Select(Activator.CreateInstance).Cast<IEndpointsDefinition>()
                 );
             }
             foreach (var lEndpointDefinition in lEndpointDefinitionList)
                 lEndpointDefinition.DefineRequiredServices(aServiceCollection);
-            aServiceCollection.AddSingleton(lEndpointDefinitionList as IReadOnlyCollection<IEndpointDefinition>);
+            aServiceCollection.AddSingleton(lEndpointDefinitionList as IReadOnlyCollection<IEndpointsDefinition>);
         }
 
         /// <summary>
@@ -35,7 +36,7 @@ namespace TGF.CA.Presentation.MinimalAPI
         /// <param name="aWebApplication"></param>
         public static void UseEndpointDefinitions(this WebApplication aWebApplication)
         {
-            var lEndpointDefinitionList = aWebApplication.Services.GetRequiredService<IReadOnlyCollection<IEndpointDefinition>>();
+            var lEndpointDefinitionList = aWebApplication.Services.GetRequiredService<IReadOnlyCollection<IEndpointsDefinition>>();
             foreach (var lEndpointDefinition in lEndpointDefinitionList)
                 lEndpointDefinition.DefineEndpoints(aWebApplication);
         }

@@ -3,9 +3,9 @@ using System.Collections.Immutable;
 using System.Net;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
+using TGF.Common.ROP.HttpResult.RailwaySwitches;
 
-namespace TGF.Common.ROP.Result
-{
+namespace TGF.Common.ROP.Result {
 
     /// <summary>
     /// Internal class that represents the unit of information while returning the result of operations in Reailway Oriented Programming.

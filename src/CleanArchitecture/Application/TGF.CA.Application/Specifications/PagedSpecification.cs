@@ -1,10 +1,10 @@
 ﻿using Ardalis.Specification;
 using TGF.CA.Application.Validation;
 using TGF.Common.ROP.HttpResult;
+using TGF.Common.ROP.HttpResult.RailwaySwitches;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Application.Specifications
-{
+namespace TGF.CA.Application.Specifications {
     public class PagedSpecification<T>(int? page, int? pageSize, PaginationValidator paginationValidationRules) : ValidatedSpecification<T, PaginationValidator>(paginationValidationRules)
         where T : class
     {

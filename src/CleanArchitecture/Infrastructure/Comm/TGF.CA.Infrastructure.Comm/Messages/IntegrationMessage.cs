@@ -1,26 +1,22 @@
 using TGF.CA.Application.Contracts.Communication;
 
-namespace TGF.CA.Infrastructure.Communication.Messages;
+namespace TGF.CA.Infrastructure.Comm.Messages;
 
-public record IntegrationMessage : IMessage
-{
+public record IntegrationMessage : IMessage {
     public string MessageIdentifier { get; }
     public string Name { get; }
-    public IntegrationMessage(string messageIdentifier, string name)
-    {
+    public IntegrationMessage(string messageIdentifier, string name) {
         MessageIdentifier = messageIdentifier;
         Name = name;
     }
 }
 
-public record IntegrationMessage<T> : IntegrationMessage
-{
+public record IntegrationMessage<T> : IntegrationMessage {
     public T Content { get; }
     public Metadata Metadata { get; }
 
     public IntegrationMessage(string messageIdentifier, string name, T content, Metadata metadata)
-        : base(messageIdentifier, name)
-    {
+        : base(messageIdentifier, name) {
         Content = content;
         Metadata = metadata;
     }

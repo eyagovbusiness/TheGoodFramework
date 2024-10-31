@@ -1,15 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
-namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Role
-{
+namespace TGF.CA.Infrastructure.Identity.Authorization.Role {
     /// <summary>
     /// Authorization handler that determines if the user has the required role or higher in the roles hierarchy.
     /// </summary>
-    public class RoleHierarchyHandler : AuthorizationHandler<RoleHierarchyRequirement>
-    {
-        protected override Task HandleRequirementAsync(AuthorizationHandlerContext aContext, RoleHierarchyRequirement aRequirement)
-        {
+    public class RoleHierarchyHandler : AuthorizationHandler<RoleHierarchyRequirement> {
+        protected override Task HandleRequirementAsync(AuthorizationHandlerContext aContext, RoleHierarchyRequirement aRequirement) {
             var lUserRoleClaim = aContext.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value!;
             var lRoleHierarchyList = new List<string> { "Admin", "Espada", "Daga", "Cadete", "Afiliado" };
 

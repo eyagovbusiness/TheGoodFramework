@@ -1,13 +1,11 @@
 using System.Reflection;
 using TGF.CA.Application.Contracts.Communication;
-using TGF.CA.Infrastructure.Communication.Messages;
+using TGF.CA.Infrastructure.Comm.Messages;
 
-namespace TGF.CA.Infrastructure.Communication.Publisher.Domain;
+namespace TGF.CA.Infrastructure.Comm.Publisher.Domain;
 
-public class DomainMessageMapper
-{
-    public static DomainMessage MapToMessage(object message, Metadata metadata)
-    {
+public class DomainMessageMapper {
+    public static DomainMessage MapToMessage(object message, Metadata metadata) {
         if (message is IntegrationMessage)
             throw new ArgumentException("Message should not be of type DomainMessage, it should be a plain type");
 
@@ -29,8 +27,7 @@ public class DomainMessageMapper
     }
 
 
-    private static DomainMessage<T> ToTypedIntegrationEvent<T>(T message, Metadata metadata)
-    {
+    private static DomainMessage<T> ToTypedIntegrationEvent<T>(T message, Metadata metadata) {
         return new DomainMessage<T>(Guid.NewGuid().ToString(), typeof(T).Name, message, metadata);
     }
 }

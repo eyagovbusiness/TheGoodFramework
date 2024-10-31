@@ -1,11 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Application;
-using TGF.CA.Infrastructure.Security.Secrets.Vault;
 
-namespace TGF.CA.Infrastructure.Security.Secrets
-{
-    public static class VaultSecretsManager_DI
-    {
+namespace TGF.CA.Infrastructure.Secrets.Vault {
+    public static class VaultSecretsManager_DI {
         /// <summary>
         /// Adds Vault service to the service collection for secrets management and default health check.
         /// </summary>

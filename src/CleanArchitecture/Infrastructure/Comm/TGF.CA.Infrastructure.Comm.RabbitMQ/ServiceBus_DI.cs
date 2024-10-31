@@ -1,38 +1,30 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using TGF.CA.Infrastructure.Communication.Consumer.Handler;
-using TGF.CA.Infrastructure.Communication.Messages;
+using TGF.CA.Infrastructure.Comm.Consumer.Handler;
+using TGF.CA.Infrastructure.Comm.Messages;
 
-
-namespace TGF.CA.Infrastructure.Communication.RabbitMQ
-{
-    public static class ServiceBus_DI
-    {
-        public static void AddServiceBusIntegrationPublisher(this IServiceCollection aServiceCollection)
-        {
+namespace TGF.CA.Infrastructure.Comm.RabbitMQ {
+    public static class ServiceBus_DI {
+        public static void AddServiceBusIntegrationPublisher(this IServiceCollection aServiceCollection) {
             aServiceCollection.AddRabbitMQInfrastructureServices("IntegrationPublisher");
             aServiceCollection.AddRabbitMQPublisher<IntegrationMessage>();
         }
 
-        public static void AddServiceBusIntegrationConsumer(this IServiceCollection aServiceCollection)
-        {
+        public static void AddServiceBusIntegrationConsumer(this IServiceCollection aServiceCollection) {
             aServiceCollection.AddRabbitMQInfrastructureServices("IntegrationConsumer");
             aServiceCollection.AddRabbitMqConsumer<IntegrationMessage>();
         }
 
-        public static void AddServiceBusDomainPublisher(this IServiceCollection aServiceCollection)
-        {
+        public static void AddServiceBusDomainPublisher(this IServiceCollection aServiceCollection) {
             aServiceCollection.AddRabbitMQInfrastructureServices("DomainPublisher");
             aServiceCollection.AddRabbitMQPublisher<DomainMessage>();
         }
 
-        public static void AddServiceBusDomainConsumer(this IServiceCollection aServiceCollection)
-        {
+        public static void AddServiceBusDomainConsumer(this IServiceCollection aServiceCollection) {
             aServiceCollection.AddRabbitMQInfrastructureServices("DomainConsumer");
             aServiceCollection.AddRabbitMqConsumer<DomainMessage>();
         }
 
-        public static void AddMessageHandlersInAssembly<T>(this IServiceCollection aaServiceCollection)
-        {
+        public static void AddMessageHandlersInAssembly<T>(this IServiceCollection aaServiceCollection) {
             // Check if at least one implementation of IMessageHandler is found.
             var lMessageHandlerCount = typeof(T).Assembly.GetTypes()
                 .Where(t => t.IsClass && !t.IsAbstract && typeof(IMessageHandler).IsAssignableFrom(t))

@@ -1,17 +1,13 @@
 ﻿using TGF.CA.Application;
 
-namespace TGF.CA.Infrastructure.Security.Identity.Authentication
-{
-    public class DiscordUserAuth
-    {
+namespace TGF.CA.Infrastructure.Identity.Authentication {
+    public class DiscordUserAuth {
         public string? ClientId { get; set; }
         public string? ClientSecret { get; set; }
     }
-    public static class AuthenticationHelper
-    {
+    public static class AuthenticationHelper {
 
-        public static async Task<DiscordUserAuth> GetDiscordUserAuth(this ISecretsManager aSecretsManager)
-        {
+        public static async Task<DiscordUserAuth> GetDiscordUserAuth(this ISecretsManager aSecretsManager) {
             var lDiscordUserAuth = await aSecretsManager.Get<DiscordUserAuth>("discordauth")
                              ?? throw new Exception("Error loading retrieving the client auth secrets!!");
 
@@ -24,8 +20,7 @@ namespace TGF.CA.Infrastructure.Security.Identity.Authentication
         /// <param name="aOriginalUri">Original full Uri.</param>
         /// <param name="aNewRedirectUri">Provided string that will replace the redirect_uri.</param>
         /// <returns></returns>
-        public static string ReplaceRedirectUri(this string aOriginalUri, string aNewRedirectUri)
-        {
+        public static string ReplaceRedirectUri(this string aOriginalUri, string aNewRedirectUri) {
             // Parse the original URL
             UriBuilder lUriBuilder = new UriBuilder(aOriginalUri);
 

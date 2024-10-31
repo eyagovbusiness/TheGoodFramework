@@ -1,13 +1,11 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 
-namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Permissions
-{
+namespace TGF.CA.Infrastructure.Identity.Authorization.Permissions {
     /// <summary>
     /// Static class to register the additional logic needed to support endpoints authorization by permissions enums.
     /// </summary>
-    public static class PermissionAuthorizationEndpointConventionBuilderExtensions
-    {
+    public static class PermissionAuthorizationEndpointConventionBuilderExtensions {
         /// <summary>
         /// Extension method of <see cref="IEndpointConventionBuilder"/> inspired on <see cref="AuthorizationEndpointConventionBuilderExtensions.RequireAuthorization{TBuilder}(TBuilder, string[])"/>.
         /// This extension method emulates the same behavior as the RequireAuthorization() method but instead of specifying policy names, flag-based enum values representing permissions are provided.
@@ -22,8 +20,7 @@ namespace TGF.CA.Infrastructure.Security.Identity.Authorization.Permissions
         /// <exception cref="ArgumentNullException">Can be thrown when aBuilder or aPermissions arguments are null.</exception>
         public static TBuilder RequirePermissions<TBuilder, TPermissionsEnum>(this TBuilder aBuilder, TPermissionsEnum aPermissions)
             where TBuilder : IEndpointConventionBuilder
-            where TPermissionsEnum : struct
-        {
+            where TPermissionsEnum : struct {
             if (aBuilder == null)
                 throw new ArgumentNullException(nameof(aBuilder));
 

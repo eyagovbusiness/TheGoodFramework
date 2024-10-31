@@ -5,10 +5,10 @@ using TGF.CA.Infrastructure.DB.Repository.CQRS.Internal;
 using TGF.Common.ROP;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
+using TGF.Common.ROP.HttpResult.RailwaySwitches;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS
-{
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS {
     /// <summary>
     /// A base class for a CQRS write repository with native error handling logic for Command operations using ROP.
     /// </summary>

@@ -1,7 +1,6 @@
 ﻿using TGF.Common.ROP.Errors;
 
-namespace TGF.CA.Domain.Core.Exceptions
-{
+namespace TGF.CA.Domain.Exceptions {
     /// <summary>
     /// Represents an exception that occurred in the domain.
     /// </summary>
@@ -9,8 +8,7 @@ namespace TGF.CA.Domain.Core.Exceptions
     /// Initializes a new instance of the <see cref="DomainException"/> class.
     /// </remarks>
     /// <param name="aError">The error containing the information about what happened.</param>
-    public class DomainException(IError aError) : Exception(aError.Message)
-    {
+    public class DomainException(IError aError) : Exception(aError.Message) {
 
         /// <summary>
         /// Gets the error.

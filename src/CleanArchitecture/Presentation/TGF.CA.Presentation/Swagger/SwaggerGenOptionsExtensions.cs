@@ -2,6 +2,7 @@
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using TGF.CA.Application.Contracts.Routing;
+using TGF.CA.Application.DTOs;
 
 namespace TGF.CA.Presentation.Swagger
 {
@@ -102,6 +103,7 @@ namespace TGF.CA.Presentation.Swagger
 
         /// <summary>
         /// Ensures all schema types end by Schema and removes DTO from the names.
+        /// Also renames <see cref="PagedListDTO{T}"/> to Paged{nameof(T)}ListSchema
         /// </summary>
         private static SwaggerGenOptions RenameSchemas(this SwaggerGenOptions aOptions)
         {
@@ -110,21 +112,23 @@ namespace TGF.CA.Presentation.Swagger
         }
 
         /// <summary>
-        /// Custom schemaId strategy that ensures all schema types end by Schema and removes DTO from the names.
+        /// Composite schemaId strategy that ensures all schema types end by Schema and removes DTO from the names.
         /// </summary>
         /// <param name="aCurrentType"></param>
         /// <returns></returns>
-        private static string CustomSchemaIdStrategy(Type aCurrentType)
-        {
+        private static string CustomSchemaIdStrategy(Type aCurrentType) {
             var lTypeName = aCurrentType.Name;
 
-            if (aCurrentType.IsGenericType && lTypeName.Contains("PaginatedListDTO"))
-            {
-                var genericArgs = aCurrentType.GetGenericArguments();
-                if (genericArgs.Length > 0)
-                    return $"Paginated{genericArgs[0].Name.Replace("DTO", "")}ListSchema";
+            if (aCurrentType.IsGenericType) {
+                var genericTypeDefinition = aCurrentType.GetGenericTypeDefinition();
+                if (genericTypeDefinition == typeof(PagedListDTO<>)) {
+                    var genericArgs = aCurrentType.GetGenericArguments();
+                    if (genericArgs.Length > 0)
+                        return $"Paged{genericArgs[0].Name.Replace("DTO", "")}ListSchema";
+                }
             }
-            else if (lTypeName.EndsWith("DTO"))
+
+            if (lTypeName.EndsWith("DTO"))
                 return lTypeName.Replace("DTO", "Schema");
 
             return lTypeName + "Schema";

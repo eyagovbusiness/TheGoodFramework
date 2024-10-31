@@ -1,12 +1,10 @@
 ﻿using System.Text.Json;
 
-namespace TGF.CA.Infrastructure.Security.Secrets.Common
-{
+namespace TGF.CA.Infrastructure.Secrets.Common {
     /// <summary>
     /// Class to support conversion from the Dictionary from Vault when reading secrets to a given object. 
     /// </summary>
-    internal static class SecretsHelperExtensions
-    {
+    internal static class SecretsHelperExtensions {
         /// <summary>
         /// Gets a new instance of the specified type that maps to the secrets dictionary, where the dictionary keys are the object property names and the values are the porperty values.
         /// </summary>
@@ -14,16 +12,13 @@ namespace TGF.CA.Infrastructure.Security.Secrets.Common
         /// <param name="aSource">Dictionary from reading vault secrets.</param>
         /// <returns>An instance of <see cref="{T}"/></returns>
         internal static T ToObject<T>(this IDictionary<string, object> aSource)
-            where T : new()
-        {
+            where T : new() {
             var lObject = new T();
             var lObjectType = lObject.GetType();
 
-            foreach (var lItem in aSource)
-            {
+            foreach (var lItem in aSource) {
                 var property = lObjectType.GetProperty(lItem.Key);
-                if (property != null)
-                {
+                if (property != null) {
                     var lValue = lItem.Value is JsonElement jsonElement ? GetJsonValue(jsonElement, property.PropertyType) : lItem.Value;
                     property.SetValue(lObject, lValue);
                 }
@@ -36,8 +31,7 @@ namespace TGF.CA.Infrastructure.Security.Secrets.Common
         /// <param name="aJsonElement"></param>
         /// <param name="aPropertyType"></param>
         /// <returns>An object of type from the context property.</returns>
-        private static object GetJsonValue(JsonElement aJsonElement, Type aPropertyType)
-        {
+        private static object GetJsonValue(JsonElement aJsonElement, Type aPropertyType) {
             if (aPropertyType == typeof(ulong) || aPropertyType == typeof(ulong?))
                 return Convert.ToUInt64(aJsonElement.ToString());
 
