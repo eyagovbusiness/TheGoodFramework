@@ -7,12 +7,14 @@ using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.HttpResult.RailwaySwitches;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal {   /// <summary>
-                                                                /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
-                                                                /// </summary>
-                                                                /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
-                                                                /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    internal abstract class QueryRepositoryBaseInternal<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : IQueryRepositoryInternal<T, TKey>
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal 
+{   
+    /// <summary>
+    /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
+    /// </summary>
+    /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
+    /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
+    internal abstract class QueryRepositoryInternal<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : IQueryRepositoryInternal<T, TKey>
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     where TRepository : class
     where T : class, Domain.Contracts.IEntity<TKey>
@@ -22,7 +24,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal {   /// <summary>
         protected readonly ILogger<TRepository> _logger = aLogger;
         protected readonly ISpecificationEvaluator _specificationEvaluator = specificationEvaluator;
 
-        public QueryRepositoryBaseInternal(TDbContext aContext, ILogger<TRepository> aLogger)
+        public QueryRepositoryInternal(TDbContext aContext, ILogger<TRepository> aLogger)
             : this(aContext, aLogger, SpecificationEvaluator.Default)
         {
             _context = aContext;
@@ -96,6 +98,14 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal {   /// <summary>
 
         }, aCancellationToken);
 
+        public virtual async Task<IHttpResult<T>> GetByIdAsync(object[] keyValues, CancellationToken aCancellationToken = default)
+        => await TryQueryAsync(async (aCancellationToken) =>
+        {
+            var lEntity = await _context.Set<T>().FindAsync(keyValues, aCancellationToken);
+            return lEntity != null ? Result.SuccessHttp(lEntity!) : Result.Failure<T>(DBErrors.Repository.Entity.NotFound);
+
+        }, aCancellationToken);
+
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetByIdListAsync(IEnumerable<TKey> entityIds, CancellationToken cancellationToken = default)
         {
             return await TryQueryAsync(async cancellationToken =>
@@ -103,7 +113,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal {   /// <summary>
                 // Convert the enumerable to a list to prevent multiple enumeration
                 var entityIdList = entityIds as List<TKey> ?? entityIds.ToList();
 
-                if (!entityIdList.Any())
+                if (entityIdList.Count == 0)
                 {
                     return Result.SuccessHttp(new List<T>() as IEnumerable<T>); // Return an empty list if no IDs were provided
                 }

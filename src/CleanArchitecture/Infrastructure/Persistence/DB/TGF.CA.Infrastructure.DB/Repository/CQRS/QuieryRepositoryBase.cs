@@ -9,16 +9,17 @@ using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.HttpResult.RailwaySwitches;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS {   /// <summary>
-                                                       /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
-                                                       /// </summary>
-                                                       /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
-                                                       /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS 
+{  
+    /// <summary>
+    /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
+    /// </summary>
+    /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
+    /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
     public abstract class QueryRepositoryBase<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : IQueryRepositoryInternal<T, TKey>
     where TDbContext : IReadOnlyDbContext
     where TRepository : class
-    where T : class, Domain.Contracts.IEntity<TKey>
-    where TKey : struct, IEquatable<TKey>
+    where T : class, new()
     {
         protected readonly TDbContext _context = aContext;
         protected readonly ILogger<TRepository> _logger = aLogger;
@@ -90,35 +91,6 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS {   /// <summary>
         #endregion
 
         #region Read
-        public virtual async Task<IHttpResult<T>> GetByIdAsync(TKey aEntityId, CancellationToken aCancellationToken = default)
-        => await TryQueryAsync(async (aCancellationToken) => {
-            var lEntity = await _context.FindAsync<T>(new object[] { aEntityId }, aCancellationToken);
-            return lEntity != null ? Result.SuccessHttp(lEntity!) : Result.Failure<T>(DBErrors.Repository.Entity.NotFound);
-
-        }, aCancellationToken);
-
-        public virtual async Task<IHttpResult<IEnumerable<T>>> GetByIdListAsync(IEnumerable<TKey> entityIds, CancellationToken cancellationToken = default)
-        {
-            return await TryQueryAsync(async cancellationToken => {
-                // Convert the enumerable to a list to prevent multiple enumeration
-                var entityIdList = entityIds as List<TKey> ?? entityIds.ToList();
-
-                if (!entityIdList.Any())
-                {
-                    return Result.SuccessHttp(new List<T>() as IEnumerable<T>); // Return an empty list if no IDs were provided
-                }
-
-                // Query the database for entities with IDs that match those in the provided list
-                var entities = await _context.Query<T>()
-                    .Where(entity => entityIdList.Contains(entity.Id)) // Directly access the Id property
-                    .ToListAsync(cancellationToken);
-
-                return entities.Count != 0
-                    ? Result.SuccessHttp(entities as IEnumerable<T>)
-                    : Result.Failure<IEnumerable<T>>(DBErrors.Repository.Entity.NotFound);
-
-            }, cancellationToken);
-        }
 
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetListAsync(CancellationToken cancellationToken = default)
         {

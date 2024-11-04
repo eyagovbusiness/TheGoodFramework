@@ -5,9 +5,10 @@ namespace TGF.CA.Domain.Contracts.Repositories
     /// <summary>
     /// Provides a set of methods for executing commands in a write repository, handling CRUD operations, managing transactions, and saving changes(CQRS friendly).
     /// </summary>
-    /// <remarks>Works with any not abstract class as entitiy. Does not contain default "by id" operations implementations</remarks>
-    public interface ICommandRepository<T>
-       where T : class, new()
+    /// <remarks>Works only with <see cref=" IEntity{TKey}"/> as entity type. Includes by Id operations.</remarks>
+    public interface IEntitiyCommandRepository<T, TKey>
+       where T : class, IEntity<TKey>
+       where TKey : struct, IEquatable<TKey>
     {
         #region Command
         /// <summary>

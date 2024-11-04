@@ -9,7 +9,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal
     /// <summary>
     /// Provides a set of methods for executing commands in a write repository, handling CRUD operations, managing transactions, and saving changes(CQRS friendly).
     /// </summary>
-    internal interface ICommandRepositoryInternal<T, TKey> : ICommandRepository<T, TKey>
+    internal interface ICommandRepositoryInternal<T, TKey> : IEntitiyCommandRepository<T, TKey>
         where T : class, IEntity<TKey>
         where TKey : struct, IEquatable<TKey>
     {

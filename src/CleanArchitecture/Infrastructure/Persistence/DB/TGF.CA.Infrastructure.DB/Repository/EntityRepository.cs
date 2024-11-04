@@ -15,14 +15,14 @@ namespace TGF.CA.Infrastructure.DB.Repository
     /// </summary>
     /// <typeparam name="TRepository">The type of the child class implementing this repository.</typeparam>
     /// <typeparam name="TDbContext">The type of the DbContext to use in this repository.</typeparam>
-    public abstract class RepositoryBase<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator)
-        : ICommandRepository<T, TKey>, IQueryRepository<T, TKey>, IRepositoryBase<T, TKey>
+    public abstract class EntityRepository<TRepository, TDbContext, T, TKey>(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator)
+        : IEntitiyCommandRepository<T, TKey>, IEntityQueryRepository<T, TKey>, IEntitiyRepository<T, TKey>
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         where TRepository : class
-        where T : class, Domain.Contracts.IEntity<TKey>
+        where T : class, Domain.Contracts.IEntity<TKey>, new()
         where TKey : struct, IEquatable<TKey>
     {
-        public RepositoryBase(TDbContext aContext, ILogger<TRepository> aLogger)
+        public EntityRepository(TDbContext aContext, ILogger<TRepository> aLogger)
             : this(aContext, aLogger, SpecificationEvaluator.Default)
         {
             _context = aContext;
@@ -107,7 +107,7 @@ namespace TGF.CA.Infrastructure.DB.Repository
             {
             }
         }
-        private class InternalQueryRepository : QueryRepositoryBaseInternal<TRepository, TDbContext, T, TKey>
+        private class InternalQueryRepository : QueryRepositoryInternal<TRepository, TDbContext, T, TKey>
         {
             internal InternalQueryRepository(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : base(aContext, aLogger, specificationEvaluator)
             {

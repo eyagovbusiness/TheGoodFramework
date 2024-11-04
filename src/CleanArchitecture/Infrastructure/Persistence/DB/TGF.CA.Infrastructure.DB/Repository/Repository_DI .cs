@@ -7,11 +7,19 @@ namespace TGF.CA.Infrastructure.DB.Repository
     public static class Repository_DI
     {
         /// <summary>
-        /// Injects in DI container all classes in the assembly implementing <see cref="IQueryRepository{,}"/> or <see cref="IRepositoryBase{,}"/>.
+        /// Injects in DI container all classes in the assembly implementing any of the repository interfaces in "TGF.CA.Domain.Contracts.Repositories" />.
         /// </summary>
         public static void AddRepositories(this IServiceCollection services, Assembly assembly)
         {
-            var repositoryTypes = new[] { typeof(IRepositoryBase<,>), typeof(IQueryRepository<,>) };
+            var repositoryTypes = new[] 
+            { 
+                typeof(IEntitiyRepository<,>),
+                typeof(IEntitiyCommandRepository<,>),
+                typeof(IEntityQueryRepository<,>),
+                typeof(IRepository<>),
+                typeof(ICommandRepository<>),
+                typeof(IQueryRepository<>) 
+            };
             var types = assembly.GetTypes();
             foreach (var type in types)
             {
