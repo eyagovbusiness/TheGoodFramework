@@ -40,7 +40,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal
         /// <param name="aCancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <param name="aSaveResultOverride">Optional function to override the default save result handling.</param>
         /// <returns>A task that represents the asynchronous save operation, containing the result of the save operation.</returns>
-        Task<IHttpResult<TResult>> TrySaveChangesAsync<TResult>(TResult aResult, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default);
+        Task<IHttpResult<TResult>> TrySaveChangesAsync<TResult>(TResult aResult, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default, CancellationToken aCancellationToken = default);
 
         /// <summary>
         /// Provides the default save result function which maps the repository save changes result into a ROP result with the value of type <see cref="{T}"/> resulting from the command logic. 

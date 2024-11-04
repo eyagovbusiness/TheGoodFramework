@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BGSFX.CA.Presentation.MinimalAPI {
+namespace TGF.CA.Presentation.MinimalAPI {
     /// <summary>
     /// Public interface that should be implemented in every encapsulation class that defines a set of minimal api endpoints.
     /// </summary>

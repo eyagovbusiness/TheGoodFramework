@@ -1,4 +1,4 @@
-﻿using BGSFX.CA.Presentation.MinimalAPI;
+﻿using TGF.CA.Presentation.MinimalAPI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 

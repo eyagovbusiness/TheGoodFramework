@@ -18,7 +18,7 @@ namespace TGF.CA.Domain.Contracts.Repositories
         /// <param name="aCancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <param name="aSaveResultOverride">Optional function to override the default save result handling.</param>
         /// <returns>A task that represents the asynchronous operation, containing the result of the command execution.</returns>
-        Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>> aSaveResultOverride = default!);
+        Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aCommandAsyncAction, Func<int, TResult, IHttpResult<TResult>> aSaveResultOverride = default!, CancellationToken aCancellationToken = default);
         /// <summary>
         /// Attempts to execute command logic asynchronously that returns the command result of type <see cref="{T}"/>.
         /// </summary>
@@ -27,7 +27,7 @@ namespace TGF.CA.Domain.Contracts.Repositories
         /// <param name="aCancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <param name="aSaveResultOverride">Optional function to override the default save result handling.</param>
         /// <returns>A task that represents the asynchronous operation, containing the result of the command execution.</returns>
-        Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<TResult>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>> aSaveResultOverride = default!);
+        Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<TResult>> aCommandAsyncAction, Func<int, TResult, IHttpResult<TResult>> aSaveResultOverride = default!, CancellationToken aCancellationToken = default);
         /// <summary>
         /// Attempts to execute command logic and returns the the command ROP result of type <see cref="IHttpResult{T}"/>.
         /// </summary>
@@ -36,7 +36,7 @@ namespace TGF.CA.Domain.Contracts.Repositories
         /// <param name="aCancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <param name="aSaveResultOverride">Optional function to override the default save result handling.</param>
         /// <returns>A task that represents the asynchronous operation, containing the result of the command execution.</returns>
-        Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<IHttpResult<TResult>> aCommandAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>> aSaveResultOverride = default!);
+        Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<IHttpResult<TResult>> aCommandAction, Func<int, TResult, IHttpResult<TResult>> aSaveResultOverride = default!, CancellationToken aCancellationToken = default);
         /// <summary>
         /// Attempts to execute command logic and returns the command result of type <see cref="{T}"/>.
         /// </summary>
@@ -45,8 +45,9 @@ namespace TGF.CA.Domain.Contracts.Repositories
         /// <param name="aCancellationToken">Optional cancellation token to cancel the operation.</param>
         /// <param name="aSaveResultOverride">Optional function to override the default save result handling.</param>
         /// <returns>A task that represents the asynchronous operation, containing the result of the command execution.</returns>
-        Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<TResult> aCommandAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>> aSaveResultOverride = default!);
+        Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<TResult> aCommandAction, Func<int, TResult, IHttpResult<TResult>> aSaveResultOverride = default!, CancellationToken aCancellationToken = default);
         #endregion
+
         #region Create-Update-Delete
         /// <summary>
         /// Asynchronously adds an entity to the repository.
@@ -61,5 +62,6 @@ namespace TGF.CA.Domain.Contracts.Repositories
         /// </summary>
         Task<IHttpResult<T>> DeleteAsync(T aEntity, CancellationToken aCancellationToken = default);
         #endregion
+
     }
 }
