@@ -1,5 +1,4 @@
-﻿using TGF.CA.Presentation.MinimalAPI;
-using Microsoft.AspNetCore.Builder;
+﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace TGF.CA.Presentation.MinimalAPI
