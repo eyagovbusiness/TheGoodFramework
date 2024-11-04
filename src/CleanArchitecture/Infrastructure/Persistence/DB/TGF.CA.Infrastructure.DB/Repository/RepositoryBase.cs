@@ -37,14 +37,14 @@ namespace TGF.CA.Infrastructure.DB.Repository
         protected readonly ISpecificationEvaluator _specificationEvaluator = specificationEvaluator;
 
         #region Command-Query
-        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
-            => await _commandRepository.TryCommandAsync(aCommandAsyncAction, aCancellationToken, aSaveResultOverride);
-        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<TResult>> aCommandAsyncAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
-            => await _commandRepository.TryCommandAsync(aCommandAsyncAction, aCancellationToken, aSaveResultOverride);
-        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<IHttpResult<TResult>> aCommandAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
-            => await _commandRepository.TryCommandAsync(aCommandAction, aCancellationToken, aSaveResultOverride);
-        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<TResult> aCommandAction, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
-            => await _commandRepository.TryCommandAsync(aCommandAction, aCancellationToken, aSaveResultOverride);
+        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aCommandAsyncAction, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default, CancellationToken aCancellationToken = default)
+            => await _commandRepository.TryCommandAsync(aCommandAsyncAction, aSaveResultOverride, aCancellationToken);
+        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<TResult>> aCommandAsyncAction, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default, CancellationToken aCancellationToken = default)
+            => await _commandRepository.TryCommandAsync(aCommandAsyncAction, aSaveResultOverride, aCancellationToken);
+        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<IHttpResult<TResult>> aCommandAction, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default, CancellationToken aCancellationToken = default)
+            => await _commandRepository.TryCommandAsync(aCommandAction, aSaveResultOverride, aCancellationToken);
+        public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<TResult> aCommandAction, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default, CancellationToken aCancellationToken = default)
+            => await _commandRepository.TryCommandAsync(aCommandAction, aSaveResultOverride, aCancellationToken);
         public async Task<IHttpResult<TResult>> TryQueryAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aQueryAsyncAction, CancellationToken aCancellationToken = default)
             => await _queryRepository.TryQueryAsync(aQueryAsyncAction, aCancellationToken);
         public async Task<IHttpResult<TResult>> TryQueryAsync<TResult>(Func<CancellationToken, Task<TResult>> aQueryAction, CancellationToken aCancellationToken = default)
@@ -94,20 +94,20 @@ namespace TGF.CA.Infrastructure.DB.Repository
 
         #region Save
         public virtual async Task<IHttpResult<TResult>> TrySaveChangesAsync<TResult>(TResult aResult, CancellationToken aCancellationToken = default, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default)
-            => await _commandRepository.TrySaveChangesAsync(aResult, aCancellationToken, aSaveResultOverride);
+            => await _commandRepository.TrySaveChangesAsync(aResult, aSaveResultOverride, aCancellationToken);
         public virtual IHttpResult<TResult> DefaultSaveResultFunc<TResult>(int aChangeCount, TResult aCommandResult)
             => _commandRepository.DefaultSaveResultFunc(aChangeCount, aCommandResult);
 
         #endregion
 
         #region Private helper classes
-        private class InternalCommandRepository : CommandRepositoryBase<TRepository, TDbContext, T, TKey>
+        private class InternalCommandRepository : CommandRepository<TRepository, TDbContext, T, TKey>
         {
             internal InternalCommandRepository(TDbContext aContext, ILogger<TRepository> aLogger) : base(aContext, aLogger)
             {
             }
         }
-        private class InternalQueryRepository : QueryRepositoryBaseInternal<TRepository, TDbContext, T, TKey>
+        private class InternalQueryRepository : QueryRepositoryInternal<TRepository, TDbContext, T, TKey>
         {
             internal InternalQueryRepository(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : base(aContext, aLogger, specificationEvaluator)
             {
