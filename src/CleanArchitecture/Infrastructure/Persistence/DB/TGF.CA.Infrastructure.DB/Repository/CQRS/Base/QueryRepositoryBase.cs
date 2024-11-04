@@ -14,14 +14,14 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
     /// <summary>
     /// Base class for quiery repositories with the TryQuery result abstractions.
     /// </summary>
-    public abstract class QueryRepositoryBase<TRepository, TDbContext, T, TKey>(
+    public abstract class QueryRepositoryBase<TRepository, TDbContext, T>(
     TDbContext aContext,
     ILogger<TRepository> aLogger,
     ISpecificationEvaluator specificationEvaluator)
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     where TRepository : class
-    where T : class, Domain.Contracts.IEntity<TKey>
-    where TKey : struct, IEquatable<TKey> {
+    where T : class
+    {
 
         protected readonly TDbContext _context = aContext;
         protected readonly ILogger<TRepository> _logger = aLogger;
@@ -90,20 +90,6 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
         #endregion
 
         #region Read
-        public virtual async Task<IHttpResult<T>> GetByIdAsync(TKey entityId, CancellationToken cancellationToken = default)
-        => await TryQueryAsync(async cancellationToken => {
-            var entity = await Queryable.FirstOrDefaultAsync(e => e.Id.Equals(entityId), cancellationToken);
-            return entity != null ? Result.SuccessHttp(entity!) : Result.Failure<T>(DBErrors.Repository.Entity.NotFound);
-        }, cancellationToken);
-
-        public virtual async Task<IHttpResult<IEnumerable<T>>> GetByIdListAsync(IEnumerable<TKey> entityIds, CancellationToken cancellationToken = default)
-        => await TryQueryAsync(async cancellationToken => {
-            var entityIdList = entityIds.ToList();
-            if (entityIdList.Count == 0) return Result.SuccessHttp(Enumerable.Empty<T>());
-
-            var entities = await Queryable.Where(e => entityIdList.Contains(e.Id)).ToListAsync(cancellationToken);
-            return entities.Count != 0 ? Result.SuccessHttp(entities as IEnumerable<T>) : Result.Failure<IEnumerable<T>>(DBErrors.Repository.Entity.NotFound);
-        }, cancellationToken);
 
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetListAsync(CancellationToken cancellationToken = default)
         => await TryQueryAsync(async cancellationToken => {
