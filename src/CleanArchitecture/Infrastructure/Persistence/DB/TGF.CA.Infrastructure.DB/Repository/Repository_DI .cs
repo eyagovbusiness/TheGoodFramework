@@ -1,17 +1,23 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
-using TGF.CA.Domain.Contracts.Repositories;
+using TGF.CA.Domain.Contracts.Repositories.Base;
+using TGF.CA.Domain.Contracts.Repositories.EntityRepository;
 
 namespace TGF.CA.Infrastructure.DB.Repository
 {
     public static class Repository_DI
     {
         /// <summary>
-        /// Injects in DI container all classes in the assembly implementing <see cref="IQueryRepository{,}"/> or <see cref="IRepositoryBase{,}"/>.
+        /// Injects in DI container all classes in the assembly implementing <see cref="IEntityQueryRepository{,}"/> or <see cref="IRepositoryBase{,}"/>.
         /// </summary>
         public static void AddRepositories(this IServiceCollection services, Assembly assembly)
         {
-            var repositoryTypes = new[] { typeof(IRepositoryBase<,>), typeof(IQueryRepository<,>) };
+            var repositoryTypes = new[] 
+            { 
+                typeof(IRepositoryBase<>),
+                typeof(IQueryRepositoryBase<>),
+                typeof(ICommandRepositoryBase<>) 
+            };
             var types = assembly.GetTypes();
             foreach (var type in types)
             {

@@ -12,7 +12,7 @@
         /// </summary>
         public DateTimeOffset CreatedAt { get; set; }
         /// <summary>
-        /// The last time when the entitiy was modified, by default it is initially set to <see cref="CreatedAt"/> when the entity is created.
+        /// The last time when the entity was modified, by default it is initially set to <see cref="CreatedAt"/> when the entity is created.
         /// </summary>
         public DateTimeOffset ModifiedAt { get; set; }
 

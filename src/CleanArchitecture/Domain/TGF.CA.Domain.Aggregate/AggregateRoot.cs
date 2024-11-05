@@ -15,8 +15,8 @@ namespace TGF.CA.Domain.Aggregate
     {
         private List<AggregateChange<TKey>> _changes = [];
 
-        //public Entity<TKey> RootEntitiy { get; internal set; }
-        //public TKey Id => RootEntitiy.Id;
+        //public Entity<TKey> RootEntity { get; internal set; }
+        //public TKey Id => RootEntity.Id;
         public TKey Id { get; set; }
 
         private string AggregateType => GetType().Name;
