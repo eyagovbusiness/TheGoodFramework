@@ -1,6 +1,7 @@
 ARG BUILD_CONFIGURATION=Release
 ARG IMAGE_REGISTRY=biognosysbi.azurecr.io
 ARG ENVIRONMENT=testportal
+ARG USER=guildswarm
 
 FROM $IMAGE_REGISTRY/base-images/$ENVIRONMENT/alpine:latest AS base
 # BUILD IMAGE
