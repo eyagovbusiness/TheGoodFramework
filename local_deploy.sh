@@ -14,8 +14,9 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         --no-cache) NO_CACHE=true ;;
         --registry-push) REGISTRY_PUSH=true ;;
-		--image-registry-bgs) IMAGE_REGISTRY=biognosysbi.azurecr.io
-							  USER=biognosys		;;
+		--image-registry-bgs) 
+			IMAGE_REGISTRY=biognosysbi.azurecr.io
+			USER=biognosys ;;
         --help) 
             echo "Usage: $0 [--no-cache] [--registry-push]"
             exit 0
