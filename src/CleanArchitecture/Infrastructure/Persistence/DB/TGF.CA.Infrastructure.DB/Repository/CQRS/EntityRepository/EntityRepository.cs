@@ -3,12 +3,11 @@ using Ardalis.Specification.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using TGF.CA.Domain.Contracts.Repositories.EntityRepository;
-using TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository;
 using TGF.CA.Infrastructure.DB.Repository.CQRS.Internal;
 using TGF.Common.ROP;
 using TGF.Common.ROP.HttpResult;
 
-namespace TGF.CA.Infrastructure.DB.Repository
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
 {
     /// <summary>
     /// A base class for any read/write repository with native error handling logic using ROP.
@@ -63,8 +62,14 @@ namespace TGF.CA.Infrastructure.DB.Repository
         public virtual async Task<IHttpResult<T>> GetByIdAsync(TKey aEntityId, CancellationToken aCancellationToken = default)
         => await _queryRepository.GetByIdAsync(aEntityId, aCancellationToken);
 
+        public virtual async Task<IHttpResult<T>> GetByIdAsync(TKey aEntityId, ISpecification<T>? specification = default, CancellationToken aCancellationToken = default)
+        => await _queryRepository.GetByIdAsync(aEntityId, specification, aCancellationToken);
+
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetByIdListAsync(IEnumerable<TKey> aEntityIdList, CancellationToken aCancellationToken = default)
         => await _queryRepository.GetByIdListAsync(aEntityIdList, aCancellationToken);
+
+        public virtual async Task<IHttpResult<IEnumerable<T>>> GetByIdListAsync(IEnumerable<TKey> aEntityIdList, ISpecification<T>? specification, CancellationToken aCancellationToken = default)
+        => await _queryRepository.GetByIdListAsync(aEntityIdList, specification, aCancellationToken);
 
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetListAsync(ISpecification<T> specification, CancellationToken cancellationToken = default)
         => await _queryRepository.GetListAsync(specification, cancellationToken);
