@@ -3,7 +3,6 @@ using Ardalis.Specification.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using TGF.CA.Domain.Contracts.Repositories.EntityRepository;
-using TGF.CA.Infrastructure.DB.DbContext;
 using TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository;
 using TGF.CA.Infrastructure.DB.Repository.CQRS.Internal;
 using TGF.Common.ROP;
