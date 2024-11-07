@@ -1,6 +1,9 @@
-ARG BUILD_CONFIGURATION=Release ENVIRONMENT=testportal
-FROM registry.guildswarm.org/baseimages/alpine_base:latest as base
+ARG BUILD_CONFIGURATION=Release
+ARG IMAGE_REGISTRY=biognosysbi.azurecr.io
+ARG ENVIRONMENT=testportal
+ARG USER=guildswarm
 
+FROM $IMAGE_REGISTRY/base-images/$ENVIRONMENT/alpine:latest AS base
 # BUILD IMAGE
 FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 WORKDIR /src
@@ -22,8 +25,17 @@ WORKDIR /app/BasePackages
 # Copy NuGet packages and other necessary files from the build stage
 COPY --from=build /src/TGFPackages ./TGFPackages
 COPY --from=build /root/.nuget/packages ./TGFRestored
-USER root 
-RUN chown -R guildswarm:guildswarm /app/ && \
-    chmod -R 700 /app/ 
-USER guildswarm 
+
+ARG USER
+USER root
+
+# Add user and group only if they don't exist
+RUN getent group $USER || addgroup -S $USER && \
+    id -u $USER &>/dev/null || adduser -S $USER -G $USER
+
+# Change ownership and set permissions
+RUN chown -R $USER:$USER /app/ && \
+    chmod -R 700 /app/
+
+USER $USER
 CMD ["/bin/sh"]

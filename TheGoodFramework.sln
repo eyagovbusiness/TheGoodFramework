@@ -61,6 +61,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Infrastructure.Comm"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.CA.Infrastructure.Comm.RabbitMQ", "src\CleanArchitecture\Infrastructure\Comm\TGF.CA.Infrastructure.Comm.RabbitMQ\TGF.CA.Infrastructure.Comm.RabbitMQ.csproj", "{F46CF8F0-F2CE-4126-BA83-A40F1401851E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TGF.Common.Patterns", "src\Common\TGF.Common.Patterns\TGF.Common.Patterns.csproj", "{06A1A7E6-02A5-45BA-9AE9-F70EAF2BDD3F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -139,6 +141,10 @@ Global
 		{F46CF8F0-F2CE-4126-BA83-A40F1401851E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F46CF8F0-F2CE-4126-BA83-A40F1401851E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F46CF8F0-F2CE-4126-BA83-A40F1401851E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06A1A7E6-02A5-45BA-9AE9-F70EAF2BDD3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06A1A7E6-02A5-45BA-9AE9-F70EAF2BDD3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06A1A7E6-02A5-45BA-9AE9-F70EAF2BDD3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06A1A7E6-02A5-45BA-9AE9-F70EAF2BDD3F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -172,6 +178,7 @@ Global
 		{AA3CAB4F-ECF4-409C-AEC7-1AE7C974644E} = {6B6CEE94-B90C-45D1-A830-A1032D8130CD}
 		{44D52ECF-1880-4025-B039-CD3FA0DDC630} = {AA3CAB4F-ECF4-409C-AEC7-1AE7C974644E}
 		{F46CF8F0-F2CE-4126-BA83-A40F1401851E} = {AA3CAB4F-ECF4-409C-AEC7-1AE7C974644E}
+		{06A1A7E6-02A5-45BA-9AE9-F70EAF2BDD3F} = {5CDB722D-5B36-455F-9612-9C39498D9693}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3A057602-2F48-48E5-A9A4-C95C82A96825}
