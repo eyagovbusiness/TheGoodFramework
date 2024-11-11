@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
+﻿using System.ComponentModel;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TGF.Common.Extensions {
     public static class EnumExtensions {
@@ -13,7 +8,7 @@ namespace TGF.Common.Extensions {
             var fieldInfo = value
             .GetType().GetField(value.ToString());
 
-            var attribute = fieldInfo.GetCustomAttribute<DescriptionAttribute>();
+            var attribute = fieldInfo?.GetCustomAttribute<DescriptionAttribute>();
 
             return attribute != null ? attribute.Description : value.ToString();
         }
