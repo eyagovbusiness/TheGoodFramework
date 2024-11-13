@@ -11,7 +11,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal
     /// </summary>
     internal interface IEntityCommandRepositoryInternal<T, TKey> : IEntityCommandRepository<T, TKey>
         where T : class, IEntity<TKey>
-        where TKey : struct, IEquatable<TKey>
+        where TKey : IEquatable<TKey>
     {
 
         #region Transactions

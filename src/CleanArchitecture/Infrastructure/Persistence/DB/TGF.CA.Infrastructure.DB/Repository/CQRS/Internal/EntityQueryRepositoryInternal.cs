@@ -18,7 +18,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal {
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     where TRepository : class
     where T : class, Domain.Contracts.IEntity<TKey>
-    where TKey : struct, IEquatable<TKey>
+    where TKey : IEquatable<TKey>
     {
 
         public EntityQueryRepositoryInternal(TDbContext aContext, ILogger<TRepository> aLogger)

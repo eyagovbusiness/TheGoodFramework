@@ -3,6 +3,7 @@ using Ardalis.Specification.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using TGF.CA.Domain.Contracts.Repositories.EntityRepository;
+using TGF.CA.Infrastructure.DB.DbContext;
 using TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository;
 using TGF.CA.Infrastructure.DB.Repository.CQRS.Internal;
 using TGF.Common.ROP;
@@ -20,7 +21,7 @@ namespace TGF.CA.Infrastructure.DB.Repository
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         where TRepository : class
         where T : class, Domain.Contracts.IEntity<TKey>
-        where TKey : struct, IEquatable<TKey>
+        where TKey : IEquatable<TKey>
     {
         public EntityRepository(TDbContext aContext, ILogger<TRepository> aLogger)
             : this(aContext, aLogger, SpecificationEvaluator.Default)
@@ -35,6 +36,11 @@ namespace TGF.CA.Infrastructure.DB.Repository
         protected readonly TDbContext _context = aContext;
         protected readonly ILogger<TRepository> _logger = aLogger;
         protected readonly ISpecificationEvaluator _specificationEvaluator = specificationEvaluator;
+
+        protected IQueryable<T> Queryable
+        => _context is IReadOnlyDbContext readOnlyDbContext
+            ? readOnlyDbContext.Query<T>()
+            : _context.Set<T>().AsQueryable();
 
         #region Command-Query
         public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aCommandAsyncAction, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default, CancellationToken aCancellationToken = default)

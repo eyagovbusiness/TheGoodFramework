@@ -6,7 +6,7 @@
     public interface IEntityCommandRepository<T, TKey>
     : ICommandRepository<T>
        where T : class, IEntity<TKey>
-       where TKey : struct, IEquatable<TKey>
+       where TKey : IEquatable<TKey>
     {
 
     }

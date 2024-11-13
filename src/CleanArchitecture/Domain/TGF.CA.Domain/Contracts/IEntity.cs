@@ -1,6 +1,6 @@
 ﻿namespace TGF.CA.Domain.Contracts
 {
-    public interface IEntity<TKey> where TKey : struct, IEquatable<TKey>
+    public interface IEntity<TKey> where TKey : IEquatable<TKey>
     {
         /// <summary>
         /// The unique identifier for the Entity.

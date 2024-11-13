@@ -8,7 +8,7 @@ namespace TGF.CA.Domain.Contracts.Repositories.EntityRepository
     public interface IEntityQueryRepository<T, TKey>
         : IQueryRepository<T>
         where T : class, IEntity<TKey>
-        where TKey : struct, IEquatable<TKey>
+        where TKey : IEquatable<TKey>
     {
 
         #region Read

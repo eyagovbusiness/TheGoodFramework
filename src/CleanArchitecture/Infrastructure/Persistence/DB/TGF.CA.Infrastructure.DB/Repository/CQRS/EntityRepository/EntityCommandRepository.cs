@@ -14,7 +14,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         where TRepository : class
         where T : class, IEntity<TKey>
-        where TKey : struct, IEquatable<TKey>
+        where TKey : IEquatable<TKey>
     {
 
     }

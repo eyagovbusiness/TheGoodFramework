@@ -1,5 +1,4 @@
-﻿
-using TGF.CA.Domain.Contracts;
+﻿using TGF.CA.Domain.Contracts;
 
 namespace TGF.CA.Domain.Primitives
 {
@@ -14,7 +13,7 @@ namespace TGF.CA.Domain.Primitives
     /// (struct) and implement IEquatable<TKey> for efficient equality comparison.
     /// Examples of valid types include int, long, Guid, etc.
     /// </typeparam>
-    public abstract class Entity<TKey> : EntityBase, IEntity<TKey> where TKey : struct, IEquatable<TKey>
+    public abstract class Entity<TKey> : EntityBase, IEntity<TKey> where TKey : IEquatable<TKey>
     {
         /// <summary>
         /// The unique identifier for the Entity.
@@ -23,6 +22,7 @@ namespace TGF.CA.Domain.Primitives
 
         protected Entity()
         {
+            Id = default!;
             CreatedAt = DateTimeOffset.UtcNow;
             ModifiedAt = CreatedAt;
         }

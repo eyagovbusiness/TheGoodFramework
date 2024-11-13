@@ -7,7 +7,7 @@ namespace TGF.CA.Domain.Contracts.Repositories.EntityRepository
     public interface IEntityRepository<T, TKey> 
         : IEntityCommandRepository<T, TKey>, IEntityQueryRepository<T, TKey>
         where T : class, IEntity<TKey>
-        where TKey : struct, IEquatable<TKey>
+        where TKey : IEquatable<TKey>
     {
 
     }
