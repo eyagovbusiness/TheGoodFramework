@@ -19,7 +19,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext, IReadOnlyDbContext
     where TRepository : class
     where T : class, Domain.Contracts.IEntity<TKey>
-    where TKey : struct, IEquatable<TKey>
+    where TKey : IEquatable<TKey>
     {
 
         public EntityQueryRepository(TDbContext aContext, ILogger<TRepository> aLogger)

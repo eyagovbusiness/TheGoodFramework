@@ -3,6 +3,7 @@ using Ardalis.Specification.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using TGF.CA.Domain.Contracts.Repositories;
+using TGF.CA.Infrastructure.DB.DbContext;
 using TGF.CA.Infrastructure.DB.Repository.CQRS;
 using TGF.CA.Infrastructure.DB.Repository.CQRS.Internal;
 using TGF.Common.ROP;
@@ -31,9 +32,15 @@ namespace TGF.CA.Infrastructure.DB.Repository
         private readonly InternalCommandRepository _commandRepository = new(aContext, aLogger);
         private readonly InternalQueryRepository _queryRepository = new(aContext, aLogger, specificationEvaluator);
 
+        // Check if context implements IReadOnlyDbContext and return the appropriate IQueryable<T>
+
         protected readonly TDbContext _context = aContext;
         protected readonly ILogger<TRepository> _logger = aLogger;
         protected readonly ISpecificationEvaluator _specificationEvaluator = specificationEvaluator;
+        protected IQueryable<T> Queryable
+        => _context is IReadOnlyDbContext readOnlyDbContext
+            ? readOnlyDbContext.Query<T>()
+            : _context.Set<T>().AsQueryable();
 
         #region Command-Query
         public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aCommandAsyncAction, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default, CancellationToken aCancellationToken = default)
