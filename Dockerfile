@@ -1,7 +1,6 @@
 ARG BUILD_CONFIGURATION=Release
-ARG IMAGE_REGISTRY=biognosysbi.azurecr.io
-ARG ENVIRONMENT=testportal
-ARG USER=guildswarm
+ARG IMAGE_REGISTRY=registry.guildswarm.org
+ARG ENVIRONMENT=Testportal
 
 FROM $IMAGE_REGISTRY/base-images/$ENVIRONMENT/alpine:latest AS base
 # BUILD IMAGE
@@ -26,7 +25,6 @@ WORKDIR /app/BasePackages
 COPY --from=build /src/TGFPackages ./TGFPackages
 COPY --from=build /root/.nuget/packages ./TGFRestored
 
-ARG USER
 USER root
 
 # Add user and group only if they don't exist
@@ -37,5 +35,5 @@ RUN getent group $USER || addgroup -S $USER && \
 RUN chown -R $USER:$USER /app/ && \
     chmod -R 700 /app/
 
-USER $USER
+USER guildswarm
 CMD ["/bin/sh"]
