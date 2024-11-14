@@ -2,7 +2,7 @@ ARG BUILD_CONFIGURATION=Release
 ARG IMAGE_REGISTRY=registry.guildswarm.org
 ARG ENVIRONMENT=Testportal
 
-FROM $IMAGE_REGISTRY/base-images/alpine_base:latest AS base
+FROM $IMAGE_REGISTRY/baseimages/alpine_base:latest AS base
 # BUILD IMAGE
 FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 WORKDIR /src
