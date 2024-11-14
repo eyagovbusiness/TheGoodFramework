@@ -77,7 +77,6 @@ pipeline {
             sh 'rm -rf *'
         }
         success {
-            build job: "backend/GSWB.Common/${ENVIRONMENT}", wait: false
             build job: "backend/GSWB.Common/${ENVIRONMENT_JOB}", wait: false
         }
         failure {
