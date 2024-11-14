@@ -1,11 +1,8 @@
-﻿
-namespace TGF.Common.ROP.HttpResult
-{
+﻿namespace TGF.Common.ROP.HttpResult.RailwaySwitches {
     /// <summary>
     /// Provides extension methods to Bind (or chain) multiple <see cref="IHttpResult{T}"/> instances.
     /// </summary>
-    public static class BindSwitchExtensions
-    {
+    public static class BindSwitchExtensions {
 
         /// <summary>
         /// Asynchronously binds a given <see cref="IHttpResult{T1}"/> to another resulting <see cref="IHttpResult{T2}"/>, chaining their outcomes.
@@ -16,8 +13,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <param name="aNextResult">A function producing the next result based on the value of the first result.</param>
         /// <returns>A task yielding the resulting <see cref="IHttpResult{T2}"/>.</returns>
         /// <remarks>Async to Async binding.</remarks>
-        public static async Task<IHttpResult<T2>> Bind<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, Task<IHttpResult<T2>>> aNextResult)
-        {
+        public static async Task<IHttpResult<T2>> Bind<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, Task<IHttpResult<T2>>> aNextResult) {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
                 ? await aNextResult(lThisResult.Value)
@@ -34,8 +30,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <param name="aNextResult">A function producing the next result based on the value of the first result.</param>
         /// <returns>A task yielding the resulting <see cref="IHttpResult{T2}"/>.</returns>
         /// <remarks>Async to Sync binding, IDEALLY IT SHOULD NEVER BE USED. Although the result is wrapped in a task due to the async nature of the first result.</remarks>
-        public static async Task<IHttpResult<T2>> Bind<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, IHttpResult<T2>> aNextResult)
-        {
+        public static async Task<IHttpResult<T2>> Bind<T1, T2>(this Task<IHttpResult<T1>> aThisResult, Func<T1, IHttpResult<T2>> aNextResult) {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
                 ? aNextResult(lThisResult.Value)

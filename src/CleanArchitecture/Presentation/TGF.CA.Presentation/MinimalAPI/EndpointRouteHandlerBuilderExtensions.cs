@@ -1,14 +1,12 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 
-namespace TGF.CA.Presentation.Middleware
-{
+namespace TGF.CA.Presentation.MinimalAPI {
 
     /// <summary>
     /// Extension class that brings support setting ednpoint metadata for the different responses it may return to the requests.
     /// </summary>
-    public static class EndpointRouteHandlerBuilderExtensions
-    {
+    public static class EndpointRouteHandlerBuilderExtensions {
         /// <summary>
         /// Private class of this extension class to support unification logic unification in one single method for both <see cref="SetResponseMetadata"/> and <see cref="SetResponseMetadata{T}"/>.
         /// This class is allowing us to unify the logic of both generic and not geenric method into one single privte method <see cref="SetResponseMetadataInternal{T}"/> where internally this class (<see cref="InternalNoSuccessResultType"/>) is used as a placeholder to support the not generic variant of the method "SetResponseMetadata".
@@ -42,20 +40,15 @@ namespace TGF.CA.Presentation.Middleware
         /// Private implementation with the unified logic for both "SetResponseMetadata" methods.
         /// </summary>
         private static RouteHandlerBuilder SetResponseMetadataInternal<TSuccessResultType>(
-            RouteHandlerBuilder aRouteHandlerBuilder, int[] aPossibleStatusCodes)
-        {
-            if (aPossibleStatusCodes != null)
-            {
-                foreach (int statusCode in aPossibleStatusCodes)
-                {
-                    if (statusCode >= 200 && statusCode <= 299)
-                    {
+            RouteHandlerBuilder aRouteHandlerBuilder, int[] aPossibleStatusCodes) {
+            if (aPossibleStatusCodes != null) {
+                foreach (int statusCode in aPossibleStatusCodes) {
+                    if (statusCode >= 200 && statusCode <= 299) {
                         if (typeof(TSuccessResultType) != typeof(InternalNoSuccessResultType))
                             aRouteHandlerBuilder.Produces<TSuccessResultType>(statusCode);
                         else
                             aRouteHandlerBuilder.Produces(statusCode);
-                    }
-                    else
+                    } else
                         aRouteHandlerBuilder.ProducesProblem(statusCode);
                 }
             }

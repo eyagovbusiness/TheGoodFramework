@@ -1,7 +1,6 @@
-﻿using TGF.CA.Domain.External;
+﻿using TGF.CA.Domain.ExternalContracts;
 
-namespace TGF.CA.Application
-{
+namespace TGF.CA.Application {
     public interface ISecretsManager
     {
         /// <summary>

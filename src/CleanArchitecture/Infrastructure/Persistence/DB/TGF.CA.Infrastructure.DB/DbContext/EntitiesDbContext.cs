@@ -4,13 +4,9 @@ using TGF.CA.Domain.Primitives;
 
 namespace TGF.CA.Infrastructure.DB.DbContext
 {
-    public class EntitiesDbContext<TDbContext> : Microsoft.EntityFrameworkCore.DbContext 
+    public class EntitiesDbContext<TDbContext>(DbContextOptions options) : Microsoft.EntityFrameworkCore.DbContext(options) 
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     {
-        public EntitiesDbContext(DbContextOptions options) : base(options)
-        {
-        }
-
         public override int SaveChanges()
         {
             UpdateTimestamps();

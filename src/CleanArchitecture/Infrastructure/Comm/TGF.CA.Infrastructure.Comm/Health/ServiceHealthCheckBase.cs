@@ -2,13 +2,11 @@
 using Newtonsoft.Json.Linq;
 using TGF.CA.Infrastructure.Discovery;
 
-namespace TGF.CA.Infrastructure.Communication.Health
-{
+namespace TGF.CA.Infrastructure.Comm.Health {
     /// <summary>
     /// Abstract base class to perform health status communication between services. Gets the health of another service by callin that service's health endpoint.
     /// </summary>
-    public abstract class ServiceHealthCheckBase : IHealthCheck
-    {
+    public abstract class ServiceHealthCheckBase : IHealthCheck {
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly IServiceDiscovery _serviceDiscovery;
         private readonly string _serviceName;
@@ -19,8 +17,7 @@ namespace TGF.CA.Infrastructure.Communication.Health
         /// <param name="aHttpClientFactory"></param>
         /// <param name="aDiscoveryService">Discovery or registry service used to get the required service address.</param>
         /// <param name="aServiceName">Service name that represents the ServiceKey of the required service was registered in the DiscoveryService.</param>
-        public ServiceHealthCheckBase(IHttpClientFactory aHttpClientFactory, IServiceDiscovery aDiscoveryService, string aServiceName)
-        {
+        public ServiceHealthCheckBase(IHttpClientFactory aHttpClientFactory, IServiceDiscovery aDiscoveryService, string aServiceName) {
             _httpClientFactory = aHttpClientFactory;
             _serviceDiscovery = aDiscoveryService;
             _serviceName = aServiceName;
@@ -32,8 +29,7 @@ namespace TGF.CA.Infrastructure.Communication.Health
         /// <param name="aContext"></param>
         /// <param name="aCancellationToken"></param>
         /// <returns></returns>
-        public virtual async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext aContext, CancellationToken aCancellationToken = default)
-        {
+        public virtual async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext aContext, CancellationToken aCancellationToken = default) {
             HttpClient lHttpClient = _httpClientFactory.CreateClient();
             string lMicroserviceHealthEndpoint = await _serviceDiscovery.GetFullAddress(_serviceName, aCancellationToken);
             lHttpClient.BaseAddress = new Uri(lMicroserviceHealthEndpoint);
@@ -44,8 +40,7 @@ namespace TGF.CA.Infrastructure.Communication.Health
             var lStatusString = JObject.Parse(lContent)["status"]?.ToString();
             lHttpClient.Dispose();
 
-            return lStatusString switch
-            {
+            return lStatusString switch {
                 "Healthy" => HealthCheckResult.Healthy("The service is healthy."),
                 "Degraded" => HealthCheckResult.Degraded("The service is degraded."),
                 _ => HealthCheckResult.Unhealthy("The service is down.")

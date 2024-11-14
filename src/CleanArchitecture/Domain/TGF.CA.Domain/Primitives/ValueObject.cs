@@ -18,9 +18,9 @@
 
         public static bool operator !=(ValueObject aFirstObject, ValueObject aSecondObject) => !(aFirstObject == aSecondObject);
 
-        public bool Equals(ValueObject aOtherObject) => aOtherObject is not null && GetAtomicValues().SequenceEqual(aOtherObject.GetAtomicValues());
+        public bool Equals(ValueObject? aOtherObject) => aOtherObject is not null && GetAtomicValues().SequenceEqual(aOtherObject.GetAtomicValues());
 
-        public override bool Equals(object aObject)
+        public override bool Equals(object? aObject)
         {
             if (aObject == null)
                 return false;

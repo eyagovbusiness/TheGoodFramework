@@ -11,9 +11,9 @@ namespace TGF.CA.Application.UseCases
         /// <summary>
         /// Executes the use case asynchronously.
         /// </summary>
-        /// <param name="aRequest">The request object containing the parameters for the use case.</param>
-        /// <param name="aCancellationToken">A token to monitor for cancellation requests.</param>
+        /// <param name="request">The request object containing the parameters for the use case.</param>
+        /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
         /// <returns>A task that represents the asynchronous operation. The task result contains the response from the use case.</returns>
-        Task<TResponse> ExecuteAsync(TRequest aRequest, CancellationToken aCancellationToken = default);
+        Task<TResponse> ExecuteAsync(TRequest request, CancellationToken cancellationToken = default);
     }
 }

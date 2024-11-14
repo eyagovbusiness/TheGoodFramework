@@ -1,12 +1,10 @@
 ﻿using TGF.Common.ROP.Errors;
 
-namespace TGF.Common.ROP.HttpResult
-{
+namespace TGF.Common.ROP.HttpResult.RailwaySwitches {
     /// <summary>
     /// Provides extension methods for <see cref="IHttpResult{T}"/> to verify results and conditionally modify the path with the provided <see cref="IHttpError"/> based on verification logic.
     /// </summary>
-    public static class VerifySwitchExtensions
-    {
+    public static class VerifySwitchExtensions {
         /// <summary>
         /// Asynchronously verifies the result using the provided function. If the result does not meet the verification criteria, 
         /// it returns a failure with the specified error. Otherwise, it returns the original result.
@@ -16,10 +14,9 @@ namespace TGF.Common.ROP.HttpResult
         /// <param name="aVerifyFunction">The asynchronous function to use for verification.</param>
         /// <param name="aHttpError">The error to return in case of verification 
         /// <remarks>From Async with Async verify function.</remarks>
-        public static async Task<IHttpResult<T>> Verify<T>(this Task<IHttpResult<T>> aThisResult, Func<T, Task<bool>> aVerifyFunction, IHttpError aHttpError)
-        {
+        public static async Task<IHttpResult<T>> Verify<T>(this Task<IHttpResult<T>> aThisResult, Func<T, Task<bool>> aVerifyFunction, IHttpError aHttpError) {
             var lThisResult = await aThisResult;
-            return lThisResult.IsSuccess && !(await aVerifyFunction(lThisResult.Value))
+            return lThisResult.IsSuccess && !await aVerifyFunction(lThisResult.Value)
                 ? Result.Result.Failure<T>(aHttpError)
                 : lThisResult;
         }
@@ -34,8 +31,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <param name="aHttpError">The error to return in case of verification failure.</param>
         /// <returns>A task producing either the original result or a failure, depending on the verification.</returns>
         /// <remarks>From Async with Sync verify function, IDEALLY IT SHOULD NEVER BE USED.</remarks>
-        public static async Task<IHttpResult<T>> Verify<T>(this Task<IHttpResult<T>> aThisResult, Func<T, bool> aVerifyFunction, IHttpError aHttpError)
-        {
+        public static async Task<IHttpResult<T>> Verify<T>(this Task<IHttpResult<T>> aThisResult, Func<T, bool> aVerifyFunction, IHttpError aHttpError) {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess && !aVerifyFunction(lThisResult.Value)
                 ? Result.Result.Failure<T>(aHttpError)
@@ -53,7 +49,7 @@ namespace TGF.Common.ROP.HttpResult
         /// <returns>Either the original result or a failure, depending on the verification.</returns>
         /// <remarks>From Sync with Async verify function.</remarks>
         public static async Task<IHttpResult<T>> Verify<T>(this IHttpResult<T> aThisResult, Func<T, Task<bool>> aVerifyFunction, IHttpError aHttpError)
-        => aThisResult.IsSuccess && !(await aVerifyFunction(aThisResult.Value))
+        => aThisResult.IsSuccess && !await aVerifyFunction(aThisResult.Value)
             ? Result.Result.Failure<T>(aHttpError)
             : aThisResult;
 

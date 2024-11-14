@@ -1,7 +1,6 @@
-namespace TGF.CA.Infrastructure.Communication.Consumer.Manager;
+namespace TGF.CA.Infrastructure.Comm.Consumer.Manager;
 
-public interface IConsumerManager<TMessage>
-{
+public interface IConsumerManager<TMessage> {
     void RestartExecution();
     void StopExecution();
     CancellationToken GetCancellationToken();

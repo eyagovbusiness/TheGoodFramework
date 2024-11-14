@@ -1,28 +1,23 @@
-using TGF.CA.Domain.External;
+using TGF.CA.Domain.ExternalContracts;
 
-namespace TGF.CA.Infrastructure.Communication.RabbitMQ;
+namespace TGF.CA.Infrastructure.Comm.RabbitMQ;
 
-public class RabbitMQSettings
-{
+public class RabbitMQSettings {
     public string? Hostname { get; private set; }
     public RabbitMQCredentials? Credentials { get; private set; }
     public PublisherSettings? Publisher { get; init; }
     public ConsumerSettings? Consumer { get; init; }
 
-    public void SetCredentials(RabbitMQCredentials credentials)
-    {
+    public void SetCredentials(RabbitMQCredentials credentials) {
         Credentials = credentials;
     }
 
-    public void SetHostName(string hostname)
-    {
+    public void SetHostName(string hostname) {
         Hostname = hostname;
     }
 
-    public string GetConnectionString()
-    {
-        if (string.IsNullOrEmpty(Hostname) || Credentials == null || string.IsNullOrEmpty(Credentials.Username) || string.IsNullOrEmpty(Credentials.Password))
-        {
+    public string GetConnectionString() {
+        if (string.IsNullOrEmpty(Hostname) || Credentials == null || string.IsNullOrEmpty(Credentials.Username) || string.IsNullOrEmpty(Credentials.Password)) {
             throw new InvalidOperationException("Error building the connection string: RabbitMQ settings are incomplete.");
         }
 
@@ -30,20 +25,17 @@ public class RabbitMQSettings
     }
 }
 
-public record RabbitMQCredentials : IBasicCredentials
-{
-    public string? Username { get; set; }
-    public string? Password { get; set; }
+public record RabbitMQCredentials : IBasicCredentials {
+    public string Username { get; set; } = default!;
+    public string Password { get; set; } = default!;
 }
 
-public record PublisherSettings
-{
+public record PublisherSettings {
     public string? IntegrationExchange { get; init; }
     public string? DomainExchange { get; init; }
 }
 
-public record ConsumerSettings
-{
+public record ConsumerSettings {
     public string? IntegrationQueue { get; init; }
     public string? DomainQueue { get; init; }
 }

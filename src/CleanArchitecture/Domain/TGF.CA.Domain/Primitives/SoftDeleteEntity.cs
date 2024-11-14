@@ -13,7 +13,7 @@ namespace TGF.CA.Domain.Primitives
     /// </typeparam>
     public abstract class SoftDeleteEntity<TKey> 
         : Entity<TKey>, ISoftDelete
-        where TKey : struct, IEquatable<TKey>
+        where TKey : IEquatable<TKey>
     {
         public bool IsDeleted { get; private set; }
 

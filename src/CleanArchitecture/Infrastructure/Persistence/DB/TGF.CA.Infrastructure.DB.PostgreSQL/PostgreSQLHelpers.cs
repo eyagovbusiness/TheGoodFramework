@@ -1,10 +1,9 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Application;
-using TGF.CA.Domain.External;
+using TGF.CA.Domain.ExternalContracts;
 using TGF.CA.Infrastructure.Discovery;
 
-namespace TGF.CA.Infrastructure.DB.PostgreSQL
-{
+namespace TGF.CA.Infrastructure.DB.PostgreSQL {
     internal static class PostgreSQLHelpers
     {
 
@@ -38,8 +37,8 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
 
         private record PostgreSQLSecrets : IBasicCredentials
         {
-            public string? Username { get; set; }
-            public string? Password { get; set; }
+            public string Username { get; set; } = default!;
+            public string Password { get; set; } = default!;
         }
 
         #endregion

@@ -77,8 +77,9 @@ namespace TGF.CA.Presentation
         /// <exception cref="Exception">Thrown when CORSFrontendURL configuration is not found.</exception>
         public static WebApplicationBuilder ConfigureFrontendCORS(this WebApplicationBuilder aWebApplicationBuilder, IConfiguration aConfiguration)
         {
-            var lCORSFrontUrl = aConfiguration.GetValue<string>("FrontendURL")
-                ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings. Please add this configuration.");
+            var lCORSFrontUrl = aConfiguration.GetValue<string>("FRONTEND_URL")
+                ?? aConfiguration.GetValue<string>("FrontendURL")
+                ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings or environment variables. Please add this configuration.");
 
             var lLocalDevelopmentUrl = aConfiguration.GetValue<string>("DevelopmentDomain"); // Replace with your local development URL if different
 
