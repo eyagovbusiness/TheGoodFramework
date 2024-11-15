@@ -6,17 +6,15 @@ Environment=development
 # Default values
 NO_CACHE=false
 REGISTRY_PUSH=false
-IMAGE_REGISTRY=registry.guildswarm.org
-USER=guildswarm
+DOCKERFILE=""
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --no-cache) NO_CACHE=true ;;
         --registry-push) REGISTRY_PUSH=true ;;
-		--image-registry-bgs) 
-			IMAGE_REGISTRY=biognosysbi.azurecr.io
-			USER=biognosys ;;
+		--bgs) 
+			DOCKERFILE="-f Dockerfile_bgs" ;;
         --help) 
             echo "Usage: $0 [--no-cache] [--registry-push]"
             exit 0
@@ -44,12 +42,12 @@ find . \( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.docker.config" \) -p
 
 # Build the Docker image with or without cache
 if [ "$NO_CACHE" = true ]; then
-	docker build --no-cache . --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${Environment} --build-arg USER=${USER} -t $IMAGE_REGISTRY/base-images/$Environment/the_good_framework:latest
+	docker build $DOCKERFILE . --no-cache --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${Environment} -t ${IMAGE_REGISTRY}/base-images/${Environment}/the_good_framework:latest
 else
-    docker build . --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${Environment} --build-arg USER=${USER} -t $IMAGE_REGISTRY/base-images/$Environment/the_good_framework:latest
+    docker build $DOCKERFILE . --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${Environment} -t ${IMAGE_REGISTRY}/base-images/${Environment}/the_good_framework:latest
 fi
 
 # If the --registry-push argument is provided, push the image
 if [ "$REGISTRY_PUSH" = true ]; then
-    docker push $IMAGE_REGISTRY/base-images/$Environment/the_good_framework:latest
+    docker push ${IMAGE_REGISTRY}/base-images/${Environment}/the_good_framework:latest
 fi
