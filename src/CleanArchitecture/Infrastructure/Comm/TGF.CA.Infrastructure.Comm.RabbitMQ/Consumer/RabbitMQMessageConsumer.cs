@@ -4,6 +4,7 @@ using TGF.CA.Infrastructure.Comm.Consumer.Handler;
 using TGF.CA.Infrastructure.Comm.Messages;
 using TGF.CA.Infrastructure.Comm.RabbitMQ;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Settings;
+using TGF.Common.Extensions;
 using ISerializer = TGF.Common.Serialization.ISerializer;
 
 
@@ -29,9 +30,20 @@ public class RabbitMQMessageConsumer<TMessage> : IMessageConsumer<TMessage> {
 
     private async Task Consume(CancellationToken aCancellationToken) {
         var lConnectionFactory = await _connectionFactory.Value;
-        using var lConnection = lConnectionFactory.CreateConnection();
+
+        using var lConnection = await RetryUtility.ExecuteWithRetryAsync(
+            async () => {
+                // Wrapping the connection creation in retry logic.
+                return await Task.Run(() => lConnectionFactory.CreateConnection(), aCancellationToken);
+            },
+            _ => false, // Retry only on exceptions.
+            aMaxRetries: 10, // Customize max retries as needed.
+            aDelayMilliseconds: 2000, // Customize delay between retries.
+            aCancellationToken // Pass the provided CancellationToken.
+        );
+
         using var lChannel = lConnection.CreateModel();
-        lChannel.BasicQos(0, 1, false);//Each consumer will take only 1 message at time and take the next one after ACK the current processing one.
+        lChannel.BasicQos(0, 1, false); // Each consumer will take only 1 message at a time and the next after ACK.
         var lReceiver = new RabbitMQMessageReceiver(lChannel, _serializer, _handleMessage);
         string lQueue = await GetCorrectQueue();
 
@@ -39,6 +51,7 @@ public class RabbitMQMessageConsumer<TMessage> : IMessageConsumer<TMessage> {
 
         await WaitUntilCancelled(aCancellationToken);
     }
+
 
     private static async Task WaitUntilCancelled(CancellationToken aCancellationToken) {
         var lTaskCompletionSource = new TaskCompletionSource<bool>();

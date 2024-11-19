@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using TGF.Common.Extensions;
 
 namespace TGF.CA.Infrastructure
 {
@@ -37,14 +38,23 @@ namespace TGF.CA.Infrastructure
         /// </summary>
         /// <param name="lServiceProvider">The <see cref="IServiceProvider"/> instance.</param>
         /// <param name="lDbContextType">The type of the <see cref="DbContext"/> for which migrations should be applied.</param>
-        private static async Task WebApplicationMigration(IServiceProvider lServiceProvider, Type lDbContextType)
-        {
+        private static async Task WebApplicationMigration(IServiceProvider lServiceProvider, Type lDbContextType) {
             if (!typeof(DbContext).IsAssignableFrom(lDbContextType))
                 throw new ArgumentException($"Type '{lDbContextType.FullName}' is not a DbContext type.");
 
             var lDbContext = lServiceProvider.GetService(lDbContextType) as DbContext
                              ?? throw new InvalidOperationException($"No service for type '{lDbContextType.FullName}' has been registered.");
-            await lDbContext.Database.MigrateAsync();
+
+            await RetryUtility.ExecuteWithRetryAsync(
+                async () => {
+                    await lDbContext.Database.MigrateAsync();
+                    return true; // Return true if no exception occurs.
+                },
+                _ => false, // Always return false so it never retries based on result.
+                aMaxRetries: 10, // Customize max retries as needed.
+                aDelayMilliseconds: 2000, // Customize delay between retries.
+                CancellationToken.None // Pass a CancellationToken if applicable.
+            );
         }
     }
 }

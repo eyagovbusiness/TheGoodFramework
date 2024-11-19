@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\TGF.Common.Extensions\TGF.Common.Extensions.csproj" />
     <ProjectReference Include="..\..\Application\TGF.CA.Application\TGF.CA.Application.csproj" />
   </ItemGroup>
 

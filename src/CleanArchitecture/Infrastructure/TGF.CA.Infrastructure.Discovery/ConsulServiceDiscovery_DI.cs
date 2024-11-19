@@ -4,8 +4,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace TGF.CA.Infrastructure.Discovery
 {
-
-
     /// <summary>
     /// Provides extension methods to register service discovery and associated health checks in the dependency injection container.
     /// </summary>

@@ -3,6 +3,7 @@ using TGF.CA.Application;
 using TGF.CA.Domain.ExternalContracts;
 using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Infrastructure.Secrets.Common;
+using TGF.Common.Extensions;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
 using VaultSharp.V1.Commons;
@@ -85,18 +86,27 @@ namespace TGF.CA.Infrastructure.Secrets.Vault {
         /// Used for Lazy initialization of the VaultClient.
         /// </summary>
         private async Task<VaultClient> GetVaultClient(IServiceDiscovery aServiceDiscovery) {
-            try {
-                string lVaultAddress = await aServiceDiscovery.GetFullAddress(InfraServicesRegistry.VaultSecretsManager)
-                    ?? throw new Exception("Vault address not found in service registry.");
-                string lVaultToken = GetTokenFromEnvironmentVariable();
+            return await RetryUtility.ExecuteWithRetryAsync(
+                async () => {
+                    try {
+                        string lVaultAddress = await aServiceDiscovery.GetFullAddress(InfraServicesRegistry.VaultSecretsManager)
+                            ?? throw new Exception("Vault address not found in service registry.");
+                        string lVaultToken = GetTokenFromEnvironmentVariable();
 
-                return new VaultClient(new VaultClientSettings(lVaultAddress, new TokenAuthMethodInfo(lVaultToken)));
-            }
-            catch (Exception ex) {
-                _logger.LogError(ex, "Error initializing Vault client.");
-                throw;
-            }
+                        return new VaultClient(new VaultClientSettings(lVaultAddress, new TokenAuthMethodInfo(lVaultToken)));
+                    }
+                    catch (Exception ex) {
+                        _logger.LogWarning(ex, "Error initializing Vault client.");
+                        throw; // Rethrow to ensure RetryUtility handles it.
+                    }
+                },
+                _ => false, // Retry only on exceptions.
+                aMaxRetries: 10, // Customize max retries as needed.
+                aDelayMilliseconds: 2000, // Customize delay between retries.
+                CancellationToken.None // Pass a CancellationToken if applicable.
+            );
         }
+
 
         #endregion
 

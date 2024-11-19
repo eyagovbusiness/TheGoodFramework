@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using TGF.Common.Extensions;
 
 namespace TGF.CA.Infrastructure.DB.PostgreSQL
 {
@@ -11,20 +12,31 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
     {
 
         /// <summary>
-        /// Adds PostgreSQL service with a connection to the specified database and using the given DbContext type. Also includes its own healthcheck.
+        /// Adds PostgreSQL service with a connection to the specified database and using the given DbContext type. Also includes its own health check.
         /// </summary>
         /// <typeparam name="TDbContext"></typeparam>
-        /// <param name="serviceCollection">Target <see cref="IServiceCollection"/>.</param>
-        /// <param name="databaseName">Name of the database to connect with.</param>
+        /// <param name="aServiceCollection">Target <see cref="IServiceCollection"/>.</param>
+        /// <param name="aDatabaseName">Name of the database to connect with.</param>
         /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
-        public static async Task<IServiceCollection> AddPostgreSQL<TDbContext>(this IServiceCollection aServiceCollection, string aDatabaseName)
-            where TDbContext : Microsoft.EntityFrameworkCore.DbContext
-        {
-            var lConnectionString = await PostgreSQLHelpers.GetConnectionString(aServiceCollection.BuildServiceProvider(), aDatabaseName);
+        public static async Task<IServiceCollection> AddPostgreSQL<TDbContext>(
+            this IServiceCollection aServiceCollection,
+            string aDatabaseName)
+            where TDbContext : Microsoft.EntityFrameworkCore.DbContext {
+            var lConnectionString = await RetryUtility.ExecuteWithRetryAsync(
+                async () => {
+                    return await PostgreSQLHelpers.GetConnectionString(aServiceCollection.BuildServiceProvider(), aDatabaseName);
+                },
+                _ => false, // Retry only on exceptions.
+                aMaxRetries: 3, // Customize max retries as needed.
+                aDelayMilliseconds: 2000, // Customize delay between retries.
+                CancellationToken.None // Pass a CancellationToken if needed.
+            );
+
             return aServiceCollection
                 .AddDbContext<TDbContext>(options => options.UseNpgsql(lConnectionString))
                 .AddPostgresHealthCheckFromConnectionString(lConnectionString, aDatabasename: aDatabaseName);
         }
+
 
         /// <summary>
         /// Adds a read only PostgreSQL service with a connection to the specified database and using the given READ ONLY DbContext type. Also includes its own healthcheck.
