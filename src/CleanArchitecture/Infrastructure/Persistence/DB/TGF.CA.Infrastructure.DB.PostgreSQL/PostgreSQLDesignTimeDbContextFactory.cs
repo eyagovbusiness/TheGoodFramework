@@ -40,9 +40,8 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
 
             lOptionsBuilder.UseNpgsql(lConnectionString, options => options.MigrationsHistoryTable("__EFMigrationsHistory", GetSchemaName()));
 
-            return (Activator.CreateInstance(typeof(TDbContext), new object[] { lOptionsBuilder.Options }) as TDbContext)!;
+            return (Activator.CreateInstance(typeof(TDbContext), [lOptionsBuilder.Options]) as TDbContext)!;
         }
-
 
     }
 

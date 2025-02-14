@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+	  <PackageReference Include="Azure.Identity" Version="1.13.2" />
     <!--Fixing CVE-2024-32655 -->
     <PackageReference Include="NpgSql" Version="8.0.3" />
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="8.0.1" />
@@ -15,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Security\TGF.CA.Infrastructure.Secrets\TGF.CA.Infrastructure.Secrets.csproj" />
     <ProjectReference Include="..\..\..\TGF.CA.Infrastructure.Discovery\TGF.CA.Infrastructure.Discovery.csproj" />
     <ProjectReference Include="..\TGF.CA.Infrastructure.DB\TGF.CA.Infrastructure.DB.csproj" />
   </ItemGroup>

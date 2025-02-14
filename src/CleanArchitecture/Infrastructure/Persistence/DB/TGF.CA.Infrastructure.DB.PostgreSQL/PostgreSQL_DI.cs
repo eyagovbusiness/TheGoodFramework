@@ -1,30 +1,28 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TGF.Common.Extensions;
 
-namespace TGF.CA.Infrastructure.DB.PostgreSQL
-{
+namespace TGF.CA.Infrastructure.DB.PostgreSQL {
 
     /// <summary>
     /// Static lass to support PostgreSQ within the DI framework.
     /// </summary>
-    public static class PostgreSQL_DI
-    {
+    public static class PostgreSQL_DI {
 
         /// <summary>
         /// Adds PostgreSQL service with a connection to the specified database and using the given DbContext type. Also includes its own health check.
         /// </summary>
         /// <typeparam name="TDbContext"></typeparam>
         /// <param name="aServiceCollection">Target <see cref="IServiceCollection"/>.</param>
-        /// <param name="aDatabaseName">Name of the database to connect with.</param>
         /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
         public static async Task<IServiceCollection> AddPostgreSQL<TDbContext>(
             this IServiceCollection aServiceCollection,
-            string aDatabaseName)
+            IConfiguration configuration)
             where TDbContext : Microsoft.EntityFrameworkCore.DbContext {
             var lConnectionString = await RetryUtility.ExecuteWithRetryAsync(
                 async () => {
-                    return await PostgreSQLHelpers.GetConnectionString(aServiceCollection.BuildServiceProvider(), aDatabaseName);
+                    return await PostgreSQLHelpers.GetConnectionString(aServiceCollection.BuildServiceProvider(), PostgreSQLHelpers.GetDatabaseName(configuration));
                 },
                 _ => false, // Retry only on exceptions.
                 aMaxRetries: 3, // Customize max retries as needed.
@@ -34,35 +32,21 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
 
             return aServiceCollection
                 .AddDbContext<TDbContext>(options => options.UseNpgsql(lConnectionString))
-                .AddPostgresHealthCheckFromConnectionString(lConnectionString, aDatabasename: aDatabaseName);
+                .AddPostgresHealthCheckFromConnectionString<TDbContext>(configuration, lConnectionString);
         }
-
-
-        /// <summary>
-        /// Adds a read only PostgreSQL service with a connection to the specified database and using the given READ ONLY DbContext type. Also includes its own healthcheck.
-        /// </summary>
-        public static async Task<IServiceCollection> AddReadOnlyPostgreSQL<TDbContext>(this IServiceCollection aServiceCollection, string aDatabaseName)
-            where TDbContext : Microsoft.EntityFrameworkCore.DbContext
-        {
-            var lConnectionString = await PostgreSQLHelpers.GetConnectionString(aServiceCollection.BuildServiceProvider(), aDatabaseName);
-            return aServiceCollection
-                .AddDbContext<TDbContext>(options => options.UseNpgsql(lConnectionString))
-                .AddPostgresHealthCheckFromConnectionString(lConnectionString, aDatabasename: aDatabaseName + "Query");
-        }
-
 
         /// <summary>
         /// Adds a healthcheck in the target <see cref="IServiceCollection"/> for the PostgreSQL database resolved from the provided aConnectionString.
         /// </summary>
         /// <param name="aServiceCollection">Target <see cref="IServiceCollection"/>.</param>
         /// <param name="aConnectionString">PostgreSQL database connection string.</param>
-        /// <param name="aDatabasename">Used to name the healthCheck</param>
         /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
-        public static IServiceCollection AddPostgresHealthCheckFromConnectionString(this IServiceCollection aServiceCollection, string aConnectionString, string? aDatabasename = default)
-            => aServiceCollection
-                .AddHealthChecks()
-                .AddNpgSql(aConnectionString, name: aDatabasename + "Database")
-                .Services;
+        public static IServiceCollection AddPostgresHealthCheckFromConnectionString<TDbContext>(this IServiceCollection aServiceCollection, IConfiguration configuration, string aConnectionString)
+            where TDbContext : Microsoft.EntityFrameworkCore.DbContext
+        => aServiceCollection
+            .AddHealthChecks()
+            .AddNpgSql(aConnectionString, name: PostgreSQLHelpers.GetDatabaseCQRSName<TDbContext>(configuration) + "Database")
+            .Services;
 
     }
 }

@@ -5,5 +5,8 @@
         public const string PostgresSecrets = "PostgresSecrets";
         #endregion
 
+        public const string DatabaseName = "DatabaseName";
+
+
     }
 }
