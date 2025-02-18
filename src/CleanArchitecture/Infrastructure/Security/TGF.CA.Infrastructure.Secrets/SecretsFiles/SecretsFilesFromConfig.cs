@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using TGF.CA.Infrastructure.InvariantConstants;
 
 namespace TGF.CA.Infrastructure.Secrets.SecretsFiles {
 
@@ -57,7 +58,7 @@ namespace TGF.CA.Infrastructure.Secrets.SecretsFiles {
         /// Resolves the full path of the secret file using the configuration.
         /// </summary>
         /// <param name="config">Configuration to access the appsettings.</param>
-        /// <param name="key">The name of the secret file.</param>
+        /// <param name="configurationKey">The name of the secret file from <see cref="IConfiguration"/>.</param>
         /// <returns>The full path to the secret file.</returns>
         /// <exception cref="InvalidOperationException">Thrown if the environment variable is not set in configuration or not found.</exception>
         /// <exception cref="KeyNotFoundException">Thrown if the secret key is not found in configuration.</exception>
@@ -66,22 +67,21 @@ namespace TGF.CA.Infrastructure.Secrets.SecretsFiles {
         /// Reads from config the name of the env variable with the secrets folder path and then reads the value. 
         /// Finally reads from config the file name of the secret and builds the full path, verify the file xists and return the full path fo the secret.
         /// </remarks>
-        private static string GetSecretFilePath(IConfiguration config, string key) {
-            var secretsPathEnvVar = config["SecretsFiles:SecretsPathEnvVar"]
-                ?? throw new InvalidOperationException("[ERROR] SecretsPathEnvVar is not set in configuration.");
+        private static string GetSecretFilePath(IConfiguration config, string configurationKey) {
+            var secretsPathEnvVar = config[ConfigurationKeys.SecretsFiles.SecretsPathEnvVar]
+                ?? throw new InvalidOperationException($"[ERROR] {ConfigurationKeys.SecretsFiles.SecretsPathEnvVar} is not set in configuration.");
 
             var secretsPath = Environment.GetEnvironmentVariable(secretsPathEnvVar)
                 ?? throw new InvalidOperationException($"[ERROR] Environment variable '{secretsPathEnvVar}' is not set!");
 
-            var secretName = config[$"SecretsFiles:SecretsFileNames:{key}"]
-                ?? throw new KeyNotFoundException($"[ERROR] Secret key '{key}' not found in configuration.");
+            var secretName = config[configurationKey]
+                ?? throw new KeyNotFoundException($"[ERROR] Secret name key '{configurationKey}' not found in configuration.");
 
             var secretFilePath = Path.Combine(secretsPath, secretName);
 
-            if (!File.Exists(secretFilePath))
-                throw new FileNotFoundException($"[ERROR] Secret file '{secretFilePath}' not found.");
-
-            return secretFilePath;
+            return !File.Exists(secretFilePath)
+                ? throw new FileNotFoundException($"[ERROR] Secret file '{secretFilePath}' not found.")
+                : secretFilePath;
         }
 
     }

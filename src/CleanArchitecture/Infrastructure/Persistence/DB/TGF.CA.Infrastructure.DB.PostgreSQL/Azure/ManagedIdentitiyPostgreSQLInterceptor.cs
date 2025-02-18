@@ -4,7 +4,6 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using System.Data.Common;
-using TGF.CA.Domain.ExternalContracts;
 using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.Secrets.SecretsFiles;
 
@@ -26,7 +25,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL.Azure {
 
         public async Task<string> GetValidNpgsqlConnectionAsync(IConfiguration configuration, string? databaseName = null, CancellationToken cancellationToken = default) {
             var accessToken = await GetValidAccessTokenAsync(cancellationToken);
-            var postgresSecrets = await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.PostgresSecrets);
+            var postgresSecrets = await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets);
             return postgresSecrets.ToConnectionString(databaseName, accessToken);
         }
 
@@ -65,17 +64,6 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL.Azure {
             finally {
                 _semaphore.Release();
             }
-        }
-
-        private record PostgreSQLConnectionSecret : IBasicCredentials {
-            public string Host { get; set; } = default!;
-            public string Port { get; set; } = default!;
-            public string Username { get; set; } = default!;
-            public string Password { get; set; } = default!;
-            public string DatabaseName { get; set; } = default!;
-
-            public string ToConnectionString(string? databaseNameOverride = null, string? passwordOverride = null)
-                => $"Host={Host};Port={Port};Username={Username};Password={passwordOverride ?? Password};Database={databaseNameOverride ?? DatabaseName};";
         }
 
     }

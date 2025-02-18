@@ -22,7 +22,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
             where TDbContext : Microsoft.EntityFrameworkCore.DbContext {
             var lConnectionString = await RetryUtility.ExecuteWithRetryAsync(
                 async () => {
-                    return await PostgreSQLHelpers.GetConnectionString(aServiceCollection.BuildServiceProvider(), PostgreSQLHelpers.GetDatabaseName(configuration));
+                    return await PostgreSQLHelpers.GetConnectionString(aServiceCollection.BuildServiceProvider(), configuration);
                 },
                 _ => false, // Retry only on exceptions.
                 aMaxRetries: 3, // Customize max retries as needed.

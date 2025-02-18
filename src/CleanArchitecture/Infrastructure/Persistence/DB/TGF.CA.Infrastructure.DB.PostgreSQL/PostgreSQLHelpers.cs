@@ -1,10 +1,11 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Application;
 using TGF.CA.Domain.ExternalContracts;
-using TGF.CA.Infrastructure.Discovery;
-using Microsoft.Extensions.Configuration;
-using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.DB.DbContext;
+using TGF.CA.Infrastructure.Discovery;
+using TGF.CA.Infrastructure.InvariantConstants;
+using TGF.CA.Infrastructure.Secrets.SecretsFiles;
 
 namespace TGF.CA.Infrastructure.DB.PostgreSQL {
 
@@ -20,10 +21,10 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
         /// <returns></returns>
         /// <exception cref="NullReferenceException">When the databae name is not configured in appsettings.</exception>
         internal static string GetDatabaseCQRSName<TDbContext>(IConfiguration configuration)
-             where TDbContext : Microsoft.EntityFrameworkCore.DbContext {
+            where TDbContext : Microsoft.EntityFrameworkCore.DbContext {
             var dbName = GetDatabaseName(configuration);
-            return typeof(IReadOnlyDbContext).IsAssignableFrom(typeof(TDbContext)) 
-                ? dbName + "Query" 
+            return typeof(IReadOnlyDbContext).IsAssignableFrom(typeof(TDbContext))
+                ? dbName + "Query"
                 : dbName;
         }
 
@@ -32,19 +33,24 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
         /// </summary>
         /// <exception cref="NullReferenceException">When the databae name is not configured in appsettings.</exception>
         internal static string GetDatabaseName(IConfiguration configuration)
-        => configuration[ConfigurationKeys.DatabaseName] 
-            ?? throw new NullReferenceException($"{ConfigurationKeys.DatabaseName} name not configured in appsettings.");
+        => configuration[ConfigurationKeys.Database.DatabaseName]
+        ?? throw new NullReferenceException($"{ConfigurationKeys.Database.DatabaseName} not configured in appsettings.");
 
         /// <summary>
         /// Gets the PostgreSQL connection string from the configured PostgreSQL database for this application.
         /// </summary>
         /// <param name="aServiceProvider">Service provider.</param>
-        /// <param name="aDatabaseName">Database name.</param>
         /// <returns>The PostgreSQL connection string.</returns>
-        internal static async Task<string> GetConnectionString(IServiceProvider aServiceProvider, string aDatabaseName) {
+        internal static async Task<string> GetConnectionString(IServiceProvider aServiceProvider, IConfiguration configuration) {
+            var configValue = configuration[ConfigurationKeys.Database.UseSecretsManagerAndServiceDiscovery]
+                ?? throw new NullReferenceException($"{ConfigurationKeys.Database.UseSecretsManagerAndServiceDiscovery} not configured in appsettings.");
+            if (bool.Parse(configValue))
+                return (await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets))
+                    .ToConnectionString();
             var lPostgreSQLSecrets = await GetPostgreSQLSecrets(aServiceProvider);
             var lPostgreSQLDiscoveryData = await GetPostgreSQLDiscoveryData(aServiceProvider);
-            return $"Host={lPostgreSQLDiscoveryData.Server};Port={lPostgreSQLDiscoveryData.Port};Username={lPostgreSQLSecrets.Username};Password={lPostgreSQLSecrets.Password};Database={aDatabaseName};";
+            var databasename = GetDatabaseName(configuration);
+            return $"Host={lPostgreSQLDiscoveryData.Server};Port={lPostgreSQLDiscoveryData.Port};Username={lPostgreSQLSecrets.Username};Password={lPostgreSQLSecrets.Password};Database={databasename};";
 
         }
 
