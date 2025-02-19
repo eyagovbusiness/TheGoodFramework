@@ -44,7 +44,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
         internal static async Task<string> GetConnectionString(IServiceProvider aServiceProvider, IConfiguration configuration) {
             var configValue = configuration[ConfigurationKeys.Database.UseSecretsManagerAndServiceDiscovery]
                 ?? throw new NullReferenceException($"{ConfigurationKeys.Database.UseSecretsManagerAndServiceDiscovery} not configured in appsettings.");
-            if (bool.Parse(configValue))
+            if (!bool.Parse(configValue))
                 return (await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets))
                     .ToConnectionString();
             var lPostgreSQLSecrets = await GetPostgreSQLSecrets(aServiceProvider);
