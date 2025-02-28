@@ -5,19 +5,11 @@ using TGF.Common.Serialization;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Consumer;
 
-public class RabbitMQMessageReceiver : DefaultBasicConsumer {
-    private readonly IModel _channel;
-    private readonly ISerializer _serializer;
-    private readonly IHandleMessage _handleMessage;
+public class RabbitMQMessageReceiver(IModel channel, ISerializer serializer, IHandleMessage handleMessage)
+: DefaultBasicConsumer {
     private byte[]? MessageBody { get; set; }
     private Type? MessageType { get; set; }
     private ulong DeliveryTag { get; set; }
-
-    public RabbitMQMessageReceiver(IModel channel, ISerializer serializer, IHandleMessage handleMessage) {
-        _channel = channel;
-        _serializer = serializer;
-        _handleMessage = handleMessage;
-    }
 
     public override async void HandleBasicDeliver(string consumerTag, ulong deliveryTag, bool redelivered, string exchange,
         string routingKey, IBasicProperties properties, ReadOnlyMemory<byte> body) {
@@ -29,13 +21,13 @@ public class RabbitMQMessageReceiver : DefaultBasicConsumer {
 
         try {
             await HandleMessage();
-            _channel.BasicAck(DeliveryTag, false);  // Acknowledge the message reception to remove it from the queue
+            channel.BasicAck(DeliveryTag, false);  // Acknowledge the message reception to remove it from the queue
         }
         catch (Exception ex) {
             // Here, you should decide how to handle the exception. You might want to log it,
             // and you might decide to either acknowledge or not acknowledge the message depending on the nature of the error.
             Console.WriteLine($"An error occurred while processing the message: {ex.Message}");
-            _channel.BasicNack(DeliveryTag, false, true);  // This is just an example to not acknowledge the message and let it be requeued
+            channel.BasicNack(DeliveryTag, false, true);  // This is just an example to not acknowledge the message and let it be requeued
         }
     }
 
@@ -44,10 +36,10 @@ public class RabbitMQMessageReceiver : DefaultBasicConsumer {
             throw new ArgumentException("Neither the body nor the messageType have been populated");
         }
 
-        var message = _serializer.DeserializeObject(MessageBody, MessageType) as IMessage
+        var message = serializer.DeserializeObject(MessageBody, MessageType) as IMessage
                       ?? throw new ArgumentException("The message didn't deserialize properly");
 
-        await _handleMessage.Handle(message, CancellationToken.None);
+        await handleMessage.Handle(message, CancellationToken.None);
     }
 }
 
