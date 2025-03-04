@@ -14,7 +14,7 @@
             public const string Key = nameof(Database);
             public const string DatabaseName = $"{Key}:DatabaseName";
             public const string AuthType = $"{Key}:AuthType";
-            public const string UseSecretsManagerAndServiceDiscovery = $"{Key}:UseSecretsManagerAndServiceDiscovery";
+            public const string SecretsSourceType = $"{Key}:SecretsSourceType";
         }
     }
 
