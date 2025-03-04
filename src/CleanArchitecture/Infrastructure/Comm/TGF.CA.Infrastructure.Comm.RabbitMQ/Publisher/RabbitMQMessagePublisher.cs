@@ -16,17 +16,18 @@ where TMessage : IMessage {
     public async Task Publish(TMessage aMessage, string? aRoutingKey = null, CancellationToken aCancellationToken = default) {
         using var lConnection = (await _connectionFactory.Value).CreateConnection();
         using var lModel = lConnection.CreateModel();
-        PublishSingle(aMessage, lModel, aRoutingKey);
+        await PublishSingle(aMessage, lModel, aRoutingKey);
     }
 
     public async Task PublishMany(IEnumerable<TMessage> aMessages, string? aRoutingKey = null, CancellationToken aCancellationToken = default) {
         using var lConnection = (await _connectionFactory.Value).CreateConnection();
         using var lModel = lConnection.CreateModel();
-        foreach (var lMessage in aMessages)
-            PublishSingle(lMessage, lModel, aRoutingKey);
+
+        var publishTasks = aMessages.Select(lMessage => PublishSingle(lMessage, lModel, aRoutingKey));
+        await Task.WhenAll(publishTasks);
     }
 
-    private async void PublishSingle(TMessage aMessage, IModel aModel, string? aRoutingKey) {
+    private async Task PublishSingle(TMessage aMessage, IModel aModel, string? aRoutingKey) {
         var lProperties = aModel.CreateBasicProperties();
         lProperties.Persistent = true;
         lProperties.Type = RabbitMQMessagePublisher<TMessage>.RemoveVersion(aMessage.GetType());
