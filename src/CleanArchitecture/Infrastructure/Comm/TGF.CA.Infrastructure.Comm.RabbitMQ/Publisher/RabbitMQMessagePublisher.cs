@@ -1,26 +1,26 @@
-using Microsoft.Extensions.Configuration;
 using RabbitMQ.Client;
 using System.Text;
 using TGF.CA.Infrastructure.Comm.Messages;
 using TGF.CA.Infrastructure.Comm.Publisher;
+using TGF.CA.Infrastructure.Comm.RabbitMQ.Connection;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Settings;
 using TGF.Common.Serialization;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Publisher;
 
-public class RabbitMQMessagePublisher<TMessage>(ISerializer serializer, IRabbitMQSettingsFactory rabbitMQSettingsFactory, IConfiguration configuration) : IExternalMessagePublisher<TMessage>
+internal class RabbitMQMessagePublisher<TMessage>(IRabbitMQSettingsFactory rabbitMQSettingsFactory, IRabbitMQConnectionFactory rabbitMQConnectionFactory, ISerializer serializer)
+: IExternalMessagePublisher<TMessage>
 where TMessage : IMessage {
     private readonly Lazy<Task<RabbitMQSettings>> _settings = new(rabbitMQSettingsFactory.GetRabbitMQSettingsAsync);
-    private readonly Lazy<Task<ConnectionFactory>> _connectionFactory = new(() => GetConnectionFactory(rabbitMQSettingsFactory, configuration));
 
     public async Task Publish(TMessage aMessage, string? aRoutingKey = null, CancellationToken aCancellationToken = default) {
-        using var lConnection = (await _connectionFactory.Value).CreateConnection();
+        var lConnection = await rabbitMQConnectionFactory.GetConnectionAsync();
         using var lModel = lConnection.CreateModel();
         await PublishSingle(aMessage, lModel, aRoutingKey);
     }
 
     public async Task PublishMany(IEnumerable<TMessage> aMessages, string? aRoutingKey = null, CancellationToken aCancellationToken = default) {
-        using var lConnection = (await _connectionFactory.Value).CreateConnection();
+        var lConnection = await rabbitMQConnectionFactory.GetConnectionAsync();
         using var lModel = lConnection.CreateModel();
 
         var publishTasks = aMessages.Select(lMessage => PublishSingle(lMessage, lModel, aRoutingKey));
@@ -50,7 +50,8 @@ where TMessage : IMessage {
     /// there is a limit of 255 characters on the type in RabbitMQ.
     /// in top of that the version will cause issues if it gets updated and the payload contains the old and so on.  
     /// </summary>
-    private static string RemoveVersion(Type aType) => RabbitMQMessagePublisher<TMessage>.RemoveVersionFromQualifiedName(aType.AssemblyQualifiedName ?? "", 0);
+    private static string RemoveVersion(Type aType)
+    => RabbitMQMessagePublisher<TMessage>.RemoveVersionFromQualifiedName(aType.AssemblyQualifiedName ?? "", 0);
 
     private static string RemoveVersionFromQualifiedName(string aAssemblyQualifiedName, int aIndexStart) {
         var lStringBuilder = new StringBuilder();
@@ -68,10 +69,4 @@ where TMessage : IMessage {
         return lStringBuilder.ToString();
     }
 
-    private static async Task<ConnectionFactory> GetConnectionFactory(IRabbitMQSettingsFactory settingsFactory, IConfiguration configuration) {
-        var settings = await settingsFactory.GetRabbitMQSettingsAsync();
-        return new() {
-            Uri = new Uri(settings.GetConnectionString(configuration))
-        };
-    }
 }

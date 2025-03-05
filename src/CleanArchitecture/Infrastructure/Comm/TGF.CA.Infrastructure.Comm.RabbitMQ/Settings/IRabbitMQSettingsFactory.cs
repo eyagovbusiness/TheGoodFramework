@@ -6,7 +6,7 @@ namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Settings;
 /// <summary>
 /// RabbitMQ settings factory where settings are built reading hostname from the <see cref="IServiceDiscovery"/> and credentials from the <see cref="ISecretsManager"/>.
 /// </summary>
-public interface IRabbitMQSettingsFactory {
+internal interface IRabbitMQSettingsFactory {
     /// <summary>
     /// Get the <see cref="RabbitMQSettings"/>.
     /// </summary>

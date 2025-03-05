@@ -5,7 +5,7 @@ using TGF.Common.Serialization;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Consumer;
 
-public class RabbitMQMessageReceiver(IModel channel, ISerializer serializer, IHandleMessage handleMessage)
+internal class RabbitMQMessageReceiver(IModel channel, ISerializer serializer, IHandleMessage handleMessage)
 : DefaultBasicConsumer {
     private byte[]? MessageBody { get; set; }
     private Type? MessageType { get; set; }

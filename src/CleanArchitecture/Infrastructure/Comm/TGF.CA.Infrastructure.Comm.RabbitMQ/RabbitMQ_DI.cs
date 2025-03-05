@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Infrastructure.Comm.Consumer;
 using TGF.CA.Infrastructure.Comm.Messages;
 using TGF.CA.Infrastructure.Comm.Publisher;
+using TGF.CA.Infrastructure.Comm.RabbitMQ.Connection;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Consumer;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Publisher;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Settings;
@@ -12,6 +13,7 @@ public static class RabbitMQ_DI {
     public static void AddRabbitMQInfrastructureServices(this IServiceCollection aServiceCollection, string aHealthCheckName) {
         aServiceCollection
         .AddTransient<IRabbitMQSettingsFactory, RabbitMQSettingsFactory>()
+        .AddSingleton<IRabbitMQConnectionFactory, RabbitMQConnectionFactory>()
         .AddSingleton<CustomRabbitMQHealthCheck>();//Add health check as singleton before registering it as healcheck to prevent the healhcheck to open a new connection on each check request
 
         aServiceCollection

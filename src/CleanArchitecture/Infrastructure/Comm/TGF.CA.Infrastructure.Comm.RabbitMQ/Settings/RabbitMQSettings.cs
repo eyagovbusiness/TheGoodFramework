@@ -6,7 +6,7 @@ using TGF.Common.Extensions;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Settings;
 
-public class RabbitMQSettings {
+internal class RabbitMQSettings {
     private SecretsSourceTypeEnum _secretsSourceType;
     /// <summary>
     /// Specifies the type of secrets source in the configuration used for retrieving the secrets for rabbitMQ.
