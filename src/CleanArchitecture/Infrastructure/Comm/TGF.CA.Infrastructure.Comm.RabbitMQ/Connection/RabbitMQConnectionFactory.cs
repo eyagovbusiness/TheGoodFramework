@@ -25,8 +25,9 @@ internal class RabbitMQConnectionFactory : IRabbitMQConnectionFactory {
 
     private static async Task<ConnectionFactory> GetConnectionFactory(IRabbitMQSettingsFactory settingsFactory, IConfiguration configuration) {
         var settings = await settingsFactory.GetRabbitMQSettingsAsync();
+        var formattedUri = settings.GetConnectionString(configuration).Replace("https://", string.Empty);//remove protocil of present in hostname: amqps://{username}:{password}@{hostname}:{port}/{vhost}
         return new ConnectionFactory {
-            Uri = new Uri(settings.GetConnectionString(configuration))
+            Uri = new Uri(formattedUri)
         };
     }
 
