@@ -16,23 +16,25 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL.Azure {
     /// The interceptor will replace the connection string with a new one that includes the access token.
     /// The interceptor will cache the access token and only refresh it when it is about to expire.
     /// </remarks>
-    internal class ManagedIdentitiyPostgreSQLInterceptor(IConfiguration configuration) : DbConnectionInterceptor {
+    internal class ManagedIdentitiyPostgreSQLInterceptor(IConfiguration configuration)
+    : DbConnectionInterceptor {
+
         private readonly string _managedIdentityClientId = Environment.GetEnvironmentVariable(EnvironmentVariableNames.AZURE_CLIENT_ID)
                 ?? throw new NullReferenceException($"[ERROR] The {EnvironmentVariableNames.AZURE_CLIENT_ID} environment variable is not set!");
         private readonly SemaphoreSlim _semaphore = new(1, 1);
 
         private AccessToken _cachedAccessToken;
 
-        public async Task<string> GetValidNpgsqlConnectionAsync(IConfiguration configuration, string? databaseName = null, CancellationToken cancellationToken = default) {
-            var accessToken = await GetValidAccessTokenAsync(cancellationToken);
-            var postgresSecrets = await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets);
-            return postgresSecrets.ToConnectionString(databaseName, accessToken);
-        }
-
         public override async Task ConnectionOpenedAsync(DbConnection connection, ConnectionEndEventData eventData, CancellationToken cancellationToken = default) {
             if (connection is NpgsqlConnection npgsqlConnection)
-                npgsqlConnection.ConnectionString = await GetValidNpgsqlConnectionAsync(configuration, cancellationToken: cancellationToken);
+                npgsqlConnection.ConnectionString = await GetValidNpgsqlConnectionStringAsync(cancellationToken);
             await base.ConnectionOpenedAsync(connection, eventData, cancellationToken);
+        }
+
+        private async Task<string> GetValidNpgsqlConnectionStringAsync(CancellationToken cancellationToken = default) {
+            var accessToken = await GetValidAccessTokenAsync(cancellationToken);
+            var postgresSecrets = await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets);
+            return postgresSecrets.ToConnectionString(accessToken) + "Pooling=true;MinPoolSize=0;MaxPoolSize=50;";//for now we will keep the pooling configuration here, if flexibility is neede din the future it wll be added to IConfiguration
         }
 
         private async Task<string> GetValidAccessTokenAsync(CancellationToken cancellationToken) {
@@ -65,6 +67,5 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL.Azure {
                 _semaphore.Release();
             }
         }
-
     }
 }
