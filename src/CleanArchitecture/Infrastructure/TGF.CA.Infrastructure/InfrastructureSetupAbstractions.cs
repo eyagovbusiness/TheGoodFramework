@@ -45,6 +45,10 @@ namespace TGF.CA.Infrastructure
             var lDbContext = lServiceProvider.GetService(lDbContextType) as DbContext
                              ?? throw new InvalidOperationException($"No service for type '{lDbContextType.FullName}' has been registered.");
 
+            try {
+                await lDbContext.Database.OpenConnectionAsync();
+            } catch { }
+
             await RetryUtility.ExecuteWithRetryAsync(
                 async () => {
                     await lDbContext.Database.MigrateAsync();
