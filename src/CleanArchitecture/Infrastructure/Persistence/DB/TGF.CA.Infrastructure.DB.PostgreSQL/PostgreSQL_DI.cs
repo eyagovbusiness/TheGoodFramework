@@ -1,12 +1,11 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using TGF.Common.Extensions;
 
 namespace TGF.CA.Infrastructure.DB.PostgreSQL {
 
     /// <summary>
-    /// Static lass to support PostgreSQ within the DI framework.
+    /// Static class to support PostgreSQL within the DI framework.
     /// </summary>
     public static class PostgreSQL_DI {
 
@@ -16,37 +15,28 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
         /// <typeparam name="TDbContext"></typeparam>
         /// <param name="aServiceCollection">Target <see cref="IServiceCollection"/>.</param>
         /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
-        public static async Task<IServiceCollection> AddPostgreSQL<TDbContext>(
-            this IServiceCollection aServiceCollection,
+        public static IServiceCollection AddPostgreSQL<TDbContext>(
+            this IServiceCollection serviceCollection,
             IConfiguration configuration)
-            where TDbContext : Microsoft.EntityFrameworkCore.DbContext {
-            var lConnectionString = await RetryUtility.ExecuteWithRetryAsync(
-                async () => {
-                    return await PostgreSQLHelpers.GetConnectionString(aServiceCollection.BuildServiceProvider(), configuration);
-                },
-                _ => false, // Retry only on exceptions.
-                aMaxRetries: 3, // Customize max retries as needed.
-                aDelayMilliseconds: 2000, // Customize delay between retries.
-                CancellationToken.None // Pass a CancellationToken if needed.
-            );
-
-            return aServiceCollection
-                .AddDbContext<TDbContext>(options => options.UseNpgsql(lConnectionString))
-                .AddPostgresHealthCheckFromConnectionString<TDbContext>(configuration, lConnectionString);
-        }
+        where TDbContext : Microsoft.EntityFrameworkCore.DbContext
+        => serviceCollection
+        .AddSingleton<PostgreSQLInterceptor>()
+        .AddDbContext<TDbContext>((provider, options) => {
+            var interceptor = provider.GetRequiredService<PostgreSQLInterceptor>();
+            options.UseNpgsql()
+            .AddInterceptors(interceptor);
+        })
+        .AddPostgresHealthCheck<TDbContext>(configuration);
 
         /// <summary>
-        /// Adds a healthcheck in the target <see cref="IServiceCollection"/> for the PostgreSQL database resolved from the provided aConnectionString.
+        /// Adds a healthcheck in the target <see cref="IServiceCollection"/> for the PostgreSQL database.
         /// </summary>
-        /// <param name="aServiceCollection">Target <see cref="IServiceCollection"/>.</param>
-        /// <param name="aConnectionString">PostgreSQL database connection string.</param>
         /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
-        public static IServiceCollection AddPostgresHealthCheckFromConnectionString<TDbContext>(this IServiceCollection aServiceCollection, IConfiguration configuration, string aConnectionString)
-            where TDbContext : Microsoft.EntityFrameworkCore.DbContext
-        => aServiceCollection
+        public static IServiceCollection AddPostgresHealthCheck<TDbContext>(this IServiceCollection serviceCollection, IConfiguration configuration)
+        where TDbContext : Microsoft.EntityFrameworkCore.DbContext
+        => serviceCollection
             .AddHealthChecks()
-            .AddNpgSql(aConnectionString, name: PostgreSQLHelpers.GetDatabaseCQRSName<TDbContext>(configuration) + "Database")
+            .AddCheck<PostgreSQLHealthCheck<TDbContext>>(PostgreSQLHelpers.GetDatabaseCQRSName<TDbContext>(configuration) + "Database")
             .Services;
-
     }
 }

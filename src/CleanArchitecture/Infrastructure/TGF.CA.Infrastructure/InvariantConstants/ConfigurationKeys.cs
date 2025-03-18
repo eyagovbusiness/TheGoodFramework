@@ -6,13 +6,15 @@
             public readonly struct SecretsFileNames {
                 public const string Key = $"{SecretsFiles.Key}:{nameof(SecretsFileNames)}";
                 public const string PostgresSecrets = $"{Key}:PostgresSecrets";
+                public const string RabbitMQConnectionString = $"{Key}:RabbitMQConnectionString";
+
             }
         }
         public readonly struct Database {
             public const string Key = nameof(Database);
-            public const string DatabaseName = "Database:DatabaseName";
-            public const string AuthType = "Database:AuthType";
-            public const string UseSecretsManagerAndServiceDiscovery = $"{Key}:UseSecretsManagerAndServiceDiscovery";
+            public const string DatabaseName = $"{Key}:DatabaseName";
+            public const string AuthType = $"{Key}:AuthType";
+            public const string SecretsSourceType = $"{Key}:SecretsSourceType";
         }
     }
 
