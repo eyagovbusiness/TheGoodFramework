@@ -41,6 +41,10 @@ namespace TGF.CA.Infrastructure {
             var dbContext = serviceProvider.GetService(dbContextType) as DbContext
                              ?? throw new InvalidOperationException($"No service for type '{dbContextType.FullName}' has been registered.");
 
+            try {
+                await lDbContext.Database.OpenConnectionAsync();
+            } catch { }
+
             await RetryUtility.ExecuteWithRetryAsync(
                 async () => {
                     await EnsureInterceptorConnectionString(dbContext);
