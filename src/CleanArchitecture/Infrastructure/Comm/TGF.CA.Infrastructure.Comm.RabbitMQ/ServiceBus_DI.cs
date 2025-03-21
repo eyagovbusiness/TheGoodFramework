@@ -1,27 +1,28 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Infrastructure.Comm.Consumer.Handler;
 using TGF.CA.Infrastructure.Comm.Messages;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ;
 
 public static class ServiceBus_DI {
-    public static void AddServiceBusIntegrationPublisher(this IServiceCollection aServiceCollection) {
-        aServiceCollection.AddRabbitMQInfrastructureServices("IntegrationPublisher");
+    public static void AddServiceBusIntegrationPublisher(this IServiceCollection aServiceCollection, IConfiguration configuration) {
+        aServiceCollection.AddRabbitMQInfrastructureServices(configuration, "IntegrationPublisher");
         aServiceCollection.AddRabbitMQPublisher<IntegrationMessage>();
     }
 
-    public static void AddServiceBusIntegrationConsumer(this IServiceCollection aServiceCollection) {
-        aServiceCollection.AddRabbitMQInfrastructureServices("IntegrationConsumer");
+    public static void AddServiceBusIntegrationConsumer(this IServiceCollection aServiceCollection, IConfiguration configuration) {
+        aServiceCollection.AddRabbitMQInfrastructureServices(configuration, "IntegrationConsumer");
         aServiceCollection.AddRabbitMqConsumer<IntegrationMessage>();
     }
 
-    public static void AddServiceBusDomainPublisher(this IServiceCollection aServiceCollection) {
-        aServiceCollection.AddRabbitMQInfrastructureServices("DomainPublisher");
+    public static void AddServiceBusDomainPublisher(this IServiceCollection aServiceCollection, IConfiguration configuration) {
+        aServiceCollection.AddRabbitMQInfrastructureServices(configuration, "DomainPublisher");
         aServiceCollection.AddRabbitMQPublisher<DomainMessage>();
     }
 
-    public static void AddServiceBusDomainConsumer(this IServiceCollection aServiceCollection) {
-        aServiceCollection.AddRabbitMQInfrastructureServices("DomainConsumer");
+    public static void AddServiceBusDomainConsumer(this IServiceCollection aServiceCollection, IConfiguration configuration) {
+        aServiceCollection.AddRabbitMQInfrastructureServices(configuration, "DomainConsumer");
         aServiceCollection.AddRabbitMqConsumer<DomainMessage>();
     }
 

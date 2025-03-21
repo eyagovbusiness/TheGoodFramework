@@ -8,9 +8,8 @@ using ISerializer = TGF.Common.Serialization.ISerializer;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Consumer;
 
-internal class RabbitMQMessageConsumer<TMessage>(IRabbitMQSettingsFactory rabbitMQSettingsFactory, IRabbitMQConnectionFactory rabbitMQConnectionFactory, IHandleMessage handleMessage, ISerializer serializer)
+internal class RabbitMQMessageConsumer<TMessage>(RabbitMQSettings rabbitMQSettings, IRabbitMQConnectionFactory rabbitMQConnectionFactory, IHandleMessage handleMessage, ISerializer serializer)
 : IMessageConsumer<TMessage> {
-    private readonly Lazy<Task<RabbitMQSettings>> _settings = new(rabbitMQSettingsFactory.GetRabbitMQSettingsAsync);
 
     public async Task StartAsync(CancellationToken aCancellationToken = default)
     => await Consume(aCancellationToken);
@@ -21,7 +20,7 @@ internal class RabbitMQMessageConsumer<TMessage>(IRabbitMQSettingsFactory rabbit
         using var lChannel = lConnection.CreateModel();
         lChannel.BasicQos(0, 1, false); // Each consumer will take only 1 message at a time and the next after ACK.
         var lReceiver = new RabbitMQMessageReceiver(lChannel, serializer, handleMessage);
-        var lQueue = await GetCorrectQueue();
+        var lQueue = GetCorrectQueue();
 
         lChannel.BasicConsume(lQueue, false, lReceiver);
 
@@ -38,10 +37,10 @@ internal class RabbitMQMessageConsumer<TMessage>(IRabbitMQSettingsFactory rabbit
         }
     }
 
-    private async Task<string> GetCorrectQueue()
+    private string GetCorrectQueue()
     => (typeof(TMessage) == typeof(IntegrationMessage)
-        ? (await _settings.Value).Consumer?.IntegrationQueue
-        : (await _settings.Value).Consumer?.DomainQueue)
+        ? rabbitMQSettings.Consumer?.IntegrationQueue
+        : rabbitMQSettings.Consumer?.DomainQueue)
     ?? throw new ArgumentException("Please configure the queues in the app settings.");
 
 }

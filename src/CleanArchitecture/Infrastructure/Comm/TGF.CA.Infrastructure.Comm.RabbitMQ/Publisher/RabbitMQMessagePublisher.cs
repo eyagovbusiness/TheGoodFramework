@@ -4,34 +4,33 @@ using TGF.CA.Infrastructure.Comm.Messages;
 using TGF.CA.Infrastructure.Comm.Publisher;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Connection;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Settings;
+using TGF.Common.Extensions;
 using TGF.Common.Serialization;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Publisher;
 
-internal class RabbitMQMessagePublisher<TMessage>(IRabbitMQSettingsFactory rabbitMQSettingsFactory, IRabbitMQConnectionFactory rabbitMQConnectionFactory, ISerializer serializer)
+internal class RabbitMQMessagePublisher<TMessage>(RabbitMQSettings rabbitMQSettings, IRabbitMQConnectionFactory rabbitMQConnectionFactory, ISerializer serializer)
 : IExternalMessagePublisher<TMessage>
 where TMessage : IMessage {
-    private readonly Lazy<Task<RabbitMQSettings>> _settings = new(rabbitMQSettingsFactory.GetRabbitMQSettingsAsync);
 
     public async Task Publish(TMessage aMessage, string? aRoutingKey = null, CancellationToken aCancellationToken = default) {
         var lConnection = await rabbitMQConnectionFactory.GetConnectionAsync();
         using var lModel = lConnection.CreateModel();
-        await PublishSingle(aMessage, lModel, aRoutingKey);
+        PublishSingle(aMessage, lModel, aRoutingKey);
     }
 
     public async Task PublishMany(IEnumerable<TMessage> aMessages, string? aRoutingKey = null, CancellationToken aCancellationToken = default) {
         var lConnection = await rabbitMQConnectionFactory.GetConnectionAsync();
         using var lModel = lConnection.CreateModel();
 
-        var publishTasks = aMessages.Select(lMessage => PublishSingle(lMessage, lModel, aRoutingKey));
-        await Task.WhenAll(publishTasks);
+        aMessages.ForEach(lMessage => PublishSingle(lMessage, lModel, aRoutingKey));
     }
 
-    private async Task PublishSingle(TMessage aMessage, IModel aModel, string? aRoutingKey) {
+    private void PublishSingle(TMessage aMessage, IModel aModel, string? aRoutingKey) {
         var lProperties = aModel.CreateBasicProperties();
         lProperties.Persistent = true;
         lProperties.Type = RabbitMQMessagePublisher<TMessage>.RemoveVersion(aMessage.GetType());
-        var lCorrectExchange = await GetCorrectExchange();
+        var lCorrectExchange = GetCorrectExchange();
 
         aModel.BasicPublish(exchange: lCorrectExchange,
             routingKey: aRoutingKey ?? "",
@@ -40,10 +39,10 @@ where TMessage : IMessage {
         );
     }
 
-    private async Task<string> GetCorrectExchange()
+    private string GetCorrectExchange()
     => (typeof(TMessage) == typeof(IntegrationMessage)
-        ? (await _settings.Value).Publisher?.IntegrationExchange
-        : (await _settings.Value).Publisher?.DomainExchange)
+        ? rabbitMQSettings.Publisher?.IntegrationExchange
+        : rabbitMQSettings.Publisher?.DomainExchange)
     ?? throw new ArgumentException("Please configure the Exchanges on the appsettings.");
 
     /// <summary>
