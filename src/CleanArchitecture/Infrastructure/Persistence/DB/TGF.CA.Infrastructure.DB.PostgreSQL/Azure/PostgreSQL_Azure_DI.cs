@@ -19,9 +19,9 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL.Azure {
         public static IServiceCollection AddAzurePostgreSQL<TDbContext>(this IServiceCollection serviceCollection, IConfiguration configuration)
             where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         => serviceCollection
-        .AddSingleton<ManagedIdentitiyPostgreSQLInterceptor>()
+        .AddSingleton<AzureWorkloadIdentitiyPostgreSQLInterceptor>()
         .AddDbContext<TDbContext>((provider, options) => {
-            var interceptor = provider.GetRequiredService<ManagedIdentitiyPostgreSQLInterceptor>();
+            var interceptor = provider.GetRequiredService<AzureWorkloadIdentitiyPostgreSQLInterceptor>();
             options.UseNpgsql()
             .AddInterceptors(interceptor);
         })

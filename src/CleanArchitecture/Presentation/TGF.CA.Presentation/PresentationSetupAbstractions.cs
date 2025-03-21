@@ -6,16 +6,13 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using TGF.CA.Presentation.MinimalAPI;
 using TGF.CA.Presentation.Swagger;
-using TGF.Common.Logging;
 using TGF.Common.Serialization;
 
-namespace TGF.CA.Presentation
-{
+namespace TGF.CA.Presentation {
     /// <summary>
     /// Provides methods and configurations to set up the presentation layer.
     /// </summary>
-    public static class PresentationSetupAbstractions
-    {
+    public static class PresentationSetupAbstractions {
         /// <summary>
         /// Configures a <see cref="WebApplicationBuilder"/> with default presentation. This includes custom serilog configuration, addition of a buch of built-in services, swagger, custom minimal api <see cref="IEndpointDefinition"/>, ui for healthChecks and more.
         /// </summary>
@@ -29,25 +26,20 @@ namespace TGF.CA.Presentation
             IEnumerable<string>? aXmlCommentFileList = default,
             string? aBaseSwaggerPath = default,
             bool aUseStringEnums = true,
-            params Type[] aScanMarkerList)
-        {
-            if (aUseStringEnums)
-            {
+            params Type[] aScanMarkerList) {
+            if (aUseStringEnums) {
                 // Configure JSON options for Minimal API
-                aWebApplicationBuilder.Services.ConfigureHttpJsonOptions(options =>
-                {
+                aWebApplicationBuilder.Services.ConfigureHttpJsonOptions(options => {
                     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
 
                 // Additional configuration for Swagger to reflect enums as strings
-                aWebApplicationBuilder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
-                {
+                aWebApplicationBuilder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options => {
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
             }
 
-            aWebApplicationBuilder.Services.Configure<JsonOptions>(options =>
-            {
+            aWebApplicationBuilder.Services.Configure<JsonOptions>(options => {
                 options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
             });
 
@@ -60,7 +52,6 @@ namespace TGF.CA.Presentation
             aWebApplicationBuilder.Configuration.AddConfiguration(HealthCheckHelper.BuildBasicHealthCheck(aWebApplicationBuilder.Configuration));
             aWebApplicationBuilder.Services.AddHealthChecks();
             aWebApplicationBuilder.Services.AddHealthChecksUI().AddInMemoryStorage();
-            aWebApplicationBuilder.Host.ConfigureSerilog();
             #endregion
 
             aWebApplicationBuilder.Services.AddProblemDetails();
@@ -75,16 +66,14 @@ namespace TGF.CA.Presentation
         /// <param name="aConfiguration">The configuration instance.</param>
         /// <returns>The modified WebApplicationBuilder instance.</returns>
         /// <exception cref="Exception">Thrown when CORSFrontendURL configuration is not found.</exception>
-        public static WebApplicationBuilder ConfigureFrontendCORS(this WebApplicationBuilder aWebApplicationBuilder, IConfiguration aConfiguration)
-        {
+        public static WebApplicationBuilder ConfigureFrontendCORS(this WebApplicationBuilder aWebApplicationBuilder, IConfiguration aConfiguration) {
             var lCORSFrontUrl = aConfiguration.GetValue<string>("FRONTEND_URL")
                 ?? aConfiguration.GetValue<string>("FrontendURL")
                 ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings or environment variables. Please add this configuration.");
 
             var lLocalDevelopmentUrl = aConfiguration.GetValue<string>("DevelopmentDomain"); // Replace with your local development URL if different
 
-            aWebApplicationBuilder.Services.AddCors(options =>
-            {
+            aWebApplicationBuilder.Services.AddCors(options => {
                 options.AddPolicy("AllowFrontCorsPolicy", builder =>
                     builder.SetIsOriginAllowed(origin => IsOriginAllowed(origin, lCORSFrontUrl, lLocalDevelopmentUrl))
                            .AllowAnyHeader()
@@ -110,8 +99,7 @@ namespace TGF.CA.Presentation
         /// 4. Allows the case where there is no subdomain.
         /// 5. Validates that, if a subdomain exists, it matches the first part of the FrontendURL's domain.
         /// </remarks>
-        private static bool IsOriginAllowed(string aOrigin, string aFrontendUrl, string? aLocalDevelopmentUrl)
-        {
+        private static bool IsOriginAllowed(string aOrigin, string aFrontendUrl, string? aLocalDevelopmentUrl) {
             var lMainDomain = new Uri(aFrontendUrl).Host;
 
             if (aOrigin == aFrontendUrl || aOrigin == aLocalDevelopmentUrl)
@@ -120,39 +108,14 @@ namespace TGF.CA.Presentation
             var lOriginDomain = new Uri(aOrigin).Host;
             var lHostParts = lOriginDomain.Split('.');
 
-            if (!lOriginDomain.EndsWith(lMainDomain, StringComparison.OrdinalIgnoreCase))
-                return false;
-
-            if (lHostParts.Length == 2)
-                return true;
-
-            return lHostParts[0] == lMainDomain.Split('.')[0];
-
-        }
-
-
-        /// <summary>
-        /// Determines if the specified origin is allowed based on the allowed origin pattern.
-        /// </summary>
-        /// <param name="origin">The origin URL to check.</param>
-        /// <param name="allowedOriginPattern">The allowed origin pattern.</param>
-        /// <returns>True if the origin is allowed; otherwise, false.</returns>
-        private static bool IsOriginAllowed(string origin, string allowedOriginPattern)
-        {
-            if (Uri.TryCreate(origin, UriKind.Absolute, out var originUri) &&
-                Uri.TryCreate(allowedOriginPattern, UriKind.Absolute, out var allowedUri))
-            {
-                return originUri.Scheme == allowedUri.Scheme &&
-                       originUri.Host.EndsWith(allowedUri.Host, StringComparison.OrdinalIgnoreCase);
-            }
-            return false;
+            return lOriginDomain.EndsWith(lMainDomain, StringComparison.OrdinalIgnoreCase)
+            && (lHostParts.Length == 2 || lHostParts[0] == lMainDomain.Split('.')[0]);
         }
 
         /// <summary>
         /// Use Authentication and Authorization.
         /// </summary>
-        public static void UseIdentity(this WebApplication aWebApplication)
-        {
+        public static void UseIdentity(this WebApplication aWebApplication) {
             aWebApplication.UseAuthentication();
             aWebApplication.UseAuthorization();//UseAuthorization must be called after UseRouting() and before UseEndpoints()
         }
