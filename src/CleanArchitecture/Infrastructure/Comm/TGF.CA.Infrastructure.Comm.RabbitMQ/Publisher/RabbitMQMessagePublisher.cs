@@ -9,16 +9,29 @@ using TGF.Common.Serialization;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Publisher;
 
+/// <summary>
+/// Publishes messages to RabbitMQ.  
+/// </summary>
+/// <typeparam name="TMessage">The Type of the message this publisher will be in charge of publisning.</typeparam>
 internal class RabbitMQMessagePublisher<TMessage>(RabbitMQSettings rabbitMQSettings, IRabbitMQConnectionFactory rabbitMQConnectionFactory, ISerializer serializer)
 : IExternalMessagePublisher<TMessage>
 where TMessage : IMessage {
 
+    /// <summary>
+    /// Publishes messages to RabbitMQ. 
+    /// </summary>
+    /// <param name="aMessage">Content of the message to publish.</param>
+    /// <param name="aRoutingKey">routing key or topic under which the message should be published.</param>
     public async Task Publish(TMessage aMessage, string? aRoutingKey = null, CancellationToken aCancellationToken = default) {
         var lConnection = await rabbitMQConnectionFactory.GetConnectionAsync();
         using var lModel = lConnection.CreateModel();
         PublishSingle(aMessage, lModel, aRoutingKey);
     }
-
+    /// <summary>
+    /// Publishes many messages to RabbitMQ.
+    /// </summary>
+    /// <param name="aMessage">Content of the message to publish.</param>
+    /// <param name="aRoutingKey">routing key or topic under which the message should be published.</param>
     public async Task PublishMany(IEnumerable<TMessage> aMessages, string? aRoutingKey = null, CancellationToken aCancellationToken = default) {
         var lConnection = await rabbitMQConnectionFactory.GetConnectionAsync();
         using var lModel = lConnection.CreateModel();
@@ -26,6 +39,7 @@ where TMessage : IMessage {
         aMessages.ForEach(lMessage => PublishSingle(lMessage, lModel, aRoutingKey));
     }
 
+    #region
     private void PublishSingle(TMessage aMessage, IModel aModel, string? aRoutingKey) {
         var lProperties = aModel.CreateBasicProperties();
         lProperties.Persistent = true;
@@ -67,5 +81,6 @@ where TMessage : IMessage {
 
         return lStringBuilder.ToString();
     }
+    #endregion
 
 }

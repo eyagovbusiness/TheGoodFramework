@@ -5,6 +5,12 @@ using TGF.Common.Serialization;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Consumer;
 
+/// <summary>
+/// Class to receive messages from RabbitMQ. It is a consumer that listens to a queue and processes the messages with a custom handler for handlign the basic deliver.
+/// </summary>
+/// <param name="channel"></param>
+/// <param name="serializer"></param>
+/// <param name="handleMessage"></param>
 internal class RabbitMQMessageReceiver(IModel channel, ISerializer serializer, IHandleMessage handleMessage)
 : DefaultBasicConsumer {
     private byte[]? MessageBody { get; set; }

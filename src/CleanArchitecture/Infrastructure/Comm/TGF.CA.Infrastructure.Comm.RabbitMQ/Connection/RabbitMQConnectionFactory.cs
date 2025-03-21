@@ -1,6 +1,7 @@
 ﻿using RabbitMQ.Client;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Connection;
+
 internal class RabbitMQConnectionFactory : IRabbitMQConnectionFactory {
     private readonly Lazy<Task<ConnectionFactory>> _connectionFactory;
     private readonly Lazy<Task<IConnection>> _connection;
@@ -13,6 +14,7 @@ internal class RabbitMQConnectionFactory : IRabbitMQConnectionFactory {
     public async Task<IConnection> GetConnectionAsync()
     => await _connection.Value;
 
+    #region
     private static async Task<ConnectionFactory> GetConnectionFactory(IRabbitMQConnectionStringProvider rabbitMQConnectionStringProvider) {
         var formattedUri = (await rabbitMQConnectionStringProvider.GetConnectionString()).Replace("https://", string.Empty);//remove protocol of present in hostname: amqps://{username}:{password}@{hostname}:{port}/{vhost}
         return new ConnectionFactory {
@@ -22,5 +24,7 @@ internal class RabbitMQConnectionFactory : IRabbitMQConnectionFactory {
 
     private static IConnection GetSingleConnection(ConnectionFactory connectionFactory)
     => connectionFactory.CreateConnection();
+    #endregion
+
 }
 

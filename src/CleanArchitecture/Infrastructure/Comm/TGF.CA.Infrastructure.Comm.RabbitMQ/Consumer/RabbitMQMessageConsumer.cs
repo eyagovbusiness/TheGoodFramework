@@ -8,12 +8,20 @@ using ISerializer = TGF.Common.Serialization.ISerializer;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Consumer;
 
+/// <summary>
+/// RabbitMQ message consumer.
+/// </summary>
+/// <typeparam name="TMessage">The Type of the message this consumer will be in charge of consuming.</typeparam>
 internal class RabbitMQMessageConsumer<TMessage>(RabbitMQSettings rabbitMQSettings, IRabbitMQConnectionFactory rabbitMQConnectionFactory, IHandleMessage handleMessage, ISerializer serializer)
 : IMessageConsumer<TMessage> {
 
+    /// <summary>
+    /// Start consuming messages.
+    /// </summary>
     public async Task StartAsync(CancellationToken aCancellationToken = default)
     => await Consume(aCancellationToken);
 
+    #region private
     private async Task Consume(CancellationToken aCancellationToken) {
         using var lConnection = await rabbitMQConnectionFactory.GetConnectionAsync();
 
@@ -42,6 +50,7 @@ internal class RabbitMQMessageConsumer<TMessage>(RabbitMQSettings rabbitMQSettin
         ? rabbitMQSettings.Consumer?.IntegrationQueue
         : rabbitMQSettings.Consumer?.DomainQueue)
     ?? throw new ArgumentException("Please configure the queues in the app settings.");
+    #endregion
 
 }
 

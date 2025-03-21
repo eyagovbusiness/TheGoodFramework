@@ -12,6 +12,10 @@ using TGF.CA.Infrastructure.Secrets;
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ;
 
 public static class RabbitMQ_DI {
+    /// <summary>
+    /// Add the RabbitMQ infrastructure services to the service collection. This includes the RabbitMQ settings, the connection factory, and the health check.
+    /// </summary>
+    /// <param name="healthCheckName">Gives name to the healthcheck for RabbitMQ</param>
     public static void AddRabbitMQInfrastructureServices(this IServiceCollection serviceCollection, IConfiguration configuration, string healthCheckName) {
 
         serviceCollection
