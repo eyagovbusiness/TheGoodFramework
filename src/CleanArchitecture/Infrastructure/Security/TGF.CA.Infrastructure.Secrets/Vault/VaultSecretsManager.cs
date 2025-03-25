@@ -6,7 +6,6 @@ using TGF.CA.Infrastructure.Secrets.Common;
 using TGF.Common.Extensions;
 using VaultSharp;
 using VaultSharp.V1.AuthMethods.Token;
-using VaultSharp.V1.Commons;
 using VaultSharp.V1.SecretsEngines;
 
 namespace TGF.CA.Infrastructure.Secrets.Vault {
@@ -21,11 +20,13 @@ namespace TGF.CA.Infrastructure.Secrets.Vault {
     public class VaultSecretsManager : ISecretsManager {
         private readonly Lazy<Task<VaultClient>> _vaultClient;
         private readonly ILogger<VaultSecretsManager> _logger;
-        public VaultSecretsManager(IServiceDiscovery aServiceDiscovery, ILogger<VaultSecretsManager> aLogger) {
+        private readonly IRetryUtility _retryUtility;
+        public VaultSecretsManager(IServiceDiscovery aServiceDiscovery, ILogger<VaultSecretsManager> aLogger, IRetryUtility retryUtility) {
             if (aServiceDiscovery == null)
                 throw new ArgumentNullException(nameof(aServiceDiscovery), "Service discovery was null.");
             _logger = aLogger;
-            _vaultClient = new Lazy<Task<VaultClient>>(GetVaultClient(aServiceDiscovery));
+            _vaultClient = new Lazy<Task<VaultClient>>(GetVaultClient(aServiceDiscovery, retryUtility));
+            _retryUtility = retryUtility;
         }
 
         #region ISecretsManager
@@ -33,7 +34,7 @@ namespace TGF.CA.Infrastructure.Secrets.Vault {
         public async Task<T> Get<T>(string aPath)
             where T : new() {
             var lVaultClient = await _vaultClient.Value;
-            Secret<SecretData> lKv2Secret = await lVaultClient.V1.Secrets.KeyValue.V2
+            var lKv2Secret = await lVaultClient.V1.Secrets.KeyValue.V2
                 .ReadSecretAsync(path: aPath, mountPoint: "secret");
 
             return lKv2Secret.Data.Data.ToObject<T>();
@@ -41,14 +42,14 @@ namespace TGF.CA.Infrastructure.Secrets.Vault {
 
         public async Task<object> GetValueObject(string aPath, string aKey) {
             var lVaultClient = await _vaultClient.Value;
-            Secret<SecretData> lKv2Secret = await lVaultClient.V1.Secrets.KeyValue.V2
+            var lKv2Secret = await lVaultClient.V1.Secrets.KeyValue.V2
                 .ReadSecretAsync(path: aPath, mountPoint: "secret");
             return lKv2Secret.Data.Data[aKey];
         }
 
         public async Task<IBasicCredentials> GetRabbitMQCredentials(string aRoleName) {
             var lVaultClient = await _vaultClient.Value;
-            Secret<UsernamePasswordCredentials> lSecret = await lVaultClient.V1.Secrets.RabbitMQ
+            var lSecret = await lVaultClient.V1.Secrets.RabbitMQ
                 .GetCredentialsAsync(aRoleName, "rabbitmq");
             return (IBasicCredentials)lSecret.Data;
         }
@@ -85,27 +86,25 @@ namespace TGF.CA.Infrastructure.Secrets.Vault {
         /// <summary>
         /// Used for Lazy initialization of the VaultClient.
         /// </summary>
-        private async Task<VaultClient> GetVaultClient(IServiceDiscovery aServiceDiscovery) {
-            return await RetryUtility.ExecuteWithRetryAsync(
-                async () => {
-                    try {
-                        string lVaultAddress = await aServiceDiscovery.GetFullAddress(InfraServicesRegistry.VaultSecretsManager)
-                            ?? throw new Exception("Vault address not found in service registry.");
-                        string lVaultToken = GetTokenFromEnvironmentVariable();
+        private async Task<VaultClient> GetVaultClient(IServiceDiscovery aServiceDiscovery, IRetryUtility retryUtility) => await retryUtility.ExecuteWithRetryAsync(
+            async () => {
+                try {
+                    var lVaultAddress = await aServiceDiscovery.GetFullAddress(InfraServicesRegistry.VaultSecretsManager)
+                        ?? throw new Exception("Vault address not found in service registry.");
+                    var lVaultToken = GetTokenFromEnvironmentVariable();
 
-                        return new VaultClient(new VaultClientSettings(lVaultAddress, new TokenAuthMethodInfo(lVaultToken)));
-                    }
-                    catch (Exception ex) {
-                        _logger.LogWarning(ex, "Error initializing Vault client.");
-                        throw; // Rethrow to ensure RetryUtility handles it.
-                    }
-                },
-                _ => false, // Retry only on exceptions.
-                aMaxRetries: 10, // Customize max retries as needed.
-                aDelayMilliseconds: 2000, // Customize delay between retries.
-                CancellationToken.None // Pass a CancellationToken if applicable.
-            );
-        }
+                    return new VaultClient(new VaultClientSettings(lVaultAddress, new TokenAuthMethodInfo(lVaultToken)));
+                }
+                catch (Exception ex) {
+                    _logger.LogWarning(ex, "Error initializing Vault client.");
+                    throw; // Rethrow to ensure RetryUtility handles it.
+                }
+            },
+            _ => false, // Retry only on exceptions.
+            aMaxRetries: 10, // Customize max retries as needed.
+            aDelayMilliseconds: 2000, // Customize delay between retries.
+            CancellationToken.None // Pass a CancellationToken if applicable.
+        );
 
 
         #endregion

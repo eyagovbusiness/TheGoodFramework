@@ -1,23 +1,17 @@
 using Microsoft.Extensions.Hosting;
-using TGF.CA.Infrastructure.Comm.Consumer;
 using TGF.CA.Infrastructure.Comm.Consumer.Manager;
 using TGF.Common.Extensions;
 
 namespace TGF.CA.Infrastructure.Comm.Consumer.Host;
 
-public class ConsumerHostedService<TMessage> : IHostedService {
-    private readonly IConsumerManager<TMessage> _consumerManager;
-    private readonly IMessageConsumer<TMessage> _messageConsumer;
+public class ConsumerHostedService<TMessage>(IConsumerManager<TMessage> consumerManager, IMessageConsumer<TMessage> messageConsumer, IRetryUtility retryUtility) : IHostedService {
+    private readonly IConsumerManager<TMessage> _consumerManager = consumerManager;
+    private readonly IMessageConsumer<TMessage> _messageConsumer = messageConsumer;
     private readonly CancellationTokenSource _stoppingCancellationTokenSource = new();
     private Task? _executingTask;
 
-    public ConsumerHostedService(IConsumerManager<TMessage> consumerManager, IMessageConsumer<TMessage> messageConsumer) {
-        _consumerManager = consumerManager;
-        _messageConsumer = messageConsumer;
-    }
-
     public Task StartAsync(CancellationToken cancellationToken) {
-        _executingTask = RetryUtility.ExecuteWithRetryAsync(
+        _executingTask = retryUtility.ExecuteWithRetryAsync(
             async () => {
                 await ConsumeMessages(_stoppingCancellationTokenSource.Token);
                 return true; // Return a value to satisfy the generic signature.

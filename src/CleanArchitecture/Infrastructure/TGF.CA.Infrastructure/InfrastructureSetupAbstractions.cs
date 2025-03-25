@@ -61,7 +61,7 @@ namespace TGF.CA.Infrastructure {
             var dbContext = serviceProvider.GetService(dbContextType) as DbContext
                              ?? throw new InvalidOperationException($"No service for type '{dbContextType.FullName}' has been registered.");
 
-            await RetryUtility.ExecuteWithRetryAsync(
+            await serviceProvider.GetRequiredService<IRetryUtility>().ExecuteWithRetryAsync(
                 async () => {
                     await EnsureInterceptorConnectionString(dbContext);
                     await dbContext.Database.MigrateAsync();//does not trigger interceptors(even tho it should)

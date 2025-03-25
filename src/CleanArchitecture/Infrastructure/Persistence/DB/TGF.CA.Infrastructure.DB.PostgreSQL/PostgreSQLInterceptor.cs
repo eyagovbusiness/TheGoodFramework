@@ -9,36 +9,22 @@ using TGF.CA.Infrastructure.Discovery;
 using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.Secrets;
 using TGF.CA.Infrastructure.Secrets.SecretsFiles;
-using TGF.Common.Extensions;
 
 namespace TGF.CA.Infrastructure.DB.PostgreSQL {
-    /// <summary>
-    /// Interceptor for PostgreSQL connections that uses Azure's Managed Identity for authentication.
-    /// </summary>
-    /// <remarks>
-    /// Intended to be registered as a singleton service in the DI container. 
-    /// The interceptor will replace the connection string with a new one that includes the access token.
-    /// The interceptor will cache the access token and only refresh it when it is about to expire.
-    /// </remarks>
     internal class PostgreSQLInterceptor(IServiceProvider serviceProvider, IConfiguration configuration)
-    : DbConnectionInterceptor {
-
-        private string? _connectionString;
+        : DbConnectionInterceptor {
+        private readonly Lazy<Task<string>> _lazyConnectionString = new(() => GetNpgsqlConnectionStringAsync(serviceProvider, configuration), LazyThreadSafetyMode.ExecutionAndPublication);
 
         public override async ValueTask<InterceptionResult> ConnectionOpeningAsync(DbConnection connection, ConnectionEventData eventData, InterceptionResult result, CancellationToken cancellationToken = default) {
-            if (connection is NpgsqlConnection npgsqlConnection) {
-                if (_connectionString.IsNullOrWhiteSpace())
-                    _connectionString = await GetNpgsqlConnectionStringAsync();
-                npgsqlConnection.ConnectionString = _connectionString;
-            }
+            if (connection is NpgsqlConnection npgsqlConnection)
+                npgsqlConnection.ConnectionString = await _lazyConnectionString.Value;
             return await base.ConnectionOpeningAsync(connection, eventData, result, cancellationToken);
         }
 
         /// <summary>
-        /// Gets the PostgreSQL connection string from the configured PostgreSQL database for this application.
+        /// Gets the PostgreSQL connection string from the configured secrets source.
         /// </summary>
-        /// <returns>The PostgreSQL connection string.</returns>
-        internal async Task<string> GetNpgsqlConnectionStringAsync() {
+        private static async Task<string> GetNpgsqlConnectionStringAsync(IServiceProvider serviceProvider, IConfiguration configuration) {
             var configValue = configuration[ConfigurationKeys.Database.SecretsSourceType]
                 ?? throw new NullReferenceException($"{ConfigurationKeys.Database.SecretsSourceType} not configured in appsettings.");
 
@@ -48,42 +34,37 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
 
             var connectionString = secretsSourceType switch {
                 SecretsSourceTypeEnum.File
-                => (await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets))
-                .ToConnectionString(),
+                    => (await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets))
+                        .ToConnectionString(),
 
                 SecretsSourceTypeEnum.SecretsManager
-                => await ConnectionStringFromSecretsManager(),
+                    => await ConnectionStringFromSecretsManager(serviceProvider, configuration),
 
-                _ => throw new NotSupportedException("[ERROR] Error building the connection string: The provided value in appsettings of SecretsSourceType in PostgreSQL section is not supported for PostgreSQL.")
+                _ => throw new NotSupportedException($"[ERROR] Unsupported SecretsSourceType: {configValue}")
             };
-            return connectionString + "Pooling=true;MinPoolSize=0;MaxPoolSize=50;";//for now we will keep the pooling configuration here, if flexibility is neede din the future it wll be added to IConfiguration
+
+            return connectionString + "Pooling=true;MinPoolSize=0;MaxPoolSize=50;";
         }
 
-        #region private
+        private static async Task<string> ConnectionStringFromSecretsManager(IServiceProvider serviceProvider, IConfiguration configuration) {
+            var postgreSQLSecrets = await GetPostgreSQLSecrets(serviceProvider);
+            var postgreSQLDiscoveryData = await GetPostgreSQLDiscoveryData(serviceProvider);
+            var databaseName = PostgreSQLHelpers.GetDatabaseName(configuration);
 
-        private async Task<string> ConnectionStringFromSecretsManager() {
-            var lPostgreSQLSecrets = await GetPostgreSQLSecrets();
-            var lPostgreSQLDiscoveryData = await GetPostgreSQLDiscoveryData();
-            var databasename = PostgreSQLHelpers.GetDatabaseName(configuration);
-            return $"Host={lPostgreSQLDiscoveryData.Server};Port={lPostgreSQLDiscoveryData.Port};Username={lPostgreSQLSecrets.Username};Password={lPostgreSQLSecrets.Password};Database={databasename};";
+            return $"Host={postgreSQLDiscoveryData.Server};Port={postgreSQLDiscoveryData.Port};Username={postgreSQLSecrets.Username};Password={postgreSQLSecrets.Password};Database={databaseName};";
         }
 
-        private async Task<DiscoveryData> GetPostgreSQLDiscoveryData()
-        => await serviceProvider
-        .GetRequiredService<IServiceDiscovery>()!
-        .GetDiscoveryData(InfraServicesRegistry.PostgreSQL)
-        ?? throw new Exception("Error loading retrieving the PostgreSQL discovery data!!");
+        private static async Task<DiscoveryData> GetPostgreSQLDiscoveryData(IServiceProvider serviceProvider) =>
+            await serviceProvider.GetRequiredService<IServiceDiscovery>().GetDiscoveryData(InfraServicesRegistry.PostgreSQL)
+            ?? throw new Exception("Error retrieving PostgreSQL discovery data!");
 
-        private async Task<PostgreSQLSecrets> GetPostgreSQLSecrets()
-        => await serviceProvider
-        .GetRequiredService<ISecretsManager>()!
-        .Get<PostgreSQLSecrets>("postgres")
-        ?? throw new Exception("Error loading retrieving the PostgreSQL secrets!!");
+        private static async Task<PostgreSQLSecrets> GetPostgreSQLSecrets(IServiceProvider serviceProvider) =>
+            await serviceProvider.GetRequiredService<ISecretsManager>().Get<PostgreSQLSecrets>("postgres")
+            ?? throw new Exception("Error retrieving PostgreSQL secrets!");
 
         private record PostgreSQLSecrets : IBasicCredentials {
             public string Username { get; set; } = default!;
             public string Password { get; set; } = default!;
         }
-        #endregion
     }
 }
