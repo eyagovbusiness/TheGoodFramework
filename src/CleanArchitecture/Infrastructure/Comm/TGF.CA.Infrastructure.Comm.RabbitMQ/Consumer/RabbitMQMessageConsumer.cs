@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using TGF.CA.Infrastructure.Comm.Consumer;
 using TGF.CA.Infrastructure.Comm.Consumer.Handler;
@@ -12,7 +13,7 @@ namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Consumer;
 /// RabbitMQ message consumer.
 /// </summary>
 /// <typeparam name="TMessage">The Type of the message this consumer will be in charge of consuming.</typeparam>
-internal class RabbitMQMessageConsumer<TMessage>(RabbitMQSettings rabbitMQSettings, IRabbitMQConnectionFactory rabbitMQConnectionFactory, IHandleMessage handleMessage, ISerializer serializer)
+internal class RabbitMQMessageConsumer<TMessage>(RabbitMQSettings rabbitMQSettings, IRabbitMQConnectionFactory rabbitMQConnectionFactory, IHandleMessage handleMessage, ISerializer serializer, ILogger<RabbitMQMessageConsumer<TMessage>> logger)
 : IMessageConsumer<TMessage> {
 
     /// <summary>
@@ -27,7 +28,7 @@ internal class RabbitMQMessageConsumer<TMessage>(RabbitMQSettings rabbitMQSettin
 
         using var lChannel = lConnection.CreateModel();
         lChannel.BasicQos(0, 1, false); // Each consumer will take only 1 message at a time and the next after ACK.
-        var lReceiver = new RabbitMQMessageReceiver(lChannel, serializer, handleMessage);
+        var lReceiver = new RabbitMQMessageReceiver(lChannel, serializer, handleMessage, logger);
         var lQueue = GetCorrectQueue();
 
         lChannel.BasicConsume(lQueue, false, lReceiver);
