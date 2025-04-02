@@ -27,7 +27,7 @@ namespace TGF.CA.Infrastructure.Secrets.SecretsFiles {
             where T : class, new() {
             var secretJson = GetSecretFromConfig(config, key);
             return JsonConvert.DeserializeObject<T>(secretJson)
-                ?? throw new NullReferenceException($"[ERROR] Deserialization of secret '{key}' returned null.");
+                ?? throw new NullReferenceException($"[ERROR]: Deserialization of secret '{key}' returned null.");
         }
 
         /// <summary>
@@ -51,7 +51,7 @@ namespace TGF.CA.Infrastructure.Secrets.SecretsFiles {
             where T : class, new() {
             var secretJson = await GetSecretFromConfigAsync(config, key);
             return JsonConvert.DeserializeObject<T>(secretJson)
-                ?? throw new NullReferenceException($"[ERROR] Deserialization of secret '{key}' returned null.");
+                ?? throw new NullReferenceException($"[ERROR]: Deserialization of secret '{key}' returned null.");
         }
 
         /// <summary>
@@ -69,18 +69,18 @@ namespace TGF.CA.Infrastructure.Secrets.SecretsFiles {
         /// </remarks>
         private static string GetSecretFilePath(IConfiguration config, string configurationKey) {
             var secretsPathEnvVar = config[ConfigurationKeys.SecretsFiles.SecretsPathEnvVar]
-                ?? throw new InvalidOperationException($"[ERROR] {ConfigurationKeys.SecretsFiles.SecretsPathEnvVar} is not set in configuration.");
+                ?? throw new InvalidOperationException($"[ERROR]: {ConfigurationKeys.SecretsFiles.SecretsPathEnvVar} is not set in configuration.");
 
             var secretsPath = Environment.GetEnvironmentVariable(secretsPathEnvVar)
-                ?? throw new InvalidOperationException($"[ERROR] Environment variable '{secretsPathEnvVar}' is not set!");
+                ?? throw new InvalidOperationException($"[ERROR]: Environment variable '{secretsPathEnvVar}' is not set!");
 
             var secretName = config[configurationKey]
-                ?? throw new KeyNotFoundException($"[ERROR] Secret name key '{configurationKey}' not found in configuration.");
+                ?? throw new KeyNotFoundException($"[ERROR]: Secret name key '{configurationKey}' not found in configuration.");
 
             var secretFilePath = Path.Combine(secretsPath, secretName);
 
             return !File.Exists(secretFilePath)
-                ? throw new FileNotFoundException($"[ERROR] Secret file '{secretFilePath}' not found.")
+                ? throw new FileNotFoundException($"[ERROR]: Secret file '{secretFilePath}' not found.")
                 : secretFilePath;
         }
 

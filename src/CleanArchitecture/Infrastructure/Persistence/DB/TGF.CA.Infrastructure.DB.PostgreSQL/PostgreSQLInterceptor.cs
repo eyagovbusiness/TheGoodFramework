@@ -40,7 +40,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
                 SecretsSourceTypeEnum.SecretsManager
                     => await ConnectionStringFromSecretsManager(serviceProvider, configuration),
 
-                _ => throw new NotSupportedException($"[ERROR] Unsupported SecretsSourceType: {configValue}")
+                _ => throw new NotSupportedException($"[ERROR]: Unsupported SecretsSourceType: {configValue}")
             };
 
             return connectionString + "Pooling=true;MinPoolSize=0;MaxPoolSize=50;";

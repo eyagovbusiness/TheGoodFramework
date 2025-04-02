@@ -9,7 +9,7 @@ namespace TGF.CA.Infrastructure.Secrets.SecretsFiles {
     public static partial class SecretsFiles {
 
         private static readonly string SecretsPath = Environment.GetEnvironmentVariable(EnvironmentVariableNames.SECRETS_PATH)
-            ?? throw new InvalidOperationException($"[ERROR] {EnvironmentVariableNames.SECRETS_PATH} environment variable is not set!");
+            ?? throw new InvalidOperationException($"[ERROR]: {EnvironmentVariableNames.SECRETS_PATH} environment variable is not set!");
 
         /// <summary>
         /// Retrieves the secret value from a file stored in the <see cref="EnvironmentVariableNames.SECRETS_PATH"/> directory.
@@ -38,7 +38,7 @@ namespace TGF.CA.Infrastructure.Secrets.SecretsFiles {
             var secretFilePath = Path.Combine(SecretsPath, secretName);
             return !File.Exists(secretFilePath)
                 ? secretFilePath :
-                throw new FileNotFoundException($"[ERROR] Secret file '{secretFilePath}' not found.");
+                throw new FileNotFoundException($"[ERROR]: Secret file '{secretFilePath}' not found.");
         }
 
     }

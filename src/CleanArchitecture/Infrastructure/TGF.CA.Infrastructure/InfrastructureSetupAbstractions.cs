@@ -13,9 +13,9 @@ namespace TGF.CA.Infrastructure {
         /// </summary>
         /// <param name="webApplicationBuilder">The <see cref="WebApplicationBuilder"/> instance.</param>
         /// <param name="logger">Optional out parameter to get the configured <see cref="ILogger"/> instance.</param>
-        public static void ConfigureLogging<T>(this WebApplicationBuilder webApplicationBuilder, out ILogger<T>? logger) {
+        public static void ConfigureLogging<Tlogger>(this WebApplicationBuilder webApplicationBuilder, out ILogger<Tlogger>? logger) {
             ConfigureLogging(webApplicationBuilder);
-            logger = webApplicationBuilder.Services.BuildServiceProvider().GetRequiredService<ILogger<T>>();
+            logger = webApplicationBuilder.Services.BuildServiceProvider().GetRequiredService<ILogger<Tlogger>>();
         }
 
         /// <summary>

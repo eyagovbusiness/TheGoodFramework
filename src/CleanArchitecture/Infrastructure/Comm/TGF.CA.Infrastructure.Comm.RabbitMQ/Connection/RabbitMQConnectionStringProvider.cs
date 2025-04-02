@@ -19,7 +19,7 @@ internal class RabbitMQConnectionStringProvider(IServiceDiscovery serviceDiscove
         var hostname = await Hostname.Value;
         var credentials = await Credentials.Value;
         return string.IsNullOrEmpty(hostname) || credentials == null || string.IsNullOrEmpty(credentials.Username) || string.IsNullOrEmpty(credentials.Password)
-            ? throw new InvalidOperationException("[ERROR] Error building the connection string: connection secrets were incomplete or not set")
+            ? throw new InvalidOperationException("[ERROR]: Error building the connection string: connection secrets were incomplete or not set")
             : $"amqp://{credentials.Username}:{credentials.Password}@{hostname}";
     }
     private record RabbitMQCredentials : IBasicCredentials {
