@@ -20,13 +20,11 @@ namespace TGF.CA.Infrastructure.Secrets.Vault {
     public class VaultSecretsManager : ISecretsManager {
         private readonly Lazy<Task<VaultClient>> _vaultClient;
         private readonly ILogger<VaultSecretsManager> _logger;
-        private readonly IRetryUtility _retryUtility;
         public VaultSecretsManager(IServiceDiscovery aServiceDiscovery, ILogger<VaultSecretsManager> aLogger, IRetryUtility retryUtility) {
             if (aServiceDiscovery == null)
                 throw new ArgumentNullException(nameof(aServiceDiscovery), "Service discovery was null.");
             _logger = aLogger;
             _vaultClient = new Lazy<Task<VaultClient>>(GetVaultClient(aServiceDiscovery, retryUtility));
-            _retryUtility = retryUtility;
         }
 
         #region ISecretsManager
