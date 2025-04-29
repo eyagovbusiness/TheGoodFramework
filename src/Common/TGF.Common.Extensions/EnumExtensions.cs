@@ -12,5 +12,17 @@ namespace TGF.Common.Extensions {
 
             return attribute != null ? attribute.Description : value.ToString();
         }
+        public static string? GetDisplayName(this Enum value) {
+
+            var fieldInfo = value
+
+            .GetType().GetField(value.ToString());
+
+            var attribute = fieldInfo?.GetCustomAttribute<System.ComponentModel.DataAnnotations.DisplayAttribute>();
+
+            return attribute != null ? attribute.Name : value.ToString();
+
+        }
+
     }
 }
