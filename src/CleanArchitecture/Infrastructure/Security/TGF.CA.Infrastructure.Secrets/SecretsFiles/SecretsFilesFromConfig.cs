@@ -77,7 +77,7 @@ namespace TGF.CA.Infrastructure.Secrets.SecretsFiles {
             var secretName = config[configurationKey]
                 ?? throw new KeyNotFoundException($"[ERROR]: Secret name key '{configurationKey}' not found in configuration.");
 
-            var secretFilePath = Path.Combine(secretsPath, secretName);
+            var secretFilePath = Path.Combine(secretsPath, secretName.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
 
             return !File.Exists(secretFilePath)
                 ? throw new FileNotFoundException($"[ERROR]: Secret file '{secretFilePath}' not found.")
