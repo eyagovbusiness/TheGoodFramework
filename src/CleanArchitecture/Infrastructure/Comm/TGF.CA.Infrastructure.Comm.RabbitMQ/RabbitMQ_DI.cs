@@ -37,7 +37,8 @@ public static class RabbitMQ_DI {
         Enum.TryParse(typeof(SecretsSourceTypeEnum), rabbitMQSettings.SecretsSourceType, false, out var secretsSourceType);
         return secretsSourceType switch {
             SecretsSourceTypeEnum.File => serviceCollection.AddSingleton<IRabbitMQConnectionStringProvider, RabbitMQFileConnectionStringProvider>(),
-            SecretsSourceTypeEnum.SecretsManager => serviceCollection.AddSingleton<IRabbitMQConnectionStringProvider, RabbitMQFileConnectionStringProvider>(),
+            SecretsSourceTypeEnum.SecretsManager => serviceCollection.AddSingleton<IRabbitMQConnectionStringProvider, RabbitMQConnectionStringProvider>(),
+            SecretsSourceTypeEnum.EnvVariable => serviceCollection.AddSingleton<IRabbitMQConnectionStringProvider, RabbitMQEnvConnectionStringProvider>(),
             _ => throw new NotSupportedException("[ERROR]: The provided value in appsettings of SecretsSourceType in RabbitMQ section is not a supported secrets provider")
         };
     }

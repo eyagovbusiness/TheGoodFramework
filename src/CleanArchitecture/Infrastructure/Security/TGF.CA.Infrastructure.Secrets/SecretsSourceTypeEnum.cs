@@ -14,5 +14,10 @@ public enum SecretsSourceTypeEnum {
     /// The secrets are stored in a secrets manager.
     /// </summary>
     [Description("SecretsManager")]
-    SecretsManager
+    SecretsManager,
+    /// <summary>
+    /// The secrets are stored in a secrets manager.
+    /// </summary>
+    [Description("EnvVariable")]
+    EnvVariable
 }

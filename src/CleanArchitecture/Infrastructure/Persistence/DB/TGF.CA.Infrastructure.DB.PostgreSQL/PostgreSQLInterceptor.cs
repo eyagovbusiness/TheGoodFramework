@@ -34,11 +34,11 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
 
             var connectionString = secretsSourceType switch {
                 SecretsSourceTypeEnum.File
-                    => (await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets))
-                        .ToConnectionString(),
-
+                    => (await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets)).ToConnectionString(),
                 SecretsSourceTypeEnum.SecretsManager
                     => await ConnectionStringFromSecretsManager(serviceProvider, configuration),
+                SecretsSourceTypeEnum.EnvVariable
+                    => ConnectionStringFromEnvVariables(serviceProvider, configuration),
 
                 _ => throw new NotSupportedException($"[ERROR]: Unsupported SecretsSourceType: {configValue}")
             };
@@ -52,6 +52,21 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
             var databaseName = PostgreSQLHelpers.GetDatabaseName(configuration);
 
             return $"Host={postgreSQLDiscoveryData.Server};Port={postgreSQLDiscoveryData.Port};Username={postgreSQLSecrets.Username};Password={postgreSQLSecrets.Password};Database={databaseName};";
+        }
+
+        private static string ConnectionStringFromEnvVariables(IServiceProvider serviceProvider, IConfiguration configuration) {
+            var pgHost = Environment.GetEnvironmentVariable(EnvironmentVariableNames.Postgres.PGHOST)
+                ?? throw new InvalidOperationException($"[ERROR]: Secrets source type for Postgres was set as env variables but the expected env variable {EnvironmentVariableNames.Postgres.PGHOST} was not set!");
+            var pgPort = Environment.GetEnvironmentVariable(EnvironmentVariableNames.Postgres.PGPORT)
+                ?? throw new InvalidOperationException($"[ERROR]: Secrets source type for Postgres was set as env variables but the expected env variable {EnvironmentVariableNames.Postgres.PGPORT} was not set!");
+            var pgUser = Environment.GetEnvironmentVariable(EnvironmentVariableNames.Postgres.PGUSER)
+                ?? throw new InvalidOperationException($"[ERROR]: Secrets source type for Postgres was set as env variables but the expected env variable {EnvironmentVariableNames.Postgres.PGUSER} was not set!");
+            var pgPassword = Environment.GetEnvironmentVariable(EnvironmentVariableNames.Postgres.PGPASSWORD)
+                ?? throw new InvalidOperationException($"[ERROR]: Secrets source type for Postgres was set as env variables but the expected env variable {EnvironmentVariableNames.Postgres.PGPASSWORD} was not set!");
+            var pgDatabase = Environment.GetEnvironmentVariable(EnvironmentVariableNames.Postgres.PGDATABASE)
+                ?? throw new InvalidOperationException($"[ERROR]: Secrets source type for Postgres was set as env variables but the expected env variable {EnvironmentVariableNames.Postgres.PGDATABASE} was not set!");
+
+            return $"Host={pgHost};Port={pgPort};Username={pgUser};Password={pgPassword};Database={pgDatabase};";
         }
 
         private static async Task<DiscoveryData> GetPostgreSQLDiscoveryData(IServiceProvider serviceProvider) =>
