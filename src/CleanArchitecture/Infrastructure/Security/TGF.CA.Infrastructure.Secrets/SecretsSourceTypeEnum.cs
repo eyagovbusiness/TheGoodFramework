@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using TGF.CA.Infrastructure.InvariantConstants;
 
 namespace TGF.CA.Infrastructure.Secrets;
 /// <summary>
@@ -16,7 +17,7 @@ public enum SecretsSourceTypeEnum {
     [Description("SecretsManager")]
     SecretsManager,
     /// <summary>
-    /// The secrets are stored in a secrets manager.
+    /// The secrets are read from environment valriables with the expected names in <see cref="EnvironmentVariableNames"/>.
     /// </summary>
     [Description("EnvVariable")]
     EnvVariable
