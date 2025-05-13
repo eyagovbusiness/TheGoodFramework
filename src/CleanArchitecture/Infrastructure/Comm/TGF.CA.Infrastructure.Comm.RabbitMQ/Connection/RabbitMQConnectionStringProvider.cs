@@ -1,4 +1,5 @@
-﻿using TGF.CA.Application;
+﻿using System.Web;
+using TGF.CA.Application;
 using TGF.CA.Domain.ExternalContracts;
 using TGF.CA.Infrastructure.Discovery;
 
@@ -20,7 +21,7 @@ internal class RabbitMQConnectionStringProvider(IServiceDiscovery serviceDiscove
         var credentials = await Credentials.Value;
         return string.IsNullOrEmpty(hostname) || credentials == null || string.IsNullOrEmpty(credentials.Username) || string.IsNullOrEmpty(credentials.Password)
             ? throw new InvalidOperationException("[ERROR]: Error building the connection string: connection secrets were incomplete or not set")
-            : $"amqp://{credentials.Username}:{credentials.Password}@{hostname}";
+            : $"amqp://{HttpUtility.UrlEncode(credentials.Username)}:{HttpUtility.UrlEncode(credentials.Password)}@{HttpUtility.UrlEncode(hostname)}";
     }
     private record RabbitMQCredentials : IBasicCredentials {
         public string Username { get; set; } = default!;
