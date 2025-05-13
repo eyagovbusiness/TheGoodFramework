@@ -12,7 +12,7 @@ internal class RabbitMQEnvConnectionStringProvider()
         var rabbitmqPassword = Environment.GetEnvironmentVariable(EnvironmentVariableNames.RabbitMQ.RABBITMQ_PASSWORD)
             ?? throw new InvalidOperationException($"[ERROR]: Secrets source type for Postgres was set as env variables but the expected env variable {EnvironmentVariableNames.RabbitMQ.RABBITMQ_PASSWORD} was not set!");
 
-        return Task.FromResult($"amqp://{rabbitmqUsername}:{rabbitmqHostname}@{rabbitmqPassword}");
+        return Task.FromResult($"amqp://{rabbitmqUsername}:{rabbitmqPassword}@{rabbitmqHostname}");
     }
 }
 
