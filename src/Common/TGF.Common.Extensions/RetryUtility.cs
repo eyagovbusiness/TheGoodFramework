@@ -23,7 +23,7 @@ namespace TGF.Common.Extensions {
         public async Task<TlResult> ExecuteWithRetryAsync<TlResult>(
             Func<Task<TlResult>> aCondition,
             Func<TlResult, bool> aRetryCondition,
-            int aMaxRetries = 3,
+            int aMaxRetries = 5,
             int aDelayMilliseconds = 1000,
             CancellationToken aCancellationToken = default) {
             ArgumentNullException.ThrowIfNull(aCondition);
@@ -38,8 +38,7 @@ namespace TGF.Common.Extensions {
                     var result = await task.ConfigureAwait(false);
                     if (!aRetryCondition(result))
                         return result;
-                }
-                catch (Exception exception) {
+                } catch (Exception exception) {
                     logger.LogWarning(exception, "[WARNING]: Exception thrown by during the {retryUtilityName} duyring retry number {retryCount}:", nameof(RetryUtility), retryCount);
                     if (aCancellationToken.IsCancellationRequested || retryCount >= aMaxRetries) {
                         logger.LogError("[ERROR]: Max retry attempts exceeded by the {retryUtilityName}", nameof(RetryUtility));
@@ -47,7 +46,9 @@ namespace TGF.Common.Extensions {
                     }
                 }
 
-                await Task.Delay(aDelayMilliseconds, aCancellationToken).ConfigureAwait(false);
+                // Exponential backoff: delay increases with each retry
+                var delay = aDelayMilliseconds * (int)Math.Pow(2, retryCount);
+                await Task.Delay(delay, aCancellationToken).ConfigureAwait(false);
             }
             while (++retryCount <= aMaxRetries && !aCancellationToken.IsCancellationRequested);
 
