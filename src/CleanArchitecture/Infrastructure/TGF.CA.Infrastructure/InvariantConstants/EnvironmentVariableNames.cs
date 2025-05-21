@@ -4,6 +4,10 @@
         public const string SECRETS_PATH = "SECRETS_PATH";
         public const string AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
 
+        public struct CloudStorage {
+            public const string CLOUD_STORAGE_CONNECTION_STRING = "CLOUD_STORAGE_CONNECTION_STRING";
+        }
+
         public struct Postgres {
             public const string PGHOST = "PGHOST";
             public const string PGPORT = "PGPORT";
