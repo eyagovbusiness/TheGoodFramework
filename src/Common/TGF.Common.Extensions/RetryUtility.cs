@@ -29,20 +29,23 @@ namespace TGF.Common.Extensions {
             ArgumentNullException.ThrowIfNull(aCondition);
             ArgumentNullException.ThrowIfNull(aRetryCondition);
 
-            var retryCount = 0;
+            var retryCount = 1;
 
             do {
                 Task<TlResult> task;
                 try {
+                    logger.LogInformation("[RETRY UTILITY] Executing task with retry, attempt number {AttemptNumber}", retryCount);
                     task = aCondition();
                     var result = await task.ConfigureAwait(false);
-                    if (!aRetryCondition(result))
+                    if (!aRetryCondition(result)) {
+                        logger.LogInformation("[RETRY UTILITY] Task with retry executed successfully during attempt number {AttemptNumber}", retryCount);
                         return result;
+                    }
                 }
                 catch (Exception exception) {
-                    logger.LogWarning(exception, "[WARNING]: Exception thrown by during the {retryUtilityName} duyring retry number {retryCount}:", nameof(RetryUtility), retryCount);
+                    logger.LogWarning(exception, "Exception thrown by during the {RetryUtilityName} duyring retry number {retryCount}:", nameof(RetryUtility), retryCount);
                     if (aCancellationToken.IsCancellationRequested || retryCount >= aMaxRetries) {
-                        logger.LogError("[ERROR]: Max retry attempts exceeded by the {retryUtilityName}", nameof(RetryUtility));
+                        logger.LogError("Max retry attempts exceeded by the {RetryUtilityName}", nameof(RetryUtility));
                         throw;
                     }
                 }
@@ -51,7 +54,7 @@ namespace TGF.Common.Extensions {
             }
             while (++retryCount <= aMaxRetries && !aCancellationToken.IsCancellationRequested);
 
-            throw new InvalidOperationException($"[ERROR]: Max retry attempts exceeded by the {nameof(RetryUtility)}");
+            throw new InvalidOperationException($"Max retry attempts exceeded by the {nameof(RetryUtility)}");
         }
 
         /// <summary>
