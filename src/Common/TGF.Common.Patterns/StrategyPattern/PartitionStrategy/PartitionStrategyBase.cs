@@ -10,9 +10,9 @@ namespace TGF.Common.Patterns.StrategyPattern.PartitionStrategy {
                 throw new ArgumentOutOfRangeException(nameof(partitionSize), "Partition size must be greater than zero.");
 
             // Check cache
-            if (_partitionCache.TryGetValue((typeof(T), partitionSize, parallelize), out var cachedResult)) {
-                return cachedResult;
-            }
+            //if (_partitionCache.TryGetValue((typeof(T), partitionSize, parallelize), out var cachedResult)) {
+            //    return cachedResult;
+            //}
 
             // Perform the split using the concrete strategy implementation
             var partitions = PerformSplit(source, partitionSize, parallelize);
