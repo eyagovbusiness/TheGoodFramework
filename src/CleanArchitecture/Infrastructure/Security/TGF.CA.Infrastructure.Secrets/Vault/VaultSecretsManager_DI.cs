@@ -11,10 +11,10 @@ namespace TGF.CA.Infrastructure.Secrets.Vault {
         /// </summary>
         public static IServiceCollection AddVaultSecretsManager(this IServiceCollection aServiceCollection, IConfiguration configuration, ILogger logger) {
             _ = logger ??
-                throw new ArgumentNullException(nameof(logger), "[ERROR]: AddVaultSecretsManager requires a builder logger!");
+                throw new ArgumentNullException(nameof(logger), "AddVaultSecretsManager requires a builder logger!");
             var discoveryAddress = configuration["Discovery:Address"];
             if (discoveryAddress.IsNullOrWhiteSpace()) {
-                logger.LogInformation("[INFO]: Discovery cofiguration is missing in appsettings, skipping vault secrets manager registration since it required the discovery service...");
+                logger.LogInformation("Discovery cofiguration is missing in appsettings, skipping vault secrets manager registration since it required the discovery service...");
                 return aServiceCollection;
             }
             return aServiceCollection.AddSingleton<ISecretsManager, VaultSecretsManager>()

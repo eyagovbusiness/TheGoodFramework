@@ -18,17 +18,17 @@ namespace TGF.CA.Infrastructure.Discovery {
         /// <returns>The updated service collection.</returns>
         public static IServiceCollection AddDiscoveryService(this IServiceCollection serviceList, IConfiguration configuration, ILogger logger) {
             _ = logger ??
-                throw new ArgumentNullException(nameof(logger), "[ERROR]: AddDiscoveryService requires a builder logger!");
+                throw new ArgumentNullException(nameof(logger), "AddDiscoveryService requires a builder logger!");
 
             var discoveryAddress = configuration["Discovery:Address"];
             if (discoveryAddress.IsNullOrWhiteSpace()) {
-                logger.LogInformation("[INFO]: Discovery cofiguration is missing in appsettings, skipping discovery service registration...");
+                logger.LogInformation("Discovery cofiguration is missing in appsettings, skipping discovery service registration...");
                 return serviceList;
             }
             var configuredUriAddress = new Uri(discoveryAddress!);
             return serviceList.AddSingleton<IConsulClient, ConsulClient>(provider => new ConsulClient(consulConfig => {
                 consulConfig.Address = configuredUriAddress;
-                logger.LogInformation("[INFO]: Consul discovery service successfully configured with address: {Address}", consulConfig.Address);
+                logger.LogInformation("Consul discovery service successfully configured with address: {Address}", consulConfig.Address);
             }))
             .AddSingleton<IServiceDiscovery, ConsulServiceDiscovery>()
             .AddConsulHealthChecks(configuredUriAddress.Host, configuredUriAddress.Port, "ServiceRegistry");
