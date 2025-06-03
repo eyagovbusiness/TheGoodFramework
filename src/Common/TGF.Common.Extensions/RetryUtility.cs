@@ -34,11 +34,11 @@ namespace TGF.Common.Extensions {
             do {
                 Task<TlResult> task;
                 try {
-                    logger.LogInformation("[RETRY UTILITY] Executing task with retry, attempt number {AttemptNumber}", retryCount);
+                    logger.LogInformation("[RETRY UTILITY] Executing task with retry, attempt number {AttemptNumber} of {MaxRetries}", retryCount, aMaxRetries);
                     task = aCondition();
                     var result = await task.ConfigureAwait(false);
                     if (!aRetryCondition(result)) {
-                        logger.LogInformation("[RETRY UTILITY] Task with retry executed successfully during attempt number {AttemptNumber}", retryCount);
+                        logger.LogInformation("[RETRY UTILITY] Task with retry executed successfully during attempt number {AttemptNumber} of {MaxRetries}", retryCount, aMaxRetries);
                         return result;
                     }
                 }
