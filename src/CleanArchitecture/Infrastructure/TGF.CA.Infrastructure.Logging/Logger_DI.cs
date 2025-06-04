@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TGF.CA.Infrastructure.InvariantConstants;
 
 namespace TGF.CA.Infrastructure.Logging {
     public static class Logger_DI {
@@ -12,6 +13,11 @@ namespace TGF.CA.Infrastructure.Logging {
         public static void ConfigureLogging<Tlogger>(this WebApplicationBuilder webApplicationBuilder, out ILogger<Tlogger>? logger) {
             ConfigureLogging(webApplicationBuilder);
             logger = webApplicationBuilder.Services.BuildServiceProvider().GetRequiredService<ILogger<Tlogger>>();
+            logger!.LogInformation(
+                "Starting {AppName} - {ServiceName} ...",
+                webApplicationBuilder.Configuration[ConfigurationKeys.AppMetadata.AppName],
+                webApplicationBuilder.Configuration[ConfigurationKeys.AppMetadata.ServiceName]
+            );
         }
 
         /// <summary>
