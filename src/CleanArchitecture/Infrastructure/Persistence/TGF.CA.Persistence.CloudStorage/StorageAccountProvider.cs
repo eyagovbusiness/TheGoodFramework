@@ -4,7 +4,6 @@ using Microsoft.Extensions.Configuration;
 using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.Secrets;
 using TGF.CA.Infrastructure.Secrets.SecretsFiles;
-using TGF.Common.Extensions;
 
 namespace TGF.CA.Infrastructure.Persistence.CloudStorage {
     public class StorageAccountProvider(IConfiguration configuration) : ICloudStorageProvider {
@@ -49,8 +48,7 @@ namespace TGF.CA.Infrastructure.Persistence.CloudStorage {
 
             Enum.TryParse(typeof(SecretsSourceTypeEnum), storageAccountSecretsSourceType, false, out var secretsSourceType);
             return secretsSourceType switch {
-                SecretsSourceTypeEnum.File => await SecretsFiles.GetSecretFromConfigAsync(configuration1, ConfigurationKeys.SecretsFiles.SecretsFileNames.CloudStorage),
-                SecretsSourceTypeEnum.EnvVariable => Environment.GetEnvironmentVariable(EnvironmentVariableNames.CloudStorage.CLOUD_STORAGE_CONNECTION_STRING) ?? throw new NullReferenceException($"[ERROR]: {ConfigurationKeys.CloudStorage.Key} secret source type was set to {SecretsSourceTypeEnum.EnvVariable.GetDescription()} but the expected Env variable {EnvironmentVariableNames.CloudStorage.CLOUD_STORAGE_CONNECTION_STRING} does not have a value"),
+                SecretsSourceTypeEnum.File => await SecretsFiles.GetSecretFromConfigAsync(configuration1, ConfigurationKeys.SecretsFiles.SecretsFileNames.CloudStorageConnectionString),
                 _ => throw new NotSupportedException("[ERROR]: The provided value in appsettings of SecretsSourceType in CloudStorage section is not a supported secrets source")
             };
         }
