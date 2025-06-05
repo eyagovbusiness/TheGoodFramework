@@ -12,5 +12,19 @@
                 public const string IAM_Roles = "IAM_Roles";
             }
         }
+        public struct Logging {
+            public struct LogLevel {
+                public const string Debug = "Debug";
+                public const string Information = "Information";
+                public const string Warning = "Warning";
+                public const string Error = "Error";
+            }
+            public struct Console {
+                public struct Provider {
+                    public const string Serilog = "Serilog";
+                    public const string OpenTelemetry = "OpenTelemetry";
+                }
+            }
+        }
     }
 }

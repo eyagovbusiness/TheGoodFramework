@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\TGF.Common.Extensions\TGF.Common.Extensions.csproj" />
-    <ProjectReference Include="..\..\..\Common\TGF.Common.Logging\TGF.Common.Logging.csproj" />
     <ProjectReference Include="..\..\Application\TGF.CA.Application\TGF.CA.Application.csproj" />
   </ItemGroup>
 

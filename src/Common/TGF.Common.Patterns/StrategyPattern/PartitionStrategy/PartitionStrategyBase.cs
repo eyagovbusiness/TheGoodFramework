@@ -9,7 +9,7 @@ namespace TGF.Common.Patterns.StrategyPattern.PartitionStrategy {
             if (partitionSize <= 0)
                 throw new ArgumentOutOfRangeException(nameof(partitionSize), "Partition size must be greater than zero.");
 
-            // Check cache
+            //// Check cache
             //if (_partitionCache.TryGetValue((typeof(T), partitionSize, parallelize), out var cachedResult)) {
             //    return cachedResult;
             //}
