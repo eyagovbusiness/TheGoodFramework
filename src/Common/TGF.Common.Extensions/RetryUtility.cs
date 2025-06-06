@@ -40,6 +40,7 @@ namespace TGF.Common.Extensions {
                     if (!aRetryCondition(result)) {
                         logger.LogInformation("[RETRY UTILITY] Task with retry executed successfully during attempt number {AttemptNumber} of {MaxRetries}", retryCount, aMaxRetries);
                         return result;
+                    }
                 } catch (Exception exception) {
                     logger.LogWarning(exception, "[WARNING]: Exception thrown by during the {retryUtilityName} duyring retry number {retryCount}:", nameof(RetryUtility), retryCount);
                     if (aCancellationToken.IsCancellationRequested || retryCount >= aMaxRetries) {
