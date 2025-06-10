@@ -39,6 +39,8 @@
             public const string Key = nameof(CloudStorage);
             public const string AuthType = $"{Key}:AuthType";
             public const string SecretsSourceType = $"{Key}:SecretsSourceType";
+            public const string CsiSecretName = $"{Key}:CsiSecretName";
+
         }
     }
 
