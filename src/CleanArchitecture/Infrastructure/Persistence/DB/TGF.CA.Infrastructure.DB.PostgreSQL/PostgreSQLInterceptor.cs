@@ -11,9 +11,9 @@ using TGF.CA.Infrastructure.Secrets;
 using TGF.CA.Infrastructure.Secrets.SecretsFiles;
 
 namespace TGF.CA.Infrastructure.DB.PostgreSQL {
-    internal class PostgreSQLInterceptor(IServiceProvider serviceProvider, IConfiguration configuration)
+    internal class PostgreSQLInterceptor(IServiceProvider serviceProvider, IConfiguration configuration, ISecretFilesService secretFilesService)
         : DbConnectionInterceptor {
-        private readonly Lazy<Task<string>> _lazyConnectionString = new(() => GetNpgsqlConnectionStringAsync(serviceProvider, configuration), LazyThreadSafetyMode.ExecutionAndPublication);
+        private readonly Lazy<Task<string>> _lazyConnectionString = new(() => GetNpgsqlConnectionStringAsync(serviceProvider, configuration, secretFilesService), LazyThreadSafetyMode.ExecutionAndPublication);
 
         public override async ValueTask<InterceptionResult> ConnectionOpeningAsync(DbConnection connection, ConnectionEventData eventData, InterceptionResult result, CancellationToken cancellationToken = default) {
             if (connection is NpgsqlConnection npgsqlConnection)
@@ -24,7 +24,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
         /// <summary>
         /// Gets the PostgreSQL connection string from the configured secrets source.
         /// </summary>
-        private static async Task<string> GetNpgsqlConnectionStringAsync(IServiceProvider serviceProvider, IConfiguration configuration) {
+        private static async Task<string> GetNpgsqlConnectionStringAsync(IServiceProvider serviceProvider, IConfiguration configuration, ISecretFilesService secretFilesService) {
             var configValue = configuration[ConfigurationKeys.Database.SecretsSourceType]
                 ?? throw new NullReferenceException($"{ConfigurationKeys.Database.SecretsSourceType} not configured in appsettings.");
 
@@ -34,7 +34,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
 
             var connectionString = secretsSourceType switch {
                 SecretsSourceTypeEnum.File
-                    => (await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets)).ToConnectionString(),
+                    => (await secretFilesService.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets)).ToConnectionString(),
                 SecretsSourceTypeEnum.SecretsManager
                     => await ConnectionStringFromSecretsManager(serviceProvider, configuration),
                 SecretsSourceTypeEnum.EnvVariable

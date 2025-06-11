@@ -6,8 +6,8 @@ using TGF.CA.Infrastructure.Secrets;
 using TGF.CA.Infrastructure.Secrets.SecretsFiles;
 
 namespace TGF.CA.Infrastructure.Persistence.CloudStorage {
-    public class StorageAccountProvider(IConfiguration configuration) : ICloudStorageProvider {
-        private readonly Lazy<Task<string>> _storageAccountConnectionString = new(() => GetStorageAccountConnectionString(configuration));
+    public class StorageAccountProvider(IConfiguration configuration, ISecretFilesService secretFilesService) : ICloudStorageProvider {
+        private readonly Lazy<Task<string>> _storageAccountConnectionString = new(() => GetStorageAccountConnectionString(configuration, secretFilesService));
         private BlobServiceClient? _blobServiceClient;
         private ShareServiceClient? _shareServiceClient;
 
@@ -43,12 +43,12 @@ namespace TGF.CA.Infrastructure.Persistence.CloudStorage {
             return _shareServiceClient.GetShareClient(shareName);
         }
 
-        private static async Task<string> GetStorageAccountConnectionString(IConfiguration configuration1) {
+        private static async Task<string> GetStorageAccountConnectionString(IConfiguration configuration1, ISecretFilesService secretFilesService) {
             var storageAccountSecretsSourceType = configuration1.GetValue<string>(ConfigurationKeys.CloudStorage.SecretsSourceType);
 
             Enum.TryParse(typeof(SecretsSourceTypeEnum), storageAccountSecretsSourceType, false, out var secretsSourceType);
             return secretsSourceType switch {
-                SecretsSourceTypeEnum.File => await SecretsFiles.GetSecretFromConfigAsync(configuration1, ConfigurationKeys.SecretsFiles.SecretsFileNames.CloudStorageConnectionString),
+                SecretsSourceTypeEnum.File => await secretFilesService.GetSecretFromConfigAsync(ConfigurationKeys.SecretsFiles.SecretsFileNames.CloudStorageConnectionString),
                 _ => throw new NotSupportedException("[ERROR]: The provided value in appsettings of SecretsSourceType in CloudStorage section is not a supported secrets source")
             };
         }
