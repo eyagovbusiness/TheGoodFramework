@@ -1,7 +1,6 @@
 ﻿using Azure.Core;
 using Azure.Identity;
 using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using System.Data.Common;
@@ -17,7 +16,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL.Azure {
     /// The interceptor will replace the connection string with a new one that includes the access token.
     /// The interceptor will cache the access token and only refresh it when it is about to expire.
     /// </remarks>
-    internal class AzureWorkloadIdentitiyPostgreSQLInterceptor(IConfiguration configuration, ILogger<AzureWorkloadIdentitiyPostgreSQLInterceptor> logger)
+    internal class AzureWorkloadIdentitiyPostgreSQLInterceptor(ISecretFilesService secretFilesService, ILogger<AzureWorkloadIdentitiyPostgreSQLInterceptor> logger)
     : DbConnectionInterceptor {
         private readonly SemaphoreSlim _semaphore = new(1, 1);
         private AccessToken _cachedAccessToken;
@@ -30,7 +29,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL.Azure {
 
         private async Task<string> GetValidNpgsqlConnectionStringAsync(CancellationToken cancellationToken = default) {
             var accessToken = await GetValidAccessTokenAsync(cancellationToken);
-            var postgresSecrets = await SecretsFiles.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(configuration, ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets);
+            var postgresSecrets = await secretFilesService.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets);
             var connectionString = postgresSecrets.ToConnectionString(passwordOverride: accessToken) + "Pooling=true;MinPoolSize=0;MaxPoolSize=50;";
             logger.LogInformation("GetValidNpgsqlConnectionStringAsync: {ConnectionString}", connectionString);
             return connectionString;

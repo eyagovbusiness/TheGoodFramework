@@ -1,11 +1,10 @@
-﻿using Microsoft.Extensions.Configuration;
-using TGF.CA.Infrastructure.Secrets.SecretsFiles;
+﻿using TGF.CA.Infrastructure.Secrets.SecretsFiles;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Connection;
 
-internal class RabbitMQFileConnectionStringProvider(IConfiguration configuration)
+internal class RabbitMQFileConnectionStringProvider(ISecretFilesService secretFilesService)
 : IRabbitMQConnectionStringProvider {
     public async Task<string> GetConnectionString()
-    => await SecretsFiles.GetSecretFromConfigAsync(configuration, InvariantConstants.ConfigurationKeys.SecretsFiles.SecretsFileNames.RabbitMQConnectionString);
+    => await secretFilesService.GetSecretFromConfigAsync(InvariantConstants.ConfigurationKeys.SecretsFiles.SecretsFileNames.RabbitMQConnectionString);
 }
 
