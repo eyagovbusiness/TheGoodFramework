@@ -7,5 +7,6 @@ namespace TGF.CA.Infrastructure.Persistence.CloudStorage {
         Task<BlobClient> GetBlobClientAsync(string containerName, string blobName);
         Task<BlobContainerClient> GetBlobContainerClientAsync(string containerName);
         Task<ShareClient> GetShareClientAsync(string shareName);
+        Task<IEnumerable<ShareClient>> GetAllShareClientsAsync(CancellationToken cancellationToken);
+        }
     }
-}

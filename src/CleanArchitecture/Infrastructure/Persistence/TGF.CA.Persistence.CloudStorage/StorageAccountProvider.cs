@@ -1,5 +1,6 @@
 ﻿using Azure.Storage.Blobs;
 using Azure.Storage.Files.Shares;
+using Azure.Storage.Files.Shares.Models;
 using Microsoft.Extensions.Configuration;
 using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.Secrets;
@@ -41,6 +42,20 @@ namespace TGF.CA.Infrastructure.Persistence.CloudStorage {
                 _shareServiceClient = new ShareServiceClient(connectionString);
             }
             return _shareServiceClient.GetShareClient(shareName);
+        }
+
+        public async Task<IEnumerable<ShareClient>> GetAllShareClientsAsync(CancellationToken cancellationToken = default) {
+            if (_shareServiceClient == null) {
+                var connectionString = await _storageAccountConnectionString.Value;
+                _shareServiceClient = new ShareServiceClient(connectionString);
+            }
+
+            var shareClients = new List<ShareClient>();
+            await foreach (var shareItem in _shareServiceClient.GetSharesAsync(ShareTraits.Metadata, cancellationToken: cancellationToken)) {
+                shareClients.Add(_shareServiceClient.GetShareClient(shareItem.Name));
+            }
+
+            return shareClients;
         }
 
         private static async Task<string> GetStorageAccountConnectionString(IConfiguration configuration1, ISecretFilesService secretFilesService) {
