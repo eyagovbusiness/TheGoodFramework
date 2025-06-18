@@ -37,7 +37,7 @@ namespace TGF.CA.Presentation
             => (await aHttpResult).ToIResult();
 
         /// <summary>
-        /// Creates and returns a new instance of <see cref="ResponseResult{T}"/> from the givn <typeparamref name="T"/> as <see cref="IResult"/>.
+        /// Creates and returns a new instance of <see cref="ResponseResult{T}"/> from the given <typeparamref name="T"/> as <see cref="IResult"/>.
         /// </summary>
         /// <typeparam name="T">Type of the source object that will be used to create the resulting <see cref="ResponseResult{T}"/>.</typeparam>
         /// <param name="aObjectResultContextValue">Instance of the source object that will be used to create the resulting <see cref="ResponseResult{T}"/> from <see cref="IResult".</param>
