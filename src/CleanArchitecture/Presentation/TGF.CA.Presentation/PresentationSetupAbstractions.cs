@@ -32,7 +32,6 @@ namespace TGF.CA.Presentation {
                 aWebApplicationBuilder.Services.ConfigureHttpJsonOptions(options => {
                     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 });
-
                 // Additional configuration for Swagger to reflect enums as strings
                 aWebApplicationBuilder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options => {
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -75,10 +74,12 @@ namespace TGF.CA.Presentation {
 
             aWebApplicationBuilder.Services.AddCors(options => {
                 options.AddPolicy("AllowFrontCorsPolicy", builder =>
-                    builder.SetIsOriginAllowed(origin => IsOriginAllowed(origin, lCORSFrontUrl, lLocalDevelopmentUrl))
+                    builder.SetIsOriginAllowed(origin =>
+                           IsOriginAllowed(origin, lCORSFrontUrl, lLocalDevelopmentUrl))
                            .AllowAnyHeader()
                            .AllowAnyMethod()
-                           .AllowCredentials());
+                           .AllowCredentials()
+                );
             });
 
             return aWebApplicationBuilder;
@@ -99,17 +100,24 @@ namespace TGF.CA.Presentation {
         /// 4. Allows the case where there is no subdomain.
         /// 5. Validates that, if a subdomain exists, it matches the first part of the FrontendURL's domain.
         /// </remarks>
-        private static bool IsOriginAllowed(string aOrigin, string aFrontendUrl, string? aLocalDevelopmentUrl) {
-            var lMainDomain = new Uri(aFrontendUrl).Host;
+        private static bool IsOriginAllowed(string? aOrigin, string aFrontendUrl, string? aLocalDevelopmentUrl) {
+            if (string.IsNullOrWhiteSpace(aOrigin) || aOrigin is "null")
+                return false; // Reject null or empty origins or origins with value "null" by default, it is importanto to explicitly handle this for not CORS requests to continue 
+            try {
+                var lMainDomain = new Uri(aFrontendUrl).Host;
 
-            if (aOrigin == aFrontendUrl || aOrigin == aLocalDevelopmentUrl)
-                return true;
+                if (aOrigin == aFrontendUrl || aOrigin == aLocalDevelopmentUrl)
+                    return true;
 
-            var lOriginDomain = new Uri(aOrigin).Host;
-            var lHostParts = lOriginDomain.Split('.');
+                var lOriginDomain = new Uri(aOrigin).Host;
+                var lHostParts = lOriginDomain.Split('.');
 
-            return lOriginDomain.EndsWith(lMainDomain, StringComparison.OrdinalIgnoreCase)
-            && (lHostParts.Length == 2 || lHostParts[0] == lMainDomain.Split('.')[0]);
+                return lOriginDomain.EndsWith(lMainDomain, StringComparison.OrdinalIgnoreCase)
+                && (lHostParts.Length == 2 || lHostParts[0] == lMainDomain.Split('.')[0]);
+            }
+            catch {
+                return false; // Reject malformed URIs
+            }
         }
 
         /// <summary>
@@ -124,7 +132,7 @@ namespace TGF.CA.Presentation {
         /// Use the custom CORS policy to allow requests from the configured Frontend domain.
         /// </summary>
         public static void UseFrontendCORS(this WebApplication aWebApplication)
-            => aWebApplication.UseCors("AllowFrontCorsPolicy");//CORS should be placed before routing.
+        => aWebApplication.UseCors("AllowFrontCorsPolicy");//CORS should be placed before routing.
 
     }
 }

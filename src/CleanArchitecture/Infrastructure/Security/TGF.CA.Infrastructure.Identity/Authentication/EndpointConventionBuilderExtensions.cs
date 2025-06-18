@@ -20,5 +20,10 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
         => aBuilder.RequireAuthorization(new AuthorizeAttribute {
             AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
         });
+
+        public static TBuilder RequireMicrosoftSingIn<TBuilder>(this TBuilder builder)
+        where TBuilder : IEndpointConventionBuilder => builder.RequireAuthorization(new AuthorizeAttribute {
+            AuthenticationSchemes = AuthenticationSchemes.MicrosoftAuthSchemeName
+        });
     }
 }
