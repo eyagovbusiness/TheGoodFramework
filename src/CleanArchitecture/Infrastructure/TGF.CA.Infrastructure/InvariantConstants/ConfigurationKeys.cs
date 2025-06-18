@@ -27,6 +27,7 @@
                 public const string PostgresSecrets = $"{Key}:PostgresSecrets";
                 public const string RabbitMQConnectionString = $"{Key}:RabbitMQConnectionString";
                 public const string CloudStorageConnectionString = $"{Key}:CloudStorageConnectionString";
+                public const string ImagePullSecret = $"{Key}:ImagePullSecret";
             }
         }
         public readonly struct Database {
