@@ -17,7 +17,8 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
         /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
         public static IServiceCollection AddPostgreSQL<TDbContext>(
             this IServiceCollection serviceCollection,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            string healthCheckNameOverride = null!)
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         => serviceCollection
         .AddSingleton<PostgreSQLInterceptor>()
@@ -26,17 +27,17 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
             options.UseNpgsql()
             .AddInterceptors(interceptor);
         })
-        .AddPostgresHealthCheck<TDbContext>(configuration);
+        .AddPostgresHealthCheck<TDbContext>(configuration, healthCheckNameOverride);
 
         /// <summary>
         /// Adds a healthcheck in the target <see cref="IServiceCollection"/> for the PostgreSQL database.
         /// </summary>
         /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
-        public static IServiceCollection AddPostgresHealthCheck<TDbContext>(this IServiceCollection serviceCollection, IConfiguration configuration)
+        public static IServiceCollection AddPostgresHealthCheck<TDbContext>(this IServiceCollection serviceCollection, IConfiguration configuration, string healthCheckNameOverride = null!)
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         => serviceCollection
-            .AddHealthChecks()
-            .AddCheck<PostgreSQLHealthCheck<TDbContext>>(PostgreSQLHelpers.GetDatabaseCQRSName<TDbContext>(configuration) + "Database")
-            .Services;
+        .AddHealthChecks()
+        .AddCheck<PostgreSQLHealthCheck<TDbContext>>(healthCheckNameOverride ?? PostgreSQLHelpers.GetDatabaseCQRSName<TDbContext>(configuration) + "Database")
+        .Services;
     }
 }

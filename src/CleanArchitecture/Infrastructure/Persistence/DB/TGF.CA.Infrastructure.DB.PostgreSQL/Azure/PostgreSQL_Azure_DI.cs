@@ -16,7 +16,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL.Azure {
         /// <typeparam name="TDbContext">The DbContext type to be registered.</typeparam>
         /// <param name="serviceCollection">The target <see cref="IServiceCollection"/>.</param>
         /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
-        public static IServiceCollection AddAzurePostgreSQL<TDbContext>(this IServiceCollection serviceCollection, IConfiguration configuration)
+        public static IServiceCollection AddAzurePostgreSQL<TDbContext>(this IServiceCollection serviceCollection, IConfiguration configuration, string healthCheckNameOverride = null!)
             where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         => serviceCollection
         .AddSingleton<AzureWorkloadIdentitiyPostgreSQLInterceptor>()
@@ -25,7 +25,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL.Azure {
             options.UseNpgsql()
             .AddInterceptors(interceptor);
         })
-        .AddPostgresHealthCheck<TDbContext>(configuration);
+        .AddPostgresHealthCheck<TDbContext>(configuration, healthCheckNameOverride);
 
     }
 }
