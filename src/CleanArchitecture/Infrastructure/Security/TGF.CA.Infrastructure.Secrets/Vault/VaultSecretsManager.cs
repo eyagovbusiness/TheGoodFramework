@@ -54,7 +54,7 @@ namespace TGF.CA.Infrastructure.Secrets.Vault {
 
         public async Task<string> GetTokenSecret(string aTokenName) {
             var lAPISecret = await GetValueObject("tokensecrets", aTokenName)
-                             ?? throw new Exception("Error loading retrieving the APISecret!!");
+                ?? throw new Exception("Error loading retrieving the APISecret!!");
             return lAPISecret.ToString()!;
         }
 
@@ -73,7 +73,6 @@ namespace TGF.CA.Infrastructure.Secrets.Vault {
         #endregion
 
         #region Private
-
         /// <summary>
         /// Used to retrieve the vault api token.
         /// </summary>
@@ -103,8 +102,6 @@ namespace TGF.CA.Infrastructure.Secrets.Vault {
             aDelayMilliseconds: 2000, // Customize delay between retries.
             CancellationToken.None // Pass a CancellationToken if applicable.
         );
-
-
         #endregion
 
     }

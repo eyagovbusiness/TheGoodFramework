@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using TGF.CA.Application.InvariantConstants;
 using TGF.CA.Presentation.MinimalAPI;
 using TGF.CA.Presentation.Swagger;
 using TGF.Common.Serialization;
@@ -66,7 +67,7 @@ namespace TGF.CA.Presentation {
         /// <returns>The modified WebApplicationBuilder instance.</returns>
         /// <exception cref="Exception">Thrown when CORSFrontendURL configuration is not found.</exception>
         public static WebApplicationBuilder ConfigureFrontendCORS(this WebApplicationBuilder aWebApplicationBuilder, IConfiguration aConfiguration) {
-            var lCORSFrontUrl = aConfiguration.GetValue<string>("FRONTEND_URL")
+            var lCORSFrontUrl = aConfiguration.GetValue<string>(EnvVariablesNames.FRONTEND_URL)
                 ?? aConfiguration.GetValue<string>("FrontendURL")
                 ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings or environment variables. Please add this configuration.");
 

@@ -2,6 +2,8 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authentication.OAuth;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -13,6 +15,7 @@ using System.Text;
 using System.Text.Json;
 using TGF.CA.Application;
 using TGF.CA.Application.Contracts.Routing;
+using TGF.CA.Application.InvariantConstants;
 
 namespace TGF.CA.Infrastructure.Identity.Authentication {
     /// <summary>
@@ -68,6 +71,64 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
             );
         }
 
+        /// <summary>
+        /// Configures OIDC authentication for the web application using OpenID Connect and Cookie authentication schemes.
+        /// </summary>
+        /// <param name="aWebApplicationBuilder"></param>
+        /// <param name="onTokenValidatedHandler">Function to handle the OnTokenValidated event.</param>
+        /// <remarks>
+        /// Cookie scheme used for pre-authentication and OIDC login session
+        /// JWT scheme used for API access after token issuance
+        /// </remarks>
+        public static void ConfigureOIDCPlusJWTAuthentication(this WebApplicationBuilder aWebApplicationBuilder, Func<Microsoft.AspNetCore.Authentication.OpenIdConnect.TokenValidatedContext, Task> onTokenValidatedHandler) {
+            var configuration = aWebApplicationBuilder.Configuration;
+            var issuer = configuration.GetValue<string>(ConfigurationKeys.FrontendURL.Key) ?? Environment.GetEnvironmentVariable(EnvVariablesNames.FRONTEND_URL)
+                ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings. Please add this configuration.");
+            aWebApplicationBuilder.Services.AddAuthentication(options => {
+
+                options.DefaultScheme = AuthenticationSchemes.OIDC_CookieAuthSchemeName; // Use OIDC cookie to authenticate
+                options.DefaultChallengeScheme = AuthenticationSchemes.OIDCAuthSchemeName; // Use OIDC to challenge for authentication
+                options.DefaultSignInScheme = AuthenticationSchemes.OIDC_CookieAuthSchemeName;
+            })
+            .AddCookie(AuthenticationSchemes.OIDC_CookieAuthSchemeName, options => {
+                options.Cookie.Name = "PreAuthOIDC_Cookie";
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                options.Cookie.SameSite = SameSiteMode.Strict;
+                options.Cookie.Domain = configuration.GetValue<string>("CookieDomain");
+            })
+            .AddJwtBearer(options => {
+                options.TokenValidationParameters = new TokenValidationParameters {
+                    ValidIssuer = issuer,
+                    ValidAudience = issuer,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable(EnvVariablesNames.API_SECRET_KEY)))
+                };
+            })
+            .AddOpenIdConnect(AuthenticationSchemes.OIDCAuthSchemeName, options => {
+                options.Authority = $"https://login.microsoftonline.com/{Environment.GetEnvironmentVariable(EnvVariablesNames.OIDC_AUTH_TENANT_ID)}/v2.0";
+                options.ClientId = Environment.GetEnvironmentVariable(EnvVariablesNames.OIDC_AUTH_CLIENT_ID);
+                options.ClientSecret = Environment.GetEnvironmentVariable(EnvVariablesNames.OIDC_AUTH_SECRET);
+
+                options.ResponseType = "code";
+                options.SaveTokens = true;
+                options.Scope.Add("openid");
+                options.Scope.Add("profile");
+                options.Scope.Add("email");
+                options.CallbackPath = configuration[ConfigurationKeys.MicrosoftAuthCallbackURI.Key];
+
+                options.TokenValidationParameters = new TokenValidationParameters {
+                    NameClaimType = "name",
+                    RoleClaimType = "roles"
+                };
+
+                options.Events = new OpenIdConnectEvents {
+                    OnTokenValidated = async context => await onTokenValidatedHandler(context)
+                };
+            });
+        }
 
         #region Private
 
