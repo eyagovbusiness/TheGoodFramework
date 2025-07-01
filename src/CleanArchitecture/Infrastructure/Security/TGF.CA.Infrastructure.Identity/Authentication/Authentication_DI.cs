@@ -83,19 +83,19 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
         public static void ConfigureOIDCPlusJWTAuthentication(this WebApplicationBuilder aWebApplicationBuilder, Func<Microsoft.AspNetCore.Authentication.OpenIdConnect.TokenValidatedContext, Task> onTokenValidatedHandler) {
             var configuration = aWebApplicationBuilder.Configuration;
             var issuer = configuration.GetValue<string>(ConfigurationKeys.FrontendURL.Key) ?? Environment.GetEnvironmentVariable(EnvVariablesNames.FRONTEND_URL)
-                ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings. Please add this configuration.");
+                ?? throw new Exception("Error while configuring JWT aauthentication, FrontendURL which is used fro token issuer and audience was not found in appsettings. Please add this configuration.");
             aWebApplicationBuilder.Services.AddAuthentication(options => {
 
-                options.DefaultScheme = AuthenticationSchemes.OIDC_CookieAuthSchemeName; // Use OIDC cookie to authenticate
+                options.DefaultScheme = AuthenticationSchemes.TokenExchangeCookieSchemeName; // Use OIDC cookie to authenticate
                 options.DefaultChallengeScheme = AuthenticationSchemes.OIDCAuthSchemeName; // Use OIDC to challenge for authentication
-                options.DefaultSignInScheme = AuthenticationSchemes.OIDC_CookieAuthSchemeName;
+                options.DefaultSignInScheme = AuthenticationSchemes.TokenExchangeCookieSchemeName;
             })
-            .AddCookie(AuthenticationSchemes.OIDC_CookieAuthSchemeName, options => {
-                options.Cookie.Name = "PreAuthOIDC_Cookie";
+            .AddCookie(AuthenticationSchemes.TokenExchangeCookieSchemeName, options => {
+                options.Cookie.Name = "TokenExchangeCookie";
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.Cookie.SameSite = SameSiteMode.Strict;
-                options.Cookie.Domain = configuration.GetValue<string>("CookieDomain");
+                options.Cookie.Domain = configuration.GetValue<string>("TokenExchangeCookieDomain");
             })
             .AddJwtBearer(options => {
                 options.TokenValidationParameters = new TokenValidationParameters {

@@ -25,16 +25,26 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
         });
 
         /// <summary>
-        /// Sets the authorization scheme to require OIDC authentication, any endpoint with this specification will require either OpenID Connect authentication to access it OR the Cookie authentication scheme generated after a sucessful sign-in with OIDC.
+        /// Sets the authorization scheme to require OIDC authentication, any endpoint with this specification will require either OpenID Connect authentication to access it OR the Cookie authentication scheme generated after a sucessful sign-in.
         /// </summary>
         public static TBuilder RequireOIDC<TBuilder>(this TBuilder builder)
         where TBuilder : IEndpointConventionBuilder
         => builder.RequireAuthorization(new AuthorizeAttribute {
             AuthenticationSchemes = string.Join(",",
             [
-                AuthenticationSchemes.OIDC_CookieAuthSchemeName,
                 AuthenticationSchemes.OIDCAuthSchemeName
+                //,AuthenticationSchemes.TokenExchangeCookieSchemeName //it breaks the OIDC flow for some reason, so we don't use it here. Not a big deal tho
+
             ])
+        });
+
+        /// <summary>
+        /// Sets the authorization scheme to the Cookie authentication scheme generated after a sucessful sign-in, the cookie contaisn the claims from the signIn method.
+        /// </summary>
+        public static TBuilder RequireTokenExchangeCookie<TBuilder>(this TBuilder builder)
+        where TBuilder : IEndpointConventionBuilder
+        => builder.RequireAuthorization(new AuthorizeAttribute {
+            AuthenticationSchemes = AuthenticationSchemes.TokenExchangeCookieSchemeName
         });
     }
 }
