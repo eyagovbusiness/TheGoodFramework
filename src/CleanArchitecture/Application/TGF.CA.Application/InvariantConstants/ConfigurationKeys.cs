@@ -6,11 +6,12 @@
         public readonly struct FrontendURL {
             public const string Key = nameof(FrontendURL);
         }
-        public readonly struct FrontendAuthCallbackURI {
-            public const string Key = nameof(FrontendAuthCallbackURI);
-        }
-        public readonly struct MicrosoftAuthCallbackURI {
-            public const string Key = nameof(MicrosoftAuthCallbackURI);
+        public readonly struct Auth {
+            public const string Key = nameof(Auth);
+            public const string FrontendAuthCallbackURI = $"{Key}:FrontendAuthCallbackURI";
+            public const string MicrosoftAuthCallbackURI = $"{Key}:MicrosoftAuthCallbackURI";
+            public const string AccessTokenLifetimeInMinutes = $"{Key}:AccessTokenLifetimeInMinutes";
+            public const string RefreshTokenLifetimeInDays = $"{Key}:RefreshTokenLifetimeInDays";
         }
     }
 }

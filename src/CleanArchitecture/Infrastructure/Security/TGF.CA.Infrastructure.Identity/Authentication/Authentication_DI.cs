@@ -91,11 +91,20 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
                 options.DefaultSignInScheme = AuthenticationSchemes.TokenExchangeCookieSchemeName;
             })
             .AddCookie(AuthenticationSchemes.TokenExchangeCookieSchemeName, options => {
-                options.Cookie.Name = "TokenExchangeCookie";
+                options.Cookie.Name = AuthenticationSchemes.TokenExchangeCookieSchemeName;
                 options.Cookie.HttpOnly = true;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.Cookie.SameSite = SameSiteMode.Strict;
-                options.Cookie.Domain = configuration.GetValue<string>("TokenExchangeCookieDomain");
+                options.Cookie.Domain = configuration.GetValue<string>($"{AuthenticationSchemes.TokenExchangeCookieSchemeName}Domain");
+                // For API endpoints, we override the default cookie authentication behavior to return 401 Unauthorized
+                // instead of redirecting to a login page when authentication fails. This is because APIs should not
+                // perform redirects (which are intended for browser flows), and clients expect a 401 status code to
+                // indicate missing or invalid credentials. Returning 401 also aligns with RESTful standards and avoids
+                // leaking endpoint existence via 404s or redirects.
+                options.Events.OnRedirectToLogin = context => {
+                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                    return Task.CompletedTask;
+                };
             })
             .AddJwtBearer(options => {
                 options.TokenValidationParameters = new TokenValidationParameters {
@@ -117,7 +126,7 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
-                options.CallbackPath = configuration[ConfigurationKeys.MicrosoftAuthCallbackURI.Key];
+                options.CallbackPath = configuration[ConfigurationKeys.Auth.MicrosoftAuthCallbackURI];
 
                 options.TokenValidationParameters = new TokenValidationParameters {
                     NameClaimType = "name",
