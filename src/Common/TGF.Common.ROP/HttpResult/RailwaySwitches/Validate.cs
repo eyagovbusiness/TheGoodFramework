@@ -44,6 +44,50 @@ namespace TGF.Common.ROP.HttpResult.RailwaySwitches {
                                            .ToImmutableArray());
         }
 
+
+        /// <summary>
+        /// Asynchronously performs a validation of the provided object with the provided validator. If the validation fails, 
+        /// it returns a failure with the resulting validation errors. Otherwise, it returns the original result.
+        /// </summary>
+        /// <typeparam name="T">The type of the result value.</typeparam>
+        /// <typeparam name="Tval">The type of object to validate.</typeparam>
+        /// <param name="aThisResult">The <see cref="IHttpResult{T}"/> to verify.</param>
+        /// <param name="aObjectToValidate">The object to validate.</param>
+        /// <param name="aValidator">The validator to use.</param>
+        /// <returns>Either the original result or a failure, depending on the validation result.</returns>
+        public static async Task<IHttpResult<T>> ValidateAsync<T, Tval>(this IHttpResult<T> aThisResult, Tval aObjectToValidate, IValidator<Tval> aValidator) {
+            if (!aThisResult.IsSuccess)
+                return aThisResult;
+
+            var lValidationResult = await aValidator.ValidateAsync(aObjectToValidate);
+            return lValidationResult.IsValid
+                ? aThisResult
+                : Result.Result.Failure<T>(lValidationResult.Errors.Select(e => GetValidationError(e.ErrorCode, e.ErrorMessage))
+                    .ToImmutableArray());
+        }
+
+        /// <summary>
+        /// Asynchronously performs a validation of the provided object with the provided validator. If the validation fails, 
+        /// it returns a failure with the resulting validation errors. Otherwise, it returns the original result.
+        /// </summary>
+        /// <typeparam name="T">The type of the result value.</typeparam>
+        /// <typeparam name="Tval">The type of object to validate.</typeparam>
+        /// <param name="aThisResult">The async <see cref="IHttpResult{T}"/> to verify.</param>
+        /// <param name="aObjectToValidate">The object to validate.</param>
+        /// <param name="aValidator">The validator to use.</param>
+        /// <returns>Either the original result or a failure, depending on the validation result.</returns>
+        public static async Task<IHttpResult<T>> ValidateAsync<T, Tval>(this Task<IHttpResult<T>> aThisResult, Tval aObjectToValidate, IValidator<Tval> aValidator) {
+            var lThisResult = await aThisResult;
+            if (!lThisResult.IsSuccess)
+                return lThisResult;
+
+            var lValidationResult = await aValidator.ValidateAsync(aObjectToValidate);
+            return lValidationResult.IsValid
+                ? lThisResult
+                : Result.Result.Failure<T>(lValidationResult.Errors.Select(e => GetValidationError(e.ErrorCode, e.ErrorMessage))
+                    .ToImmutableArray());
+        }
+
         /// <summary>
         /// Performs a validation of this result Value. If the validation fails, 
         /// it returns a failure with the resulting validation errors. Otherwise, it returns the original result.

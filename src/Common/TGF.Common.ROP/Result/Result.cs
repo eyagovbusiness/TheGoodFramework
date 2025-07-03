@@ -21,7 +21,7 @@ namespace TGF.Common.ROP.Result {
 
         public Result(T aValue) {
             _value = aValue;
-            ErrorList = ImmutableArray<IError>.Empty;
+            ErrorList = [];
         }
 #pragma warning disable CS8601 // Possible null reference assignment.
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
@@ -54,7 +54,7 @@ namespace TGF.Common.ROP.Result {
             => new Result<T>(aErrorList);
 
         public static IResult<T> Failure<T>(IError aError)
-            => new Result<T>(ImmutableArray.Create(aError));
+            => new Result<T>([aError]);
 
         #endregion
 
