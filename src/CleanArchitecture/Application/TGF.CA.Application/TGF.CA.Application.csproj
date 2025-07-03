@@ -6,6 +6,13 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+	<!--Authentication belongs to the infrastructure layer, but in some use cases may be required to be used in the application layer. 
+	Specially for reeferencing some types and structs of this packages. Since we use IoC and the infrastructure layer depeends on the applcation layer, the dependecy of thse packages will come from the application layer, making avliable the classes or structs in the application layer for the us cases and the method and logic to be executed in the infrastructure layer-->
+  <ItemGroup>
+	<PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.17" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\Domain\TGF.CA.Domain\TGF.CA.Domain.csproj">
       <TreatAsUsed>true</TreatAsUsed>

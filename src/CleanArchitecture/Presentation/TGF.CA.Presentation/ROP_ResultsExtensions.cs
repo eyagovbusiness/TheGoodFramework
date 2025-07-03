@@ -7,13 +7,11 @@ using System.Text.Json;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
 
-namespace TGF.CA.Presentation
-{
+namespace TGF.CA.Presentation {
     /// <summary>
     /// Static class to support conversion of <see cref="IHttpResult{T}"/> into <see cref="IResult"/>.
     /// </summary>
-    public static class ROP_ResultsExtensions
-    {
+    public static class ROP_ResultsExtensions {
         private static JsonSerializerOptions? _cachedJsonOptions;
 
         /// <summary>
@@ -37,34 +35,26 @@ namespace TGF.CA.Presentation
             => (await aHttpResult).ToIResult();
 
         /// <summary>
-        /// Creates and returns a new instance of <see cref="ResponseResult{T}"/> from the given <typeparamref name="T"/> as <see cref="IResult"/>.
+        /// Creates and returns a new instance of <see cref="ResponseResult{T}"/> from the given <typeparamref name="T"/>.
         /// </summary>
         /// <typeparam name="T">Type of the source object that will be used to create the resulting <see cref="ResponseResult{T}"/>.</typeparam>
         /// <param name="aObjectResultContextValue">Instance of the source object that will be used to create the resulting <see cref="ResponseResult{T}"/> from <see cref="IResult".</param>
         /// <param name="aObjectResultStatusCode">HTTP StatusCode to be set in the returning <see cref="ResponseResult{T}".</param>
-        /// <returns><see cref="IResult"/></returns>
-        private static IResult ToResponseResult<T>(this T aObjectResultContextValue, HttpStatusCode aObjectResultStatusCode)
-            => new ResponseResult<T>(aObjectResultContextValue, aObjectResultStatusCode);
+        /// <returns><see cref="ResponseResult{T}"/></returns>
+        private static ResponseResult<T> ToResponseResult<T>(this T aObjectResultContextValue, HttpStatusCode aObjectResultStatusCode)
+           => new(aObjectResultContextValue, aObjectResultStatusCode);
 
-        internal class ResponseResult<T> : IResult
-        {
-            private readonly T _resultValue;
-            private readonly int _httpStatusCode;
+        internal class ResponseResult<T>(T aResultValue, HttpStatusCode aHttpStatusCode) : IResult {
+            private readonly T _resultValue = aResultValue;
+            private readonly int _httpStatusCode = (int)aHttpStatusCode;
 
-            public ResponseResult(T aResultValue, HttpStatusCode aHttpStatusCode)
-            {
-                _resultValue = aResultValue;
-                _httpStatusCode = (int)aHttpStatusCode;
-            }
-
-            public async Task ExecuteAsync(HttpContext httpContext)
-            {
+            public async Task ExecuteAsync(HttpContext httpContext) {
                 httpContext.Response.ContentType = "application/json";
                 httpContext.Response.StatusCode = _httpStatusCode;
 
                 _cachedJsonOptions ??= httpContext.RequestServices.GetService<IOptions<JsonOptions>>()?.Value?.JsonSerializerOptions;
 
-                var lJson = System.Text.Json.JsonSerializer.Serialize(_resultValue, _cachedJsonOptions);
+                var lJson = JsonSerializer.Serialize(_resultValue, _cachedJsonOptions);
                 await httpContext.Response.WriteAsync(lJson);
             }
         }
@@ -81,25 +71,24 @@ namespace TGF.CA.Presentation
         /// or a problem detail containing the first error from the error list, along with the associated HTTP status code.
         /// </returns>
         private static IResult ToProblemDetailResponseResult<T>(this IHttpResult<T> aHttpResult)
-                => aHttpResult.HasValidationErrors()
-                   ? Results.ValidationProblem(aHttpResult.ErrorList.ConvertToErrorDictionary())
-                   : Results.Problem(title: aHttpResult.ErrorList.First().Code,
-                                     detail: aHttpResult.ErrorList.GetErrorListAsString(),
-                                     statusCode: (int)aHttpResult.StatusCode);
+        => aHttpResult.HasValidationErrors()
+            ? Results.ValidationProblem(aHttpResult.ErrorList.ConvertToErrorDictionary())
+            : Results.Problem(
+                title: aHttpResult.ErrorList.First().Code,
+                detail: aHttpResult.ErrorList.GetErrorListAsString(),
+                statusCode: (int)aHttpResult.StatusCode
+            );
 
         /// <summary>
         /// Converts a list of errors to a dictionary where the key is the error code, and the value is an array of error messages.
         /// </summary>
         /// <param name="aErrorList">The list of errors to convert.</param>
         /// <returns>A dictionary containing error codes as keys and error messages as values.</returns>
-        private static Dictionary<string, string[]> ConvertToErrorDictionary(this IEnumerable<IError> aErrorList)
-        {
+        private static Dictionary<string, string[]> ConvertToErrorDictionary(this IEnumerable<IError> aErrorList) {
             var lErrorDictionary = new Dictionary<string, List<string>>();
-            foreach (var lError in aErrorList)
-            {
-                if (!lErrorDictionary.TryGetValue(lError.Code, out var lErrorMessages))
-                {
-                    lErrorMessages = new List<string>();
+            foreach (var lError in aErrorList) {
+                if (!lErrorDictionary.TryGetValue(lError.Code, out var lErrorMessages)) {
+                    lErrorMessages = [];
                     lErrorDictionary[lError.Code] = lErrorMessages;
                 }
                 lErrorMessages.Add(lError.Message);
