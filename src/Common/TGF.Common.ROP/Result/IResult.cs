@@ -3,14 +3,12 @@ using System.Collections.Immutable;
 using System.Text.Json.Serialization;
 using TGF.Common.ROP.Errors;
 
-namespace TGF.Common.ROP.Result
-{
+namespace TGF.Common.ROP.Result {
     /// <summary>
     /// Public interface for any <see cref="Result{T}"/>.
     /// </summary>
     [JsonObject]
-    public interface IResult<T>
-    {
+    public interface IResult<T> {
         [JsonPropertyName("Value")]
         T Value { get; }
         [JsonPropertyName("IsSuccess")]

@@ -11,8 +11,7 @@ namespace TGF.Common.ROP.Result {
     /// Internal class that represents the unit of information while returning the result of operations in Reailway Oriented Programming.
     /// </summary>
     /// <typeparam name="T">Type of the result Value.</typeparam>
-    internal readonly struct Result<T> : IResult<T>
-    {
+    internal readonly struct Result<T> : IResult<T> {
         private readonly T _value;
         public T Value => IsSuccess
                         ? _value
@@ -20,16 +19,14 @@ namespace TGF.Common.ROP.Result {
         public bool IsSuccess => ErrorList.Length == 0;
         public ImmutableArray<IError> ErrorList { get; }
 
-        public Result(T aValue)
-        {
+        public Result(T aValue) {
             _value = aValue;
             ErrorList = ImmutableArray<IError>.Empty;
         }
 #pragma warning disable CS8601 // Possible null reference assignment.
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
-        public Result(ImmutableArray<IError> aErrorList)
-        {
-            _value = default(T);
+        public Result(ImmutableArray<IError> aErrorList) {
+            _value = default;
 
             if (aErrorList.Length == 0)
                 throw new InvalidOperationException("Can't create a failure Result without errors.");
@@ -39,18 +36,14 @@ namespace TGF.Common.ROP.Result {
 #pragma warning restore CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 #pragma warning restore CS8601 // Possible null reference assignment.
 
-        public override string ToString()
-        {
-            return IsSuccess ? $"Success Result: Value = {Value}" : $"Failure Result: Errors = {string.Join(", ", ErrorList)}";
-        }
+        public override string ToString() => IsSuccess ? $"Success Result: Value = {Value}" : $"Failure Result: Errors = {string.Join(", ", ErrorList)}";
 
     }
 
     /// <summary>
     /// Static class to provide extension methods of Result type instances and create new instances of Results with success or failure(s).
     /// </summary>
-    public static class Result
-    {
+    public static class Result {
 
         #region Result
 
@@ -94,8 +87,7 @@ namespace TGF.Common.ROP.Result {
                     .Select(error => ValidateSwitchExtensions.GetValidationError(error.ErrorCode, error.ErrorMessage))
                     .ToImmutableArray());
 
-        public static IHttpResult<string> ContextAccessTokenResult(HttpContext aHttpContext)
-        {
+        public static IHttpResult<string> ContextAccessTokenResult(HttpContext aHttpContext) {
             var lAccessToken = aHttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
             return string.IsNullOrEmpty(lAccessToken)
                 ? Failure<string>(CommonErrors.ContextAccessToken.NullOrEmpty)
@@ -111,7 +103,7 @@ namespace TGF.Common.ROP.Result {
         /// Tries to parse an IResult into an IHttpResult, this will only work if the IResult parameter is an instance of HttpResult.
         /// <exception cref="Exception"></exception>
         public static IHttpResult<T> TryHttpResultParse<T>(this IResult<T> aResult)
-            => aResult != null && aResult is IHttpResult<T>
+            => aResult is not null and IHttpResult<T>
                ? aResult as IHttpResult<T>
                : throw new Exception($"TryParse failed from IResult<{nameof(T)}> to IHttpResult<{nameof(T)}>");
 #pragma warning restore CS8603 // Possible null reference return.

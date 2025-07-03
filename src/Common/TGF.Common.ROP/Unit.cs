@@ -1,11 +1,9 @@
-﻿namespace TGF.Common.ROP
-{
+﻿namespace TGF.Common.ROP {
 
     /// <summary>
     /// Represents a void type, since <see cref="void"/> is not a valid return type in C#.
     /// </summary>
-    public readonly struct Unit : IEquatable<Unit>, IComparable<Unit>, IComparable
-    {
+    public readonly struct Unit : IEquatable<Unit>, IComparable<Unit>, IComparable {
         private static readonly Unit _value = new();
 
         /// <summary>
@@ -76,6 +74,7 @@
         /// <param name="first">The first object.</param>
         /// <param name="second">The second object.</param>
         /// <c>true</c> if the <paramref name="first"/> object is equal to the <paramref name="second" /> object; otherwise, <c>false</c>.
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Required for operator overload compliance.")]
         public static bool operator ==(Unit first, Unit second) => true;
 
         /// <summary>
@@ -84,6 +83,7 @@
         /// <param name="first">The first object.</param>
         /// <param name="second">The second object.</param>
         /// <c>true</c> if the <paramref name="first"/> object is not equal to the <paramref name="second" /> object; otherwise, <c>false</c>.
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Required for operator overload compliance.")]
         public static bool operator !=(Unit first, Unit second) => false;
 
         /// <summary>
@@ -92,24 +92,12 @@
         /// <returns>A <see cref="string" /> that represents this instance.</returns>
         public override string ToString() => "()";
 
-        public static bool operator <(Unit left, Unit right)
-        {
-            return left.CompareTo(right) < 0;
-        }
+        public static bool operator <(Unit left, Unit right) => left.CompareTo(right) < 0;
 
-        public static bool operator <=(Unit left, Unit right)
-        {
-            return left.CompareTo(right) <= 0;
-        }
+        public static bool operator <=(Unit left, Unit right) => left.CompareTo(right) <= 0;
 
-        public static bool operator >(Unit left, Unit right)
-        {
-            return left.CompareTo(right) > 0;
-        }
+        public static bool operator >(Unit left, Unit right) => left.CompareTo(right) > 0;
 
-        public static bool operator >=(Unit left, Unit right)
-        {
-            return left.CompareTo(right) >= 0;
-        }
+        public static bool operator >=(Unit left, Unit right) => left.CompareTo(right) >= 0;
     }
 }
