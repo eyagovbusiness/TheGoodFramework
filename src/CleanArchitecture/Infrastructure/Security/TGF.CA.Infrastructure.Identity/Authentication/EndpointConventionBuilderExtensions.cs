@@ -30,12 +30,7 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
         public static TBuilder RequireOIDC<TBuilder>(this TBuilder builder)
         where TBuilder : IEndpointConventionBuilder
         => builder.RequireAuthorization(new AuthorizeAttribute {
-            AuthenticationSchemes = string.Join(",",
-            [
-                AuthenticationSchemes.OIDCAuthSchemeName
-                //,AuthenticationSchemes.TokenExchangeCookieSchemeName //it breaks the OIDC flow for some reason, so we don't use it here. Not a big deal tho
-
-            ])
+            AuthenticationSchemes = AuthenticationSchemes.OIDCAuthSchemeName
         });
 
         /// <summary>
@@ -45,6 +40,20 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
         where TBuilder : IEndpointConventionBuilder
         => builder.RequireAuthorization(new AuthorizeAttribute {
             AuthenticationSchemes = AuthenticationSchemes.TokenExchangeCookieSchemeName
+        });
+
+        /// <summary>
+        /// Sets the authorization scheme to require either the TokenExchangeCookieSchemeName or the JWT Bearer authentication scheme, any endpoint with this specification will require a valid JWT token or a valid Token Exchange Cookie to access it.
+        /// </summary>
+        public static TBuilder RequireTokenExchangeCookieOrJWTBearer<TBuilder>(this TBuilder builder)
+        where TBuilder : IEndpointConventionBuilder
+        => builder.RequireAuthorization(new AuthorizeAttribute {
+            AuthenticationSchemes = string.Join(",",
+            [
+                AuthenticationSchemes.TokenExchangeCookieSchemeName
+                ,JwtBearerDefaults.AuthenticationScheme
+
+            ])
         });
     }
 }
