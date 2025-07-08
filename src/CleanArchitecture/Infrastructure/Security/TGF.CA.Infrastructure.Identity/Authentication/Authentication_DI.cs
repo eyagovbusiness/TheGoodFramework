@@ -85,27 +85,16 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
             var issuer = configuration.GetValue<string>(ConfigurationKeys.FrontendURL.Key) ?? Environment.GetEnvironmentVariable(EnvVariablesNames.FRONTEND_URL)
                 ?? throw new Exception("Error while configuring JWT aauthentication, FrontendURL which is used fro token issuer and audience was not found in appsettings. Please add this configuration.");
             aWebApplicationBuilder.Services.AddAuthentication(options => {
-
                 options.DefaultScheme = AuthenticationSchemes.TokenExchangeCookieSchemeName; // Use OIDC cookie to authenticate
                 options.DefaultChallengeScheme = AuthenticationSchemes.OIDCAuthSchemeName; // Use OIDC to challenge for authentication
                 options.DefaultSignInScheme = AuthenticationSchemes.TokenExchangeCookieSchemeName;
             })
-            .AddCookie(AuthenticationSchemes.TokenExchangeCookieSchemeName, options => {
-                options.Cookie.Name = AuthenticationSchemes.TokenExchangeCookieSchemeName;
-                options.Cookie.HttpOnly = true;
-                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-                options.Cookie.SameSite = SameSiteMode.Strict;
-                options.Cookie.Domain = configuration.GetValue<string>($"{AuthenticationSchemes.TokenExchangeCookieSchemeName}Domain");
-                // For API endpoints, we override the default cookie authentication behavior to return 401 Unauthorized
-                // instead of redirecting to a login page when authentication fails. This is because APIs should not
-                // perform redirects (which are intended for browser flows), and clients expect a 401 status code to
-                // indicate missing or invalid credentials. Returning 401 also aligns with RESTful standards and avoids
-                // leaking endpoint existence via 404s or redirects.
-                options.Events.OnRedirectToLogin = context => {
-                    context.Response.StatusCode = StatusCodes.Status401Unauthorized;
-                    return Task.CompletedTask;
-                };
-            })
+            .AddCookie(AuthenticationSchemes.TokenExchangeCookieSchemeName,
+                options => ConfigureSecureCookie(options, aWebApplicationBuilder.Configuration, AuthenticationSchemes.TokenExchangeCookieSchemeName)
+            )
+            .AddCookie(AuthenticationSchemes.RefreshTokenCookieSchemeName,
+                options => ConfigureSecureCookie(options, aWebApplicationBuilder.Configuration, AuthenticationSchemes.RefreshTokenCookieSchemeName)
+            )
             .AddJwtBearer(options => {
                 options.TokenValidationParameters = new TokenValidationParameters {
                     ValidIssuer = issuer,
@@ -113,7 +102,8 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable(EnvVariablesNames.API_SECRET_KEY)))
+                        Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable(EnvVariablesNames.API_SECRET_KEY))
+                    )
                 };
             })
             .AddOpenIdConnect(AuthenticationSchemes.OIDCAuthSchemeName, options => {
@@ -140,6 +130,23 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
         }
 
         #region Private
+
+        private static void ConfigureSecureCookie(CookieAuthenticationOptions options, IConfiguration configuration, string CookieAuthenticationSchemeName) {
+            options.Cookie.Name = CookieAuthenticationSchemeName;
+            options.Cookie.HttpOnly = true;
+            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            options.Cookie.SameSite = SameSiteMode.Strict;
+            options.Cookie.Domain = configuration.GetValue<string>($"{CookieAuthenticationSchemeName}Domain");
+            // For API endpoints, we override the default cookie authentication behavior to return 401 Unauthorized
+            // instead of redirecting to a login page when authentication fails. This is because APIs should not
+            // perform redirects (which are intended for browser flows), and clients expect a 401 status code to
+            // indicate missing or invalid credentials. Returning 401 also aligns with RESTful standards and avoids
+            // leaking endpoint existence via 404s or redirects.
+            options.Events.OnRedirectToLogin = context => {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return Task.CompletedTask;
+            };
+        }
 
         private static async Task<string> GetAPISecret(IServiceCollection aServiceCollection)
             => await aServiceCollection.BuildServiceProvider()

@@ -10,7 +10,7 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
         /// Configures this endpoint to require the DiscordAuthSchemeName defined in the application layer.
         /// </summary>
         public static TBuilder RequireDiscord<TBuilder>(this TBuilder aBuilder)
-            where TBuilder : IEndpointConventionBuilder
+        where TBuilder : IEndpointConventionBuilder
         => aBuilder.RequireAuthorization(new AuthorizeAttribute {
             AuthenticationSchemes = AuthenticationSchemes.DiscordAuthSchemeName
         });
@@ -19,7 +19,7 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
         /// Sets the authorization scheme to require JWT Bearer authentication, any endpoint with this specification will require a valid JWT token to access it.
         /// </summary>
         public static TBuilder RequireJWTBearer<TBuilder>(this TBuilder aBuilder)
-            where TBuilder : IEndpointConventionBuilder
+        where TBuilder : IEndpointConventionBuilder
         => aBuilder.RequireAuthorization(new AuthorizeAttribute {
             AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme
         });
@@ -43,17 +43,25 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
         });
 
         /// <summary>
-        /// Sets the authorization scheme to require either the TokenExchangeCookieSchemeName or the JWT Bearer authentication scheme, any endpoint with this specification will require a valid JWT token or a valid Token Exchange Cookie to access it.
+        /// Sets the authorization scheme to require either the TokenExchangeCookieSchemeName or the RefreshTokenCookieSchemeName, any endpoint with this specification will require a valid Token Exchange Cookie or a valid Refresh Token Cookie to access it.
         /// </summary>
-        public static TBuilder RequireTokenExchangeCookieOrJWTBearer<TBuilder>(this TBuilder builder)
+        public static TBuilder RequireTokenExchangeCookieOrRefreshTokenCookie<TBuilder>(this TBuilder builder)
         where TBuilder : IEndpointConventionBuilder
         => builder.RequireAuthorization(new AuthorizeAttribute {
             AuthenticationSchemes = string.Join(",",
             [
-                AuthenticationSchemes.TokenExchangeCookieSchemeName
-                ,JwtBearerDefaults.AuthenticationScheme
-
+                AuthenticationSchemes.TokenExchangeCookieSchemeName,
+                AuthenticationSchemes.RefreshTokenCookieSchemeName
             ])
+        });
+
+        /// <summary>
+        /// Sets the authorization scheme to require the RefreshTokenCookieSchemeName, any endpoint with this specification will require a valid Refresh Token Cookie to access it.
+        /// </summary>
+        public static TBuilder RequireRefreshTokenCookie<TBuilder>(this TBuilder builder)
+        where TBuilder : IEndpointConventionBuilder
+        => builder.RequireAuthorization(new AuthorizeAttribute {
+            AuthenticationSchemes = AuthenticationSchemes.RefreshTokenCookieSchemeName
         });
     }
 }

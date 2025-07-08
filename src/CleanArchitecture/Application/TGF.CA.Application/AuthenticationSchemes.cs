@@ -4,5 +4,7 @@ namespace TGF.CA.Application {
         public const string DiscordAuthSchemeName = "Discord";
         public const string OIDCAuthSchemeName = "OIDCAuth";
         public const string TokenExchangeCookieSchemeName = "TokenExchangeCookie";
+        public const string RefreshTokenCookieSchemeName = "RefreshTokenCookie";
+
     }
 }
