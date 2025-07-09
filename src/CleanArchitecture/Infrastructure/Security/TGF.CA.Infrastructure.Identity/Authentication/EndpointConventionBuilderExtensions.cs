@@ -43,15 +43,15 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
         });
 
         /// <summary>
-        /// Sets the authorization scheme to require either the TokenExchangeCookieSchemeName or the RefreshTokenCookieSchemeName, any endpoint with this specification will require a valid Token Exchange Cookie or a valid Refresh Token Cookie to access it.
+        /// Sets the authorization scheme to require either the RefreshTokenCookieSchemeName or TokenExchangeCookieSchemeName, any endpoint with this specification will require a valid Token Exchange Cookie or a valid Refresh Token Cookie to access it.
         /// </summary>
-        public static TBuilder RequireTokenExchangeCookieOrRefreshTokenCookie<TBuilder>(this TBuilder builder)
+        public static TBuilder RequireRefreshTokenCookieOrTokenExchangeCookie<TBuilder>(this TBuilder builder)
         where TBuilder : IEndpointConventionBuilder
         => builder.RequireAuthorization(new AuthorizeAttribute {
             AuthenticationSchemes = string.Join(",",
             [
-                AuthenticationSchemes.TokenExchangeCookieSchemeName,
-                AuthenticationSchemes.RefreshTokenCookieSchemeName
+                AuthenticationSchemes.RefreshTokenCookieSchemeName,
+                AuthenticationSchemes.TokenExchangeCookieSchemeName
             ])
         });
 
