@@ -117,7 +117,7 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
                 options.Scope.Add("openid");
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
-                options.CallbackPath = configuration[ConfigurationKeys.Auth.MicrosoftAuthCallbackURI];
+                options.CallbackPath = configuration[ConfigurationKeys.Auth.OIDCAuthCallbackURI];
 
                 options.TokenValidationParameters = new TokenValidationParameters {
                     NameClaimType = "name",
