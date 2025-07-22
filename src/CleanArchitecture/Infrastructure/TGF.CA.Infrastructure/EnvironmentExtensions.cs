@@ -71,6 +71,7 @@ namespace TGF.CA.Infrastructure {
         /// </summary>
         public static HostEnvironmentEnum GetHostEnvironment(this IWebHostEnvironment webHostEnvironment) {
             var cloudProvider = webHostEnvironment.EnvironmentName.Split('_')[1];
+            Console.WriteLine($"Detected cloud provider: {cloudProvider}");
             return Enum.TryParse(typeof(HostEnvironmentEnum), cloudProvider, false, out var result) && result is HostEnvironmentEnum parsedResult
                 ? parsedResult
                 : throw new InvalidOperationException($"Invalid cloud provider: {cloudProvider}");
