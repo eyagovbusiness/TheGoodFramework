@@ -70,7 +70,10 @@ namespace TGF.CA.Infrastructure {
         /// Gets the cloud provider based on the environment name.
         /// </summary>
         public static HostEnvironmentEnum GetHostEnvironment(this IWebHostEnvironment webHostEnvironment) {
-            var cloudProvider = webHostEnvironment.EnvironmentName.Split('_')[1];
+            var envName = webHostEnvironment.EnvironmentName;
+            string cloudProvider;
+            var parts = envName.Split('_');
+            cloudProvider = parts.Length > 1 ? parts[1] : envName;
             Console.WriteLine($"Detected cloud provider: {cloudProvider}");
             return Enum.TryParse(typeof(HostEnvironmentEnum), cloudProvider, false, out var result) && result is HostEnvironmentEnum parsedResult
                 ? parsedResult
