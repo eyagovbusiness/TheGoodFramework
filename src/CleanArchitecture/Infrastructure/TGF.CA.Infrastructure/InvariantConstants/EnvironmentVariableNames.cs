@@ -15,6 +15,7 @@
         }
 
         public struct RabbitMQ {
+            public const string RABBITMQ_PROTOCOL = "RABBITMQ_PROTOCOL";
             public const string RABBITMQ_HOSTNAME = "RABBITMQ_HOSTNAME";
             public const string RABBITMQ_USERNAME = "RABBITMQ_USERNAME";
             public const string RABBITMQ_PASSWORD = "RABBITMQ_PASSWORD";
