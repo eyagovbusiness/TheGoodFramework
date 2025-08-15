@@ -74,10 +74,9 @@ namespace TGF.CA.Infrastructure {
             string cloudProvider;
             var parts = envName.Split('_');
             cloudProvider = parts.Length > 1 ? parts[1] : envName;
-            Console.WriteLine($"Detected cloud provider: {cloudProvider}");
             return Enum.TryParse(typeof(HostEnvironmentEnum), cloudProvider, false, out var result) && result is HostEnvironmentEnum parsedResult
                 ? parsedResult
-                : throw new InvalidOperationException($"Invalid cloud provider: {cloudProvider}");
+                : throw new InvalidOperationException($"Invalid host environment: The value for ASPNETCORE_ENVIRONMENT env variable is expectd in format[dev/stg/(empty)]_[HOST] and the value that was set for HOST is not valid: {cloudProvider}");
         }
     }
 }
