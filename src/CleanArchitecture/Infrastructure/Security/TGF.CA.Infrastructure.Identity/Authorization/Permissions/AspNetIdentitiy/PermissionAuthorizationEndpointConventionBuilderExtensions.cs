@@ -2,7 +2,44 @@
 using Microsoft.AspNetCore.Builder;
 
 namespace SF.Common.Infrastructure.Identity.Authorization.Permissions.AspNetIdentitiy {
+    /// <summary>
+    /// Extension methods for configuring permission-based authorization requirements on minimal API endpoints.
+    /// </summary>
     public static class PermissionAuthorizationEndpointConventionBuilderExtensions {
+        /// <summary>
+        /// Adds a dynamic permission-based authorization policy requirement to an endpoint.
+        /// </summary>
+        /// <typeparam name="TBuilder">
+        /// The type of endpoint convention builder (e.g., <see cref="RouteHandlerBuilder"/>).
+        /// </typeparam>
+        /// <param name="builder">
+        /// The endpoint convention builder to which the authorization requirement will be applied.
+        /// </param>
+        /// <param name="requiredValues">
+        /// One or more permission claim values that the authenticated user must possess 
+        /// to access the endpoint (e.g., "CanCreateUsers", "CanDeleteUsers").
+        /// </param>
+        /// <returns>
+        /// The same <typeparamref name="TBuilder"/> instance for method chaining.
+        /// </returns>
+        /// <remarks>
+        /// <para>
+        /// This method does not require you to register static policies in <c>Program.cs</c>.
+        /// Instead, the <see cref="PermissionAuthorizationPolicyProvider"/> will dynamically 
+        /// create and cache policies at runtime based on the specified permission names.
+        /// </para>
+        /// <para>
+        /// This is especially useful in systems with many fine-grained permissions, 
+        /// as you avoid manually registering each policy.
+        /// </para>
+        /// </remarks>
+        /// <example>
+        /// Minimal API usage:
+        /// <code>
+        /// app.MapPost("/users", CreateUserHandler)
+        ///    .RequirePermissions("CanCreateUsers", "CanAssignRoles");
+        /// </code>
+        /// </example>
         public static TBuilder RequiresClaims<TBuilder>(
             this TBuilder builder,
             string claimType,
