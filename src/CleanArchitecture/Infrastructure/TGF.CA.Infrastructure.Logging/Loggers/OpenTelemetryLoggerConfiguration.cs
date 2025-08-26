@@ -3,13 +3,12 @@ using Microsoft.Extensions.Logging;
 using OpenTelemetry.Logs;
 using OpenTelemetry.Resources;
 using TGF.CA.Infrastructure.InvariantConstants;
-namespace TGF.CA.Infrastructure.Logging.Loggers {
 
+namespace TGF.CA.Infrastructure.Logging.Loggers {
     /// <summary>
     /// Provides configuration methods for setting up logging using OpenTelemetry.
     /// </summary>
     public static class OpenTelemetryLoggerConfiguration {
-
         /// <summary>
         /// Configures OpenTelemetry logging to log messages to the console and optionally to an OTLP exporter.
         /// The log level is retrieved from the application's configuration.
@@ -30,21 +29,24 @@ namespace TGF.CA.Infrastructure.Logging.Loggers {
 
             loggingBuilder.SetMinimumLevel(parsedLogLevel);
 
+            // Apply per-category log level overrides from configuration
+            LoggingExtensions.ApplyLogLevelOverrides(loggingBuilder, context.Configuration);
+
             loggingBuilder.AddOpenTelemetry(options => {
                 options.IncludeFormattedMessage = true;
                 options.IncludeScopes = true;
                 options.ParseStateValues = true;
 
                 options.SetResourceBuilder(ResourceBuilder.CreateDefault()
-                .AddService(context.Configuration["OpenTelemetry:ServiceName"] ?? "DefaultApp"));
+                    .AddService(context.Configuration["OpenTelemetry:ServiceName"] ?? "DefaultApp"));
 
                 options.AddConsoleExporter();
 
-                // Optional: OTLP exporter  
-                // options.AddOtlpExporter(otlpOptions =>  
-                // {  
-                //     otlpOptions.Endpoint = new Uri("http://your-otel-collector:4317");  
-                // });  
+                // Optional: OTLP exporter
+                // options.AddOtlpExporter(otlpOptions =>
+                // {
+                //     otlpOptions.Endpoint = new Uri("http://your-otel-collector:4317");
+                // });
             });
         });
     }
