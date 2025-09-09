@@ -12,41 +12,37 @@ namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Consumer;
 /// <param name="channel"></param>
 /// <param name="serializer"></param>
 /// <param name="handleMessage"></param>
-internal class RabbitMQMessageReceiver(IModel channel, ISerializer serializer, IHandleMessage handleMessage, ILogger logger)
-: DefaultBasicConsumer {
-    private byte[]? MessageBody { get; set; }
-    private Type? MessageType { get; set; }
-    private ulong DeliveryTag { get; set; }
+internal class RabbitMQMessageReceiver(IModel channel, ISerializer serializer, IHandleMessage handleMessage, ILogger logger) : DefaultBasicConsumer(channel) {
+    public override void HandleBasicDeliver(string consumerTag, ulong deliveryTag, bool redelivered, string exchange, string routingKey, IBasicProperties properties, ReadOnlyMemory<byte> body) {
+        var messageBody = body.ToArray();
+        var messageType = Type.GetType(properties.Type);
 
-    public override async void HandleBasicDeliver(string consumerTag, ulong deliveryTag, bool redelivered, string exchange,
-        string routingKey, IBasicProperties properties, ReadOnlyMemory<byte> body) {
-        await Task.Yield(); // Allows the handler to resume on a different thread if it's able to, potentially freeing up the current thread
-
-        MessageType = Type.GetType(properties.Type)!;
-        MessageBody = body.ToArray();
-        DeliveryTag = deliveryTag;
-
-        try {
-            await HandleMessage();
-            channel.BasicAck(DeliveryTag, false);  // Acknowledge the message reception to remove it from the queue
-        }
-        catch (Exception ex) {
-            // Here, you should decide how to handle the exception. You might want to log it,
-            // and you might decide to either acknowledge or not acknowledge the message depending on the nature of the error.
-            logger.LogError(ex, "An error occurred while processing the message");
-            channel.BasicNack(DeliveryTag, false, true);  // This is just an example to not acknowledge the message and let it be requeued
-        }
-    }
-
-    private async Task HandleMessage() {
-        if (MessageBody == null || MessageType == null) {
-            throw new ArgumentException("Neither the body nor the messageType have been populated");
+        if (messageType == null) {
+            logger.LogWarning("Cannot resolve message type: {Type}", properties.Type);
+            channel.BasicNack(deliveryTag, false, false);
+            return;
         }
 
-        var message = serializer.DeserializeObject(MessageBody, MessageType) as IMessage
-                      ?? throw new ArgumentException("The message didn't deserialize properly");
+        logger.LogInformation("Received message. ConsumerTag: {ConsumerTag}, DeliveryTag: {DeliveryTag}, Type: {Type}", consumerTag, deliveryTag, messageType.FullName);
 
-        await handleMessage.Handle(message, CancellationToken.None);
+        _ = Task.Run(async () => {
+            try {
+                var message = serializer.DeserializeObject(messageBody, messageType) as IMessage;
+                if (message == null) {
+                    logger.LogWarning("Message deserialized as null. DeliveryTag: {DeliveryTag}", deliveryTag);
+                    channel.BasicNack(deliveryTag, false, false);
+                    return;
+                }
+
+                logger.LogInformation("Handling message: {MessageIdentifier}", message.MessageIdentifier);
+
+                await handleMessage.Handle(message, CancellationToken.None);
+                channel.BasicAck(deliveryTag, false);
+            }
+            catch (Exception ex) {
+                logger.LogError(ex, "Error processing message. DeliveryTag: {DeliveryTag}", deliveryTag);
+                channel.BasicNack(deliveryTag, false, true); // requeue
+            }
+        });
     }
 }
-
