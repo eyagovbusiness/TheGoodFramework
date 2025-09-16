@@ -7,6 +7,13 @@ Environment=development
 NO_CACHE=false
 REGISTRY_PUSH=false
 DOCKERFILE=""
+TAG="latest"
+
+# Check if the first argument is a tag (doesn't start with --)
+if [[ "$#" -gt 0 && ! "$1" =~ ^-- ]]; then
+    TAG="$1"
+    shift
+fi
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
@@ -40,14 +47,16 @@ trap 'rm -f projectfiles.tar' EXIT
 find . \( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.docker.config" \) -print0 \
     | tar -cvf projectfiles.tar --null -T -
 
+IMAGE_TAG="${IMAGE_REGISTRY}/base-images/${Environment}/the_good_framework:{TAG}"
+
 # Build the Docker image with or without cache
 if [ "$NO_CACHE" = true ]; then
-	docker build $DOCKERFILE . --no-cache --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${Environment} -t ${IMAGE_REGISTRY}/base-images/${Environment}/the_good_framework:latest
+	docker build $DOCKERFILE . --no-cache --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${Environment} -t ${IMAGE_TAG}
 else
-    docker build $DOCKERFILE . --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${Environment} -t ${IMAGE_REGISTRY}/base-images/${Environment}/the_good_framework:latest
+    docker build $DOCKERFILE . --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${Environment} -t ${IMAGE_TAG}
 fi
 
 # If the --registry-push argument is provided, push the image
 if [ "$REGISTRY_PUSH" = true ]; then
-    docker push ${IMAGE_REGISTRY}/base-images/${Environment}/the_good_framework:latest
+    docker push ${IMAGE_TAG}
 fi
