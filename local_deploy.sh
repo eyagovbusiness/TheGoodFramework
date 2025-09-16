@@ -47,7 +47,7 @@ trap 'rm -f projectfiles.tar' EXIT
 find . \( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.docker.config" \) -print0 \
     | tar -cvf projectfiles.tar --null -T -
 
-IMAGE_TAG="${IMAGE_REGISTRY}/base-images/${Environment}/the_good_framework:{TAG}"
+IMAGE_TAG="${IMAGE_REGISTRY}/base-images/${Environment}/the_good_framework:${TAG}"
 
 # Build the Docker image with or without cache
 if [ "$NO_CACHE" = true ]; then
