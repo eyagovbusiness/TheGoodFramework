@@ -1,9 +1,8 @@
 #!/bin/bash
 set -eux
 
-Environment=development
-
 # Default values
+ENVIRONMENT="${OMICSFLOW_ENVIRONMENT:-development}" 
 NO_CACHE=false
 REGISTRY_PUSH=false
 DOCKERFILE=""
@@ -23,7 +22,7 @@ while [[ "$#" -gt 0 ]]; do
 		--bgs) 
 			DOCKERFILE="-f Dockerfile_bgs" ;;
         --help) 
-            echo "Usage: $0 [--no-cache] [--registry-push]"
+            echo "Usage: $0 [--no-cache] [--registry-push] [--bgs]"
             exit 0
             ;;
         *) 
@@ -47,13 +46,13 @@ trap 'rm -f projectfiles.tar' EXIT
 find . \( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.docker.config" \) -print0 \
     | tar -cvf projectfiles.tar --null -T -
 
-IMAGE_TAG="${IMAGE_REGISTRY}/base-images/${Environment}/the_good_framework:${TAG}"
+IMAGE_TAG="${IMAGE_REGISTRY}/base-images/${ENVIRONMENT}/the_good_framework:${TAG}"
 
 # Build the Docker image with or without cache
 if [ "$NO_CACHE" = true ]; then
-	docker build $DOCKERFILE . --no-cache --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${Environment} -t ${IMAGE_TAG}
+	docker build $DOCKERFILE . --no-cache --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${ENVIRONMENT} -t ${IMAGE_TAG}
 else
-    docker build $DOCKERFILE . --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${Environment} -t ${IMAGE_TAG}
+    docker build $DOCKERFILE . --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${ENVIRONMENT} -t ${IMAGE_TAG}
 fi
 
 # If the --registry-push argument is provided, push the image
