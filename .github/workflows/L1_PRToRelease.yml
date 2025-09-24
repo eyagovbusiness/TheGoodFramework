@@ -2,6 +2,7 @@ name: L1 - Build TheGoodFramework (PR → release/0.0.0)
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
     branches:
       - release/0.0.0
   workflow_dispatch:
