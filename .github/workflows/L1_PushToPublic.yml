@@ -30,7 +30,6 @@ jobs:
 
       - name: Build and push with local_deploy.sh
         run: |
-          cd TheGoodFramework
           chmod +x ./local_deploy.sh
 
           TAG="${{ github.event.inputs.tag || 'latest' }}"
