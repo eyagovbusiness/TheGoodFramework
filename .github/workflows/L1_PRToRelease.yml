@@ -27,10 +27,9 @@ jobs:
           registry: ${{ secrets.REG_ADDRESS }}
           username: ${{ secrets.REG_USERNAME }}
           password: ${{ secrets.REG_PASSWORD }}
-          
+
       - name: Run local_deploy.sh
         run: |
-          cd TheGoodFramework
           chmod +x ./local_deploy.sh
           ./local_deploy.sh --no-cache --bgs
         env:
