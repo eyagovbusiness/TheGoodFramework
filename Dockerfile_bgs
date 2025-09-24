@@ -1,5 +1,5 @@
 ARG BUILD_CONFIGURATION=Release ENVIRONMENT=testportal
-ARG IMAGE_REGISTRY=biognosysbi.azurecr.io
+ARG IMAGE_REGISTRY=omicsflowinternal.azurecr.io
 
 FROM $IMAGE_REGISTRY/base-images/$ENVIRONMENT/alpine:latest AS base
 # BUILD IMAGE
