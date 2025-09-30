@@ -39,3 +39,14 @@ jobs:
         env:
           IMAGE_REGISTRY: ${{ secrets.REG_ADDRESS }}
           OMICSFLOW_ENVIRONMENT: production
+
+  dispatch:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+    - name: Trigger main workflow in L2.Common
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.PAT_TOKEN }} 
+        repository: Biognosys/SF.Common
+        event-type: L1-dependency-update
