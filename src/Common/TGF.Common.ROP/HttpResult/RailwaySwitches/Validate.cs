@@ -108,6 +108,28 @@ namespace TGF.Common.ROP.HttpResult.RailwaySwitches {
         }
 
         /// <summary>
+        /// Asynchronously performs a validation of this result Value. If the validation fails, 
+        /// it returns a failure with the resulting validation errors. Otherwise, it returns the original result.
+        /// </summary>
+        /// <typeparam name="T">The type of the result value.</typeparam>
+        /// <param name="aThisResult">The async <see cref="IHttpResult{T}"/> to verify.</param>
+        /// <param name="aValidator">The validator to use.</param>
+        /// <returns>Either the original result or a failure, depending on the validation result.</returns>
+        public static async Task<IHttpResult<T>> ValidateResult<T>(this Task<IHttpResult<T>> aThisResult, IValidator<T> aValidator) {
+            var lThisResult = await aThisResult;
+            if (!lThisResult.IsSuccess)
+                return lThisResult;
+
+            var lValidationResult = await aValidator.ValidateAsync(lThisResult.Value);
+            return lValidationResult.IsValid
+                ? lThisResult
+                : Result.Result.Failure<T>(
+                    lValidationResult.Errors
+                        .Select(e => GetValidationError(e.ErrorCode, e.ErrorMessage))
+                        .ToImmutableArray());
+        }
+
+        /// <summary>
         /// Get a list of validation results and if any of the validation results was not valid, 
         /// it returns a failure with all the failed validation errors. Otherwise, it returns the original result.
         /// </summary>
