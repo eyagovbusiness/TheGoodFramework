@@ -25,7 +25,7 @@
             public readonly struct SecretsFileNames {
                 public const string Key = $"{SecretsFiles.Key}:{nameof(SecretsFileNames)}";
                 public const string PostgresSecrets = $"{Key}:PostgresSecrets";
-                public const string RabbitMQConnectionString = $"{Key}:RabbitMQConnectionString";
+                public const string RabbitMQCredentials = $"{Key}:RabbitMQCredentials";
                 public const string CloudStorageConnectionString = $"{Key}:CloudStorageConnectionString";
                 public const string ImagePullSecret = $"{Key}:ImagePullSecret";
             }
