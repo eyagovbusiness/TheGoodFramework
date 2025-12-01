@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.Common.Extensions;
 
 namespace TGF.CA.Infrastructure.Discovery {
@@ -31,7 +32,7 @@ namespace TGF.CA.Infrastructure.Discovery {
                 logger.LogInformation("Consul discovery service successfully configured with address: {Address}", consulConfig.Address);
             }))
             .AddSingleton<IServiceDiscovery, ConsulServiceDiscovery>()
-            .AddConsulHealthChecks(configuredUriAddress.Host, configuredUriAddress.Port, "ServiceRegistry");
+            .AddConsulHealthChecks(configuredUriAddress.Host, configuredUriAddress.Port, InfrastrcutureConstants.HealthCheckNames.ServiceRegistry);
         }
 
         /// <summary>

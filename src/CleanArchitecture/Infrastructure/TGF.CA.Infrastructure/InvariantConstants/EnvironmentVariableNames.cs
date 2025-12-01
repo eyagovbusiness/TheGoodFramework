@@ -5,6 +5,7 @@
         /// </summary>
         public const string SECRETS_PATH = "SECRETS_PATH";
         public const string AZURE_CLIENT_ID = "AZURE_CLIENT_ID";
+        public const string SOFTWARE_VERSION = "SOFTWARE_VERSION";
 
         public struct Postgres {
             public const string PGHOST = "PGHOST";
