@@ -12,7 +12,9 @@ public struct InfrastrcutureConstants {
         public const string LicenseCompliance = "LicenseCompliance";
         public const string SecretsManager = "SecretsManager";
         public const string ServiceRegistry = "ServiceRegistry";
-        
+
+        public const string ObjectStorage = "ObjectStorage";
+
     }
 }
 
