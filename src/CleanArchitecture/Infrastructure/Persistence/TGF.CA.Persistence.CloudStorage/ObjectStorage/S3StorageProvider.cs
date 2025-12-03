@@ -6,13 +6,16 @@ namespace TGF.CA.Infrastructure.Persistence.CloudStorage.ObjectStorage;
 public class S3StorageProvider(IAmazonS3 s3Client) : IObjectStorageProvider {
 
     #region IObjectStorageProvider Implementation
-    public async Task<bool> CheckConnectionAsync(CancellationToken cancellationToken = default) {
+    public async Task<bool> CheckConnectionOrThrowAsync(CancellationToken cancellationToken = default) {
         try {
-            await s3Client.ListBucketsAsync(cancellationToken);
+            await s3Client.HeadBucketAsync(new HeadBucketRequest {
+                BucketName = Environment.GetEnvironmentVariable("AWS_BUCKET_NAME") ?? throw new InvalidOperationException("S3_BUCKET_NAME environment variable is not set.")
+            }, cancellationToken);
+
             return true; // Success means connection is valid
         }
         catch {
-            return false; // Any exception means connectivity failed
+            throw;
         }
 
     }

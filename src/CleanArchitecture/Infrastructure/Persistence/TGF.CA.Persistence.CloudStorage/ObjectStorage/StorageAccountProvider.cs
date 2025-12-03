@@ -12,14 +12,14 @@ public class StorageAccountProvider(IConfiguration configuration, ISecretFilesSe
     private BlobServiceClient? _blobServiceClient;
 
     #region IObjectStorageProvider Implementation
-    public async Task<bool> CheckConnectionAsync(CancellationToken cancellationToken = default) {
+    public async Task<bool> CheckConnectionOrThrowAsync(CancellationToken cancellationToken = default) {
         try {
             var client = await GetBlobServiceClientAsync();
             await client.GetPropertiesAsync(cancellationToken);
             return true;
         }
         catch {
-            return false;
+            throw;
         }
     }
 

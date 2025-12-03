@@ -16,9 +16,9 @@ public interface IObjectStorageProvider {
     /// </summary>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
     /// <returns>
-    /// A task that returns <c>true</c> if the connection is successful; otherwise <c>false</c>.
+    /// A task that returns <c>true</c> if the connection is successful; otherwise throws and exception.
     /// </returns>
-    Task<bool> CheckConnectionAsync(CancellationToken cancellationToken = default);
+    Task<bool> CheckConnectionOrThrowAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Downloads an object from the specified container or bucket.
