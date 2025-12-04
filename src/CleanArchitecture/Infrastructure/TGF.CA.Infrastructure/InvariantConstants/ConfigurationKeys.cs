@@ -4,7 +4,12 @@
             public const string Key = nameof(AppMetadata);
             public const string AppName = $"{Key}:AppName";
             public const string ServiceName = $"{Key}:ServiceName";
-
+        }
+        public readonly struct Licensing {
+            public const string Key = nameof(Licensing);
+            public readonly struct Slascone {
+                public const string Key = $"{Licensing.Key}:{nameof(Slascone)}";
+            }
         }
         public readonly struct Logging {
             public const string Key = nameof(Logging);
@@ -25,8 +30,11 @@
             public readonly struct SecretsFileNames {
                 public const string Key = $"{SecretsFiles.Key}:{nameof(SecretsFileNames)}";
                 public const string PostgresSecrets = $"{Key}:PostgresSecrets";
+                public const string LicenseKeySecret = $"{Key}:LicenseKeySecret";
+                public const string LicenseProvisioningKeySecret = $"{Key}:LicenseProvisioningKeySecret";
+                public const string LicensePemSecret = $"{Key}:LicensePemSecret";
                 public const string RabbitMQCredentials = $"{Key}:RabbitMQCredentials";
-                public const string CloudStorageConnectionString = $"{Key}:CloudStorageConnectionString";
+                public const string ObjectStorageConnectionString = $"{Key}:ObjectStorageConnectionString";
                 public const string ImagePullSecret = $"{Key}:ImagePullSecret";
             }
         }
@@ -36,8 +44,8 @@
             public const string AuthType = $"{Key}:AuthType";
             public const string SecretsSourceType = $"{Key}:SecretsSourceType";
         }
-        public readonly struct CloudStorage {
-            public const string Key = nameof(CloudStorage);
+        public readonly struct ObjectStorage {
+            public const string Key = nameof(ObjectStorage);
             public const string SecretsSourceType = $"{Key}:SecretsSourceType";
 
             public readonly struct AWS {

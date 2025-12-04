@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.4.33213.308
+# Visual Studio Version 18
+VisualStudioVersion = 18.0.11205.157 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{4B37E92C-1DF6-438C-9425-9CD42E69700A}"
 EndProject
@@ -64,6 +64,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TGF.CA.Infrastructure.Persistence.CloudStorage", "src\CleanArchitecture\Infrastructure\Persistence\TGF.CA.Persistence.CloudStorage\TGF.CA.Infrastructure.Persistence.CloudStorage.csproj", "{EA2BFE0E-2536-4F40-8840-0695DF0E0625}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TGF.CA.Infrastructure.Logging", "src\CleanArchitecture\Infrastructure\TGF.CA.Infrastructure.Logging\TGF.CA.Infrastructure.Logging.csproj", "{5E5644CC-1489-4474-AC25-FC3C080EE3D8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TGF.CA.Infrastructure.Licensing", "src\CleanArchitecture\Infrastructure\TGF.CA.Infrastructure.Licensing\TGF.CA.Infrastructure.Licensing.csproj", "{5F1BAF66-ADEA-4C97-96DE-6A9234D891DB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -151,6 +153,10 @@ Global
 		{5E5644CC-1489-4474-AC25-FC3C080EE3D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5E5644CC-1489-4474-AC25-FC3C080EE3D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5E5644CC-1489-4474-AC25-FC3C080EE3D8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F1BAF66-ADEA-4C97-96DE-6A9234D891DB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F1BAF66-ADEA-4C97-96DE-6A9234D891DB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F1BAF66-ADEA-4C97-96DE-6A9234D891DB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F1BAF66-ADEA-4C97-96DE-6A9234D891DB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -186,6 +192,7 @@ Global
 		{06A1A7E6-02A5-45BA-9AE9-F70EAF2BDD3F} = {5CDB722D-5B36-455F-9612-9C39498D9693}
 		{EA2BFE0E-2536-4F40-8840-0695DF0E0625} = {1327FF9E-0D53-46FB-9288-A5CC30096386}
 		{5E5644CC-1489-4474-AC25-FC3C080EE3D8} = {6B6CEE94-B90C-45D1-A830-A1032D8130CD}
+		{5F1BAF66-ADEA-4C97-96DE-6A9234D891DB} = {6B6CEE94-B90C-45D1-A830-A1032D8130CD}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {3A057602-2F48-48E5-A9A4-C95C82A96825}
