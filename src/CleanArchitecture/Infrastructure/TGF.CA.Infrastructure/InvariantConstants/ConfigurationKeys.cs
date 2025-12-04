@@ -34,7 +34,7 @@
                 public const string LicenseProvisioningKeySecret = $"{Key}:LicenseProvisioningKeySecret";
                 public const string LicensePemSecret = $"{Key}:LicensePemSecret";
                 public const string RabbitMQCredentials = $"{Key}:RabbitMQCredentials";
-                public const string CloudStorageConnectionString = $"{Key}:CloudStorageConnectionString";
+                public const string ObjectStorageConnectionString = $"{Key}:ObjectStorageConnectionString";
                 public const string ImagePullSecret = $"{Key}:ImagePullSecret";
             }
         }
@@ -44,8 +44,8 @@
             public const string AuthType = $"{Key}:AuthType";
             public const string SecretsSourceType = $"{Key}:SecretsSourceType";
         }
-        public readonly struct CloudStorage {
-            public const string Key = nameof(CloudStorage);
+        public readonly struct ObjectStorage {
+            public const string Key = nameof(ObjectStorage);
             public const string SecretsSourceType = $"{Key}:SecretsSourceType";
 
             public readonly struct AWS {
