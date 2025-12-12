@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+	<!--It seems that this specific version of IdentityModel is required but was missing for AspNetCore.HealthChecks.UI-->
+	<PackageReference Include="IdentityModel" Version="5.2.0" />
     <PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.2" />
-	  <!--FIXING  CVE-2024-43483 -->
+	<!--FIXING  CVE-2024-43483 -->
+	<PackageReference Include="KubernetesClient" Version="17.0.14" />
 	<PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.1" />
     <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="8.0.1" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />

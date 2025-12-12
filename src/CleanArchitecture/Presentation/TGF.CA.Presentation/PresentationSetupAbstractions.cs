@@ -59,6 +59,15 @@ namespace TGF.CA.Presentation {
             return aWebApplicationBuilder;
         }
 
+
+        /// <summary>
+        /// Defines the modes for origin validation in CORS configuration.
+        /// </summary>
+        public enum OriginValidationMode {
+            StrictMatch,
+            BaseDomainMatch //(last two segments)
+        }
+
         /// <summary>
         /// Configures CORS to allow requests from the specified frontend URL pattern, supporting dynamic subdomains.
         /// </summary>
@@ -66,7 +75,7 @@ namespace TGF.CA.Presentation {
         /// <param name="aConfiguration">The configuration instance.</param>
         /// <returns>The modified WebApplicationBuilder instance.</returns>
         /// <exception cref="Exception">Thrown when CORSFrontendURL configuration is not found.</exception>
-        public static WebApplicationBuilder ConfigureFrontendCORS(this WebApplicationBuilder aWebApplicationBuilder, IConfiguration aConfiguration) {
+        public static WebApplicationBuilder ConfigureFrontendCORS(this WebApplicationBuilder aWebApplicationBuilder, IConfiguration aConfiguration, OriginValidationMode aOriginValidationMode = OriginValidationMode.StrictMatch) {
             var lCORSFrontUrl = aConfiguration.GetValue<string>(EnvVariablesNames.FRONTEND_URL)
                 ?? aConfiguration.GetValue<string>("FrontendURL")
                 ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings or environment variables. Please add this configuration.");
@@ -76,7 +85,7 @@ namespace TGF.CA.Presentation {
             aWebApplicationBuilder.Services.AddCors(options => {
                 options.AddPolicy("AllowFrontCorsPolicy", builder =>
                     builder.SetIsOriginAllowed(origin =>
-                           IsOriginAllowed(origin, lCORSFrontUrl, lLocalDevelopmentUrl))
+                           IsOriginAllowed(origin, lCORSFrontUrl, lLocalDevelopmentUrl, aOriginValidationMode))
                            .AllowAnyHeader()
                            .AllowAnyMethod()
                            .AllowCredentials()
@@ -86,40 +95,53 @@ namespace TGF.CA.Presentation {
             return aWebApplicationBuilder;
         }
 
+
+
         /// <summary>
-        /// Validates if the origin is allowed for CORS based on the frontend URL and local development URL. Allows origins like https://environment.subdomain.domain.TLD
+        /// Validates if the origin is allowed for CORS based on the selected validation mode.
         /// </summary>
         /// <param name="aOrigin">The origin of the incoming request.</param>
         /// <param name="aFrontendUrl">The configured frontend URL.</param>
-        /// <param name="aLocalDevelopmentUrl">The local development URL (optional, for development environments).</param>
-        /// <returns>True if the origin is allowed; false otherwise.</returns>
-        /// <remarks>
-        /// This method applies the following logic:
-        /// 1. Extracts the main domain from the FrontendURL.
-        /// 2. Allows the request if the origin matches either the FrontendURL or the local development URL.
-        /// 3. Ensures that the origin's domain ends with the main domain.
-        /// 4. Allows the case where there is no subdomain.
-        /// 5. Validates that, if a subdomain exists, it matches the first part of the FrontendURL's domain.
-        /// </remarks>
-        private static bool IsOriginAllowed(string? aOrigin, string aFrontendUrl, string? aLocalDevelopmentUrl) {
+        /// <param name="aLocalDevelopmentUrl">Optional local development URL.</param>
+        /// <param name="mode">Validation mode: StrictMatch or BaseDomainMatch.</param>
+        /// <returns>True if allowed; false otherwise.</returns>
+        private static bool IsOriginAllowed(string? aOrigin, string aFrontendUrl, string? aLocalDevelopmentUrl, OriginValidationMode mode) {
             if (string.IsNullOrWhiteSpace(aOrigin) || aOrigin is "null")
-                return false; // Reject null or empty origins or origins with value "null" by default, it is importanto to explicitly handle this for not CORS requests to continue 
-            try {
-                var lMainDomain = new Uri(aFrontendUrl).Host;
+                return false;
 
+            try {
                 if (aOrigin == aFrontendUrl || aOrigin == aLocalDevelopmentUrl)
                     return true;
 
-                var lOriginDomain = new Uri(aOrigin).Host;
-                var lHostParts = lOriginDomain.Split('.');
+                var lFrontendHost = new Uri(aFrontendUrl).Host;
+                var lOriginHost = new Uri(aOrigin).Host;
 
-                return lOriginDomain.EndsWith(lMainDomain, StringComparison.OrdinalIgnoreCase)
-                && (lHostParts.Length == 2 || lHostParts[0] == lMainDomain.Split('.')[0]);
+                switch (mode) {
+                    case OriginValidationMode.StrictMatch:
+                        var lHostParts = lOriginHost.Split('.');
+                        return lOriginHost.EndsWith(lFrontendHost, StringComparison.OrdinalIgnoreCase)
+                               && (lHostParts.Length == 2 || lHostParts[0] == lFrontendHost.Split('.')[0]);
+
+                    case OriginValidationMode.BaseDomainMatch:
+                        var lFrontendParts = lFrontendHost.Split('.');
+                        var lOriginParts = lOriginHost.Split('.');
+                        if (lFrontendParts.Length < 2 || lOriginParts.Length < 2)
+                            return false;
+
+                        var lFrontendBase = string.Join('.', lFrontendParts.TakeLast(2));
+                        var lOriginBase = string.Join('.', lOriginParts.TakeLast(2));
+                        return lFrontendBase.Equals(lOriginBase, StringComparison.OrdinalIgnoreCase);
+
+                    default:
+                        return false;
+                }
             }
             catch {
-                return false; // Reject malformed URIs
+                return false;
             }
         }
+
+
 
         /// <summary>
         /// Use Authentication and Authorization.
