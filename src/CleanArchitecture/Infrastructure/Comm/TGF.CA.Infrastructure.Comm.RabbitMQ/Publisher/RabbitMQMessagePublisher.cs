@@ -46,11 +46,9 @@ where TMessage : IMessage {
         lProperties.Persistent = true;
         lProperties.Type = RabbitMQMessagePublisher<TMessage>.RemoveVersion(aMessage.GetType());
 
-        if (aMessage is IntegrationMessage integrationMsg) {
-            var metadataProperty = aMessage.GetType().GetProperty("Metadata");
-            if (metadataProperty?.GetValue(aMessage) is Metadata metadata && metadata.Priority.HasValue) {
-                lProperties.Priority = metadata.Priority.Value;
-            }
+        var metadataProperty = aMessage.GetType().GetProperty("Metadata");
+        if (metadataProperty?.GetValue(aMessage) is Metadata metadata && metadata.Priority.HasValue) {
+            lProperties.Priority = metadata.Priority.Value;
         }
 
         var lCorrectExchange = GetCorrectExchange();
