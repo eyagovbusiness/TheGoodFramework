@@ -55,7 +55,7 @@ namespace TGF.CA.Infrastructure {
                 },
                 _ => false, // Always return false so it never retries based on result.
                 aMaxRetries: 10, // Customize max retries as needed.
-                aDelayMilliseconds: 2000, // Customize delay between retries.
+                aDelayMilliseconds: 500, // Customize delay between retries.
                 CancellationToken.None // Pass a CancellationToken if applicable.
             );
         }

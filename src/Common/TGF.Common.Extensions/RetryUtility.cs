@@ -20,42 +20,44 @@ namespace TGF.Common.Extensions {
         /// <exception cref="ArgumentNullException">Thrown if either <paramref name="aCondition"/> or <paramref name="aRetryCondition"/> is null.</exception>
         /// <exception cref="InvalidOperationException">Thrown when the retry attempts exceed the maximum limit.</exception>
         /// <exception cref="Exception">Propagates any exceptions thrown by the task being retried, except for those handled by retries and cancellation.</exception>
-        public async Task<TlResult> ExecuteWithRetryAsync<TlResult>(
-            Func<Task<TlResult>> aCondition,
-            Func<TlResult, bool> aRetryCondition,
-            int aMaxRetries = 5,
-            int aDelayMilliseconds = 1000,
-            CancellationToken aCancellationToken = default) {
-            ArgumentNullException.ThrowIfNull(aCondition);
-            ArgumentNullException.ThrowIfNull(aRetryCondition);
+        public async Task<TResult> ExecuteWithRetryAsync<TResult>(
+            Func<Task<TResult>> operation,
+            Func<TResult, bool> shouldRetry,
+            int maxRetries = 5,
+            int initialDelayMs = 1000,
+            CancellationToken ct = default) {
+            ArgumentNullException.ThrowIfNull(operation);
+            ArgumentNullException.ThrowIfNull(shouldRetry);
 
-            var retryCount = 1;
-
-            do {
-                Task<TlResult> task;
+            for (int attempt = 1; attempt <= maxRetries; attempt++) {
                 try {
-                    logger.LogInformation("[RETRY UTILITY] Executing task with retry, attempt number {AttemptNumber} of {MaxRetries}", retryCount, aMaxRetries);
-                    task = aCondition();
-                    var result = await task.ConfigureAwait(false);
-                    if (!aRetryCondition(result)) {
-                        logger.LogInformation("[RETRY UTILITY] Task with retry executed successfully during attempt number {AttemptNumber} of {MaxRetries}", retryCount, aMaxRetries);
+                    logger.LogInformation("[RETRY] Attempt {Attempt} of {MaxRetries}", attempt, maxRetries);
+
+                    TResult result = await operation().ConfigureAwait(false);
+
+                    // If the condition says "don't retry", or this is our last stand, return the result
+                    if (!shouldRetry(result) || attempt == maxRetries) {
                         return result;
                     }
-                } catch (Exception exception) {
-                    logger.LogWarning(exception, "[WARNING]: Exception thrown by during the {retryUtilityName} duyring retry number {retryCount}:", nameof(RetryUtility), retryCount);
-                    if (aCancellationToken.IsCancellationRequested || retryCount >= aMaxRetries) {
-                        logger.LogError("Max retry attempts exceeded by the {RetryUtilityName}", nameof(RetryUtility));
-                        throw;
-                    }
+                }
+                catch (Exception ex) when (attempt < maxRetries && !ct.IsCancellationRequested) {
+                    logger.LogWarning(ex, "[RETRY] Exception on attempt {Attempt}", attempt);
                 }
 
-                // Exponential backoff: delay increases with each retry
-                var delay = aDelayMilliseconds * (int)Math.Pow(2, retryCount);
-                await Task.Delay(delay, aCancellationToken).ConfigureAwait(false);
-            }
-            while (++retryCount <= aMaxRetries && !aCancellationToken.IsCancellationRequested);
+                // Calculate Delay: (initialDelay * 2^(attempt-1)) + Jitter
+                // Attempt 1 failure -> delay 1000ms. Attempt 2 failure -> delay 2000ms.
+                var factor = Math.Pow(1.5, attempt - 1); // Reduced exponent
+                var delay = TimeSpan.FromMilliseconds(initialDelayMs * factor);
 
-            throw new InvalidOperationException($"Max retry attempts exceeded by the {nameof(RetryUtility)}");
+                // Adding a small random jitter (0-200ms) prevents synchronized retries
+                var jitter = TimeSpan.FromMilliseconds(Random.Shared.Next(0, 200));
+
+                await Task.Delay(delay + jitter, ct).ConfigureAwait(false);
+            }
+
+            // This part is technically unreachable due to the logic above, 
+            // but kept for compiler satisfaction or specific fall-through logic.
+            throw new OperationCanceledException("Retry failed or was cancelled.");
         }
 
         /// <summary>
