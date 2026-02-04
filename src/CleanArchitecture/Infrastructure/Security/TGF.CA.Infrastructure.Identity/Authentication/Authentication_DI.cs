@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -81,11 +82,18 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
         /// JWT scheme used for API access after token issuance.
         /// IMPORTANT: The order in which the authentication schemes are added matters, when an endpoint is protected by multiple authentication schemes, the first one that matches will be used. Or when a request comes with multiple authentication schemes, the first one that matches will be used.
         /// </remarks>
-        public static void ConfigureOIDCPlusJWTAuthentication(this WebApplicationBuilder aWebApplicationBuilder, Func<Microsoft.AspNetCore.Authentication.OpenIdConnect.TokenValidatedContext, Task> onTokenValidatedHandler) {
+        public static void ConfigureOIDCPlusJWTAuthentication(
+            this WebApplicationBuilder aWebApplicationBuilder, 
+            Func<Microsoft.AspNetCore.Authentication.OpenIdConnect.TokenValidatedContext, Task> onTokenValidatedHandler) {
+            
             var configuration = aWebApplicationBuilder.Configuration;
             var issuer = configuration.GetValue<string>(ConfigurationKeys.FrontendURL.Key) ?? Environment.GetEnvironmentVariable(EnvVariablesNames.FRONTEND_URL)
                 ?? throw new Exception("Error while configuring JWT aauthentication, FrontendURL which is used fro token issuer and audience was not found in appsettings. Please add this configuration.");
-            aWebApplicationBuilder.Services.AddAuthentication(options => {
+            
+            // Build additional cookie schemes from configuration
+            var additionalCookieSchemes = BuildCookieSchemesFromConfiguration(configuration);
+            
+            var authBuilder = aWebApplicationBuilder.Services.AddAuthentication(options => {
                 options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = AuthenticationSchemes.OIDCAuthSchemeName; // Use OIDC to challenge for authentication
                 options.DefaultSignInScheme = AuthenticationSchemes.TokenExchangeCookieSchemeName;
@@ -106,8 +114,24 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
             )
             .AddCookie(AuthenticationSchemes.TokenExchangeCookieSchemeName,
                 options => ConfigureSecureCookie(options, aWebApplicationBuilder.Configuration, AuthenticationSchemes.TokenExchangeCookieSchemeName)
-            )
-            .AddOpenIdConnect(AuthenticationSchemes.OIDCAuthSchemeName, options => {
+            );
+
+            // Register additional domain-specific cookie schemes
+            foreach (var (schemeName, cookieDomain) in additionalCookieSchemes) {
+                authBuilder.AddCookie(schemeName, options => {
+                    options.Cookie.Name = schemeName;
+                    options.Cookie.HttpOnly = true;
+                    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+                    options.Cookie.SameSite = SameSiteMode.Strict;
+                    options.Cookie.Domain = cookieDomain;
+                    options.Events.OnRedirectToLogin = context => {
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        return Task.CompletedTask;
+                    };
+                });
+            }
+
+            authBuilder.AddOpenIdConnect(AuthenticationSchemes.OIDCAuthSchemeName, options => {
                 options.Authority = $"https://login.microsoftonline.com/{Environment.GetEnvironmentVariable(EnvVariablesNames.OIDC_AUTH_TENANT_ID)}/v2.0";
                 options.ClientId = Environment.GetEnvironmentVariable(EnvVariablesNames.OIDC_AUTH_CLIENT_ID);
                 options.ClientSecret = Environment.GetEnvironmentVariable(EnvVariablesNames.OIDC_AUTH_SECRET);
@@ -125,12 +149,70 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
                 };
 
                 options.Events = new OpenIdConnectEvents {
+                    OnRedirectToIdentityProvider = context => {
+                        // Get redirect_uri from query parameter (OAuth/OIDC standard)
+                        var redirectUri = context.Request.Query["redirect_uri"].FirstOrDefault();
+                        
+                        if (!string.IsNullOrWhiteSpace(redirectUri)) {
+                            context.Properties.Items["redirect_uri"] = redirectUri;
+                            
+                            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<OpenIdConnectEvents>>();
+                            logger.LogInformation("[OIDC:Init] Stored redirect_uri: {RedirectUri}", redirectUri);
+                        }
+                        
+                        return Task.CompletedTask;
+                    },
                     OnTokenValidated = async context => await onTokenValidatedHandler(context)
                 };
             });
         }
 
         #region Private
+
+        /// <summary>
+        /// Builds cookie scheme configurations from FrontendURL and AdditionalAllowedHosts in configuration.
+        /// Extracts unique base domains and creates a cookie scheme for each.
+        /// Note: FrontendURL always uses the default TokenExchangeCookie scheme.
+        /// </summary>
+        private static Dictionary<string, string> BuildCookieSchemesFromConfiguration(IConfiguration configuration) {
+            var schemes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            
+            // Get only AdditionalAllowedHosts (FrontendURL uses default TokenExchangeCookie)
+            var additionalHosts = configuration.GetSection(ConfigurationKeys.Auth.AdditionalAllowedHosts)
+                .Get<string[]>() ?? Array.Empty<string>();
+            
+            // Extract unique base domains
+            var uniqueDomains = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            
+            foreach (var host in additionalHosts) {
+                if (Uri.TryCreate(host, UriKind.Absolute, out var uri)) {
+                    var hostDomain = uri.Host;
+                    
+                    // Skip localhost (uses default TokenExchangeCookie)
+                    if (hostDomain.Equals("localhost", StringComparison.OrdinalIgnoreCase) || 
+                        hostDomain.StartsWith("127.") || 
+                        hostDomain.Equals("::1")) {
+                        continue;
+                    }
+                    
+                    // Extract base domain (last two segments)
+                    var parts = hostDomain.Split('.');
+                    if (parts.Length >= 2) {
+                        var baseDomain = string.Join(".", parts.TakeLast(2));
+                        uniqueDomains.Add(baseDomain);
+                    }
+                }
+            }
+            
+            // Create cookie scheme for each unique domain
+            foreach (var domain in uniqueDomains) {
+                var schemeName = $"TokenExchangeCookie_{domain.Replace(".", "_")}";
+                var cookieDomain = $".{domain}";
+                schemes[schemeName] = cookieDomain;
+            }
+            
+            return schemes;
+        }
 
         private static void ConfigureSecureCookie(CookieAuthenticationOptions options, IConfiguration configuration, string cookieAuthenticationSchemeName) {
             options.Cookie.Name = cookieAuthenticationSchemeName;
