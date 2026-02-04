@@ -22,7 +22,7 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
     /// <summary>
     /// Extension class to add custom authentication logic to our <see cref="IServiceCollection"/> from our WebApplicationBuilder
     /// </summary>
-    /// <remarks>REQUIERES <see cref="ISecretsManager"/> service registered.</remarks>
+    /// <remarks>REQUIRES <see cref="ISecretsManager"/> service registered.</remarks>
     public static class Authentication_DI {
         public static async Task AddBasicJWTAuthentication(this IServiceCollection aServiceCollection) {
             var lAPISecret = await GetAPISecret(aServiceCollection);
@@ -132,7 +132,23 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
             }
 
             authBuilder.AddOpenIdConnect(AuthenticationSchemes.OIDCAuthSchemeName, options => {
-                options.Authority = $"https://login.microsoftonline.com/{Environment.GetEnvironmentVariable(EnvVariablesNames.OIDC_AUTH_TENANT_ID)}/v2.0";
+                // OIDC authority must be configured via environment variable only (not appsettings)
+                // to prevent sensitive information (tenant IDs, domains) from being committed to version control.
+                // 
+                // Supported providers (examples):
+                // - Microsoft Entra ID: https://login.microsoftonline.com/{tenant-id}/v2.0
+                // - Google: https://accounts.google.com
+                // - Auth0: https://{your-domain}.auth0.com
+                // - Keycloak: https://{your-domain}/realms/{realm-name}
+                // - Okta: https://{your-domain}.okta.com/oauth2/default
+                var authority = Environment.GetEnvironmentVariable(EnvVariablesNames.OIDC_AUTH_AUTHORITY)
+                    ?? throw new InvalidOperationException(
+                        $"OIDC Authority must be configured via environment variable '{EnvVariablesNames.OIDC_AUTH_AUTHORITY}'. " +
+                        "This contains sensitive information and should not be stored in appsettings.json. " +
+                        "Examples: https://login.microsoftonline.com/{{tenant-id}}/v2.0 (Microsoft), " +
+                        "https://accounts.google.com (Google), https://{{your-domain}}.auth0.com (Auth0)");
+                
+                options.Authority = authority;
                 options.ClientId = Environment.GetEnvironmentVariable(EnvVariablesNames.OIDC_AUTH_CLIENT_ID);
                 options.ClientSecret = Environment.GetEnvironmentVariable(EnvVariablesNames.OIDC_AUTH_SECRET);
 
