@@ -1,0 +1,58 @@
+name: L1 - Build and Push TheGoodFramework (Push → public)
+
+on:
+  push:
+    branches:
+      - public
+      
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Docker image tag"
+        required: false
+        default: "latest"
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout TheGoodFramework repository
+        uses: actions/checkout@v4
+        with:
+          ref: public
+
+      - name: Log in to Azure Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ secrets.REG_ADDRESS }}
+          username: ${{ secrets.REG_USERNAME }}
+          password: ${{ secrets.REG_PASSWORD }}
+
+      - name: Build and push with local_deploy.sh
+        run: |
+          chmod +x ./local_deploy.sh
+
+          TAG="${{ github.event.inputs.tag || 'latest' }}"
+
+          echo "Building and pushing with tag: $TAG"
+          ./local_deploy.sh $TAG --no-cache --bgs --registry-push
+        env:
+          IMAGE_REGISTRY: ${{ secrets.REG_ADDRESS }}
+          OMICSFLOW_ENVIRONMENT: production
+
+  dispatch:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger main workflow in L2.Common
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.PAT_TOKEN }} 
+          repository: Biognosys/SF.Common
+          event-type: L1-dependency-update
+          client-payload: |
+            {
+              "source_repo": "${{ github.repository }}",
+              "source_tag": "${{ github.event.inputs.tag || 'latest' }}",
+              "source_commit": "${{ github.sha }}"
+            }
