@@ -14,6 +14,7 @@ public static class ServiceBus_DI {
         aServiceCollection.AddRabbitMQInfrastructureServices(configuration, InfrastrcutureConstants.HealthCheckNames.IntegrationPublisher);
         aServiceCollection.AddRabbitMQPublisher<IntegrationMessage>();
     }
+    
     /// <summary>
     /// Adds an integration message consumer. It also ensures the required services for RabbitMQ infrastructure are added.
     /// </summary>
@@ -21,6 +22,7 @@ public static class ServiceBus_DI {
         aServiceCollection.AddRabbitMQInfrastructureServices(configuration, InfrastrcutureConstants.HealthCheckNames.IntegrationConsumer);
         aServiceCollection.AddRabbitMqConsumer<IntegrationMessage>();
     }
+    
     /// <summary>
     /// Adds a domain message publisher. It also ensures the required services for RabbitMQ infrastructure are added.
     /// </summary>
@@ -28,8 +30,9 @@ public static class ServiceBus_DI {
         aServiceCollection.AddRabbitMQInfrastructureServices(configuration, InfrastrcutureConstants.HealthCheckNames.DomainPublisher);
         aServiceCollection.AddRabbitMQPublisher<DomainMessage>();
     }
+    
     /// <summary>
-    /// Adds a domain message comsumer. It also ensures the required services for RabbitMQ infrastructure are added.
+    /// Adds a domain message consumer. It also ensures the required services for RabbitMQ infrastructure are added.
     /// </summary>
     public static void AddServiceBusDomainConsumer(this IServiceCollection aServiceCollection, IConfiguration configuration) {
         aServiceCollection.AddRabbitMQInfrastructureServices(configuration, InfrastrcutureConstants.HealthCheckNames.DomainConsumer);
@@ -37,34 +40,44 @@ public static class ServiceBus_DI {
     }
 
     /// <summary>
-    /// Adds all the message handlers(classes implementing <see cref="IMessageHandler"/> found in the specified assembly <typeparamref name="T"/>.
+    /// Scans and registers all message handlers from the assembly containing type <typeparamref name="T"/>.
+    /// Validates handlers to prevent captive dependency anti-patterns.
     /// </summary>
-    /// <typeparam name="T">marker type to determine the assmebly to reference.</typeparam>
-    /// <exception cref="InvalidOperationException">Thrown then the method is called but no implementation of <see cref="IMessageHandler"/> was found in the marked assembly.</exception>
-    public static void AddMessageHandlersInAssembly<T>(this IServiceCollection aaServiceCollection) {
-        // Add IMessageHandler implementations as transient.
-        // Find all non-abstract, non-generic classes implementing IMessageHandler in T's assembly
-        var lHandlerTypes = typeof(T).Assembly.GetTypes()
-            .Where(t => t.IsClass && !t.IsAbstract && !t.IsGenericType && typeof(IMessageHandler).IsAssignableFrom(t));
+    /// <typeparam name="T">Marker type to identify the assembly to scan</typeparam>
+    /// <exception cref="InvalidOperationException">Thrown when no handlers found or validation fails</exception>
+    public static void AddMessageHandlersInAssembly<T>(this IServiceCollection services) {
+        // Find all message handler types in the assembly
+        var handlerTypes = typeof(T).Assembly.GetTypes()
+            .Where(t => t.IsClass && 
+                       !t.IsAbstract && 
+                       !t.IsGenericType && 
+                       typeof(IMessageHandler).IsAssignableFrom(t))
+            .ToList();
 
-        // Check if at least one implementation of IMessageHandler is found.
-        var lMessageHandlerCount = lHandlerTypes.Count();
-        if (lMessageHandlerCount < 1)
-            throw new InvalidOperationException("AddHandlersInAssembly<T>() was called but any implementation of IMessageHandler was found during the scan in T's assembly. Please add at lest one or remove the call of this method.");
+        if (handlerTypes.Count == 0)
+            throw new InvalidOperationException(
+                $"No message handlers found in assembly '{typeof(T).Assembly.GetName().Name}'. " +
+                $"Ensure at least one class implements IMessageHandler.");
 
-        foreach (var handlerType in lHandlerTypes) {
-            aaServiceCollection.AddTransient(typeof(IMessageHandler), handlerType);
-            // Optionally, register for all interfaces the handler implements (except IMessageHandler itself)
-            foreach (var iface in handlerType.GetInterfaces().Where(i => i != typeof(IMessageHandler) && typeof(IMessageHandler).IsAssignableFrom(i))) {
-                aaServiceCollection.AddTransient(iface, handlerType);
+        // Register and validate each handler
+        foreach (var handlerType in handlerTypes) {
+            // Validate before registration to catch issues at startup
+            MessageHandlerValidator.Validate(handlerType, services);
+            
+            // Register as transient
+            services.AddTransient(typeof(IMessageHandler), handlerType);
+            
+            // Register for all implemented interfaces (except base IMessageHandler)
+            foreach (var iface in handlerType.GetInterfaces()
+                .Where(i => i != typeof(IMessageHandler) && 
+                          typeof(IMessageHandler).IsAssignableFrom(i))) {
+                services.AddTransient(iface, handlerType);
             }
         }
 
-        // Add the IMessageHandlerRegistry which depends on a collection of all IMessageHandler registered above.
-        aaServiceCollection.AddSingleton<IMessageHandlerRegistry, MessageHandlerRegistry>();
-        // Add IHandleMessage implementation which depends on the IMessageHandlerRegistry registered above.
-        aaServiceCollection.AddSingleton<IHandleMessage, HandleMessage>();
+        // Register handler infrastructure
+        services.AddSingleton<IMessageHandlerRegistry, MessageHandlerRegistry>();
+        services.AddSingleton<IHandleMessage, HandleMessage>();
     }
-
 }
 
