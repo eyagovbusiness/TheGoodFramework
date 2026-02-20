@@ -69,23 +69,28 @@ namespace TGF.CA.Presentation {
         }
 
         /// <summary>
-        /// Configures CORS to allow requests from the specified frontend URL pattern, supporting dynamic subdomains.
+        /// Configures CORS to allow requests from the specified frontend URL and additional allowed hosts.
         /// </summary>
         /// <param name="aWebApplicationBuilder">The WebApplicationBuilder instance.</param>
         /// <param name="aConfiguration">The configuration instance.</param>
+        /// <param name="aOriginValidationMode">The origin validation mode (StrictMatch or BaseDomainMatch).</param>
         /// <returns>The modified WebApplicationBuilder instance.</returns>
-        /// <exception cref="Exception">Thrown when CORSFrontendURL configuration is not found.</exception>
+        /// <exception cref="Exception">Thrown when FrontendURL configuration is not found.</exception>
         public static WebApplicationBuilder ConfigureFrontendCORS(this WebApplicationBuilder aWebApplicationBuilder, IConfiguration aConfiguration, OriginValidationMode aOriginValidationMode = OriginValidationMode.StrictMatch) {
             var lCORSFrontUrl = aConfiguration.GetValue<string>(EnvVariablesNames.FRONTEND_URL)
                 ?? aConfiguration.GetValue<string>("FrontendURL")
                 ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings or environment variables. Please add this configuration.");
 
-            var lLocalDevelopmentUrl = aConfiguration.GetValue<string>("DevelopmentDomain"); // Replace with your local development URL if different
+            var lLocalDevelopmentUrl = aConfiguration.GetValue<string>("DevelopmentDomain");
+            
+            // Get additional allowed hosts from configuration
+            var lAdditionalAllowedHosts = aConfiguration.GetSection(ConfigurationKeys.Auth.AdditionalAllowedHosts)
+                .Get<string[]>() ?? [];
 
             aWebApplicationBuilder.Services.AddCors(options => {
                 options.AddPolicy("AllowFrontCorsPolicy", builder =>
                     builder.SetIsOriginAllowed(origin =>
-                           IsOriginAllowed(origin, lCORSFrontUrl, lLocalDevelopmentUrl, aOriginValidationMode))
+                           IsOriginAllowed(origin, lCORSFrontUrl, lLocalDevelopmentUrl, lAdditionalAllowedHosts, aOriginValidationMode))
                            .AllowAnyHeader()
                            .AllowAnyMethod()
                            .AllowCredentials()
@@ -103,14 +108,21 @@ namespace TGF.CA.Presentation {
         /// <param name="aOrigin">The origin of the incoming request.</param>
         /// <param name="aFrontendUrl">The configured frontend URL.</param>
         /// <param name="aLocalDevelopmentUrl">Optional local development URL.</param>
+        /// <param name="aAdditionalAllowedHosts">Additional allowed hosts from configuration.</param>
         /// <param name="mode">Validation mode: StrictMatch or BaseDomainMatch.</param>
         /// <returns>True if allowed; false otherwise.</returns>
-        private static bool IsOriginAllowed(string? aOrigin, string aFrontendUrl, string? aLocalDevelopmentUrl, OriginValidationMode mode) {
+        private static bool IsOriginAllowed(string? aOrigin, string aFrontendUrl, string? aLocalDevelopmentUrl, string[] aAdditionalAllowedHosts, OriginValidationMode mode) {
             if (string.IsNullOrWhiteSpace(aOrigin) || aOrigin is "null")
                 return false;
 
             try {
+                // Check exact match with FrontendURL, LocalDevelopmentUrl, or any AdditionalAllowedHosts
                 if (aOrigin == aFrontendUrl || aOrigin == aLocalDevelopmentUrl)
+                    return true;
+
+                // Check if origin matches any additional allowed host (case-insensitive)
+                if (aAdditionalAllowedHosts.Any(host => 
+                    aOrigin.Equals(host, StringComparison.OrdinalIgnoreCase)))
                     return true;
 
                 var lFrontendHost = new Uri(aFrontendUrl).Host;
