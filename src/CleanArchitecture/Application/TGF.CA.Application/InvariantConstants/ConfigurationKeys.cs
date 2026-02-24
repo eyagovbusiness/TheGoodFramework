@@ -12,6 +12,7 @@
             public const string OIDCAuthCallbackURI = $"{Key}:OIDCAuthCallbackURI";
             public const string AccessTokenLifetimeInMinutes = $"{Key}:AccessTokenLifetimeInMinutes";
             public const string RefreshTokenLifetimeInDays = $"{Key}:RefreshTokenLifetimeInDays";
+            public const string AdditionalAllowedHosts = $"{Key}:AdditionalAllowedHosts";
         }
     }
 }

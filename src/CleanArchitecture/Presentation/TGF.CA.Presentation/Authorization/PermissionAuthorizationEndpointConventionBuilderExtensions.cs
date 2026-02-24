@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 
-namespace SF.Common.Infrastructure.Identity.Authorization.Permissions.AspNetIdentitiy {
+namespace TGF.CA.Presentation.Authorization {
     /// <summary>
     /// Extension methods for configuring permission-based authorization requirements on minimal API endpoints.
     /// </summary>
@@ -15,8 +15,11 @@ namespace SF.Common.Infrastructure.Identity.Authorization.Permissions.AspNetIden
         /// <param name="builder">
         /// The endpoint convention builder to which the authorization requirement will be applied.
         /// </param>
+        /// <param name="claimType">
+        /// The type of claim to check (e.g., "Permission", "Role").
+        /// </param>
         /// <param name="requiredValues">
-        /// One or more permission claim values that the authenticated user must possess 
+        /// One or more claim values that the authenticated user must possess 
         /// to access the endpoint (e.g., "CanCreateUsers", "CanDeleteUsers").
         /// </param>
         /// <returns>
@@ -25,8 +28,8 @@ namespace SF.Common.Infrastructure.Identity.Authorization.Permissions.AspNetIden
         /// <remarks>
         /// <para>
         /// This method does not require you to register static policies in <c>Program.cs</c>.
-        /// Instead, the <see cref="PermissionAuthorizationPolicyProvider"/> will dynamically 
-        /// create and cache policies at runtime based on the specified permission names.
+        /// Instead, a <c>PermissionAuthorizationPolicyProvider</c> (if configured) will dynamically 
+        /// create and cache policies at runtime based on the specified claim type and values.
         /// </para>
         /// <para>
         /// This is especially useful in systems with many fine-grained permissions, 
@@ -37,7 +40,8 @@ namespace SF.Common.Infrastructure.Identity.Authorization.Permissions.AspNetIden
         /// Minimal API usage:
         /// <code>
         /// app.MapPost("/users", CreateUserHandler)
-        ///    .RequirePermissions("CanCreateUsers", "CanAssignRoles");
+        ///    .RequiresClaims(OmicsFlowClaims.Permission.ClaimType, 
+        ///                    OmicsFlowClaims.Permission.Values.CanCreateUsers);
         /// </code>
         /// </example>
         public static TBuilder RequiresClaims<TBuilder>(
@@ -45,12 +49,10 @@ namespace SF.Common.Infrastructure.Identity.Authorization.Permissions.AspNetIden
             string claimType,
             params string[] requiredValues)
             where TBuilder : IEndpointConventionBuilder {
-            if (builder == null)
-                throw new ArgumentNullException(nameof(builder));
-
-            if (string.IsNullOrWhiteSpace(claimType))
-                throw new ArgumentNullException(nameof(claimType));
-
+            
+            ArgumentNullException.ThrowIfNull(builder);
+            ArgumentException.ThrowIfNullOrWhiteSpace(claimType);
+            
             if (requiredValues == null || requiredValues.Length == 0)
                 throw new ArgumentException("At least one claim value must be provided.", nameof(requiredValues));
 
