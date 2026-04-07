@@ -31,6 +31,7 @@
                 public const string Key = $"{SecretsFiles.Key}:{nameof(SecretsFileNames)}";
                 public const string PostgresSecrets = $"{Key}:PostgresSecrets";
                 public const string LicenseKeySecret = $"{Key}:LicenseKeySecret";
+                public const string SpectronautLicenseKeySecret = $"{Key}:SpectronautLicenseKeySecret";
                 public const string LicenseProvisioningKeySecret = $"{Key}:LicenseProvisioningKeySecret";
                 public const string LicensePemSecret = $"{Key}:LicensePemSecret";
                 public const string RabbitMQCredentials = $"{Key}:RabbitMQCredentials";
