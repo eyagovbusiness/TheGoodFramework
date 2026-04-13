@@ -1,8 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slascone.Client;
 using Slascone.Client.Interfaces;
+using System.Text.Json;
 using System.Runtime.CompilerServices;
 using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.Licensing.Slascone.Contracts;
@@ -254,19 +255,25 @@ internal sealed class LicensingService(
         }
     }
 
-    public async Task OpenSessionAsync() {
-        var licensekey = await GetLicenseKeyFromSecretFile();
-        if (string.IsNullOrEmpty(licensekey)) {
+    public Task OpenSessionAsync()
+        => OpenSessionAsync(ConfigurationKeys.SecretsFiles.SecretsFileNames.LicenseKeySecret);
+
+    public async Task OpenSessionAsync(string licenseKeyConfigurationKey, string? clientId = null, string? sessionId = null) {
+        var resolvedClientId = clientId ?? deviceInfoService.GetUniqueDeviceId();
+        var resolvedSessionId = ResolveSessionId(sessionId);
+        var licenseId = await GetLicenseIdFromSecretFile(licenseKeyConfigurationKey);
+
+        if (!licenseId.HasValue) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
             logger.LogWarning("[LICENSE] You have to add a license heartbeat first.");
             return;
         }
-        try {
 
+        try {
             var sessionDto = new SessionRequestDto {
-                Client_id = deviceInfoService.GetUniqueDeviceId(),
-                License_id = Guid.Parse(licensekey),
-                Session_id = _sessionId
+                Client_id = resolvedClientId,
+                License_id = licenseId.Value,
+                Session_id = resolvedSessionId
             };
 
             var slasconeClient = await SlasconeClient.Value;
@@ -280,14 +287,14 @@ internal sealed class LicensingService(
                     // Normally you would inform the user about this and prevent the usage of the software.
                     logger.LogWarning("[LICENSE] Maximum of allowed parallel opened sessions exceeded!");
                 }
+
                 LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
                 return;
-
             }
 
             var sessionStatus = result.data;
             SessionInfo = sessionStatus;
-            logger.LogInformation("[LICENSE] Session opened successfully {SessionId}", _sessionId);
+            logger.LogInformation("[LICENSE] Session opened successfully {SessionId}", resolvedSessionId);
             logger.LogInformation("[LICENSE] Max number of concurrent sessions: {MaxOpenSessionCount}", sessionStatus.Max_open_session_count);
             logger.LogInformation("[LICENSE] Session valid until {SessionValidUntil}", sessionStatus.Session_valid_until);
             LastOpenSessionAttemptStatus = LicenseSessionStatus.Opened;
@@ -298,18 +305,25 @@ internal sealed class LicensingService(
         }
     }
 
-    public async Task CloseSessionAsync() {
-        var licensekey = await GetLicenseKeyFromSecretFile();
-        if (string.IsNullOrEmpty(licensekey)) {
+    public Task CloseSessionAsync()
+        => CloseSessionAsync(ConfigurationKeys.SecretsFiles.SecretsFileNames.LicenseKeySecret);
+
+    public async Task CloseSessionAsync(string licenseKeyConfigurationKey, string? clientId = null, string? sessionId = null) {
+        var resolvedClientId = clientId ?? deviceInfoService.GetUniqueDeviceId();
+        var resolvedSessionId = ResolveSessionId(sessionId);
+        var licenseId = await GetLicenseIdFromSecretFile(licenseKeyConfigurationKey);
+
+        if (!licenseId.HasValue) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
             logger.LogWarning("[LICENSE] You have to add a license heartbeat first.");
             return;
         }
+
         try {
             var sessionDto = new SessionRequestDto {
-                Client_id = deviceInfoService.GetUniqueDeviceId(),
-                License_id = Guid.Parse(licensekey),
-                Session_id = _sessionId
+                Client_id = resolvedClientId,
+                License_id = licenseId.Value,
+                Session_id = resolvedSessionId
             };
 
             var slasconeClient = await SlasconeClient.Value;
@@ -320,8 +334,9 @@ internal sealed class LicensingService(
                 LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
                 return;
             }
+
             LastOpenSessionAttemptStatus = LicenseSessionStatus.Closed;
-            logger.LogInformation("[LICENSE] Session closed successfully {SessionId}", _sessionId);
+            logger.LogInformation("[LICENSE] Session closed successfully {SessionId}", resolvedSessionId);
         }
         catch (Exception ex) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
@@ -371,6 +386,61 @@ internal sealed class LicensingService(
     /// </summary>
     private async Task<string> GetLicenseKeyFromSecretFile()
         => await secretFilesService.GetSecretFromConfigAsync(ConfigurationKeys.SecretsFiles.SecretsFileNames.LicenseKeySecret);
+
+    private async Task<Guid?> GetLicenseIdFromSecretFile(string licenseKeyConfigurationKey) {
+        var licenseKeySecret = await GetLicenseSecretContentAsync(licenseKeyConfigurationKey);
+        if (string.IsNullOrWhiteSpace(licenseKeySecret))
+            return null;
+
+        if (Guid.TryParse(licenseKeySecret, out var directLicenseId))
+            return directLicenseId;
+
+        try {
+            using var doc = JsonDocument.Parse(licenseKeySecret);
+            if (!doc.RootElement.TryGetProperty("license_key", out var licenseKeyElement))
+                throw new InvalidOperationException($"[LICENSE] License secret '{licenseKeyConfigurationKey}' does not contain 'license_key'.");
+
+            var parsedLicenseKey = licenseKeyElement.GetString();
+            if (!Guid.TryParse(parsedLicenseKey, out var jsonLicenseId))
+                throw new InvalidOperationException($"[LICENSE] License secret '{licenseKeyConfigurationKey}' contains an invalid license key '{parsedLicenseKey}'.");
+
+            return jsonLicenseId;
+        }
+        catch (JsonException ex) {
+            logger.LogError(ex, "[LICENSE] Failed to parse secret {LicenseKeyConfigurationKey} as JSON.", licenseKeyConfigurationKey);
+            throw new InvalidOperationException($"[LICENSE] License secret '{licenseKeyConfigurationKey}' is neither a GUID nor valid JSON.", ex);
+        }
+    }
+
+    private async Task<string> GetLicenseSecretContentAsync(string licenseKeyConfigurationKey) {
+        if (licenseKeyConfigurationKey != ConfigurationKeys.Licensing.SpectronautLicensing.LicenseFileSecretName)
+            return await secretFilesService.GetSecretFromConfigAsync(licenseKeyConfigurationKey);
+
+        var secretsPathEnvVar = configuration[ConfigurationKeys.SecretsFiles.SecretsPathEnvVar]
+            ?? throw new InvalidOperationException($"[ERROR]: {ConfigurationKeys.SecretsFiles.SecretsPathEnvVar} is not set in configuration.");
+        var secretsPath = Environment.GetEnvironmentVariable(secretsPathEnvVar)
+            ?? throw new InvalidOperationException($"[ERROR]: Environment variable '{secretsPathEnvVar}' is not set!");
+        var configuredPath = configuration[licenseKeyConfigurationKey]
+            ?? throw new KeyNotFoundException($"[ERROR]: Secret name key '{licenseKeyConfigurationKey}' not found in configuration.");
+
+        var fullPath = Path.Combine(secretsPath, configuredPath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        if (Directory.Exists(fullPath))
+            fullPath = Path.Combine(fullPath, "license.json");
+
+        if (!File.Exists(fullPath))
+            throw new FileNotFoundException($"[ERROR]: Secret file '{fullPath}' not found.");
+
+        return (await File.ReadAllTextAsync(fullPath)).Trim();
+    }
+
+    private Guid ResolveSessionId(string? sessionId) {
+        if (string.IsNullOrWhiteSpace(sessionId))
+            return _sessionId;
+
+        return Guid.TryParse(sessionId, out var parsedSessionId)
+            ? parsedSessionId
+            : throw new InvalidOperationException($"[LICENSE] SessionId '{sessionId}' is not a valid GUID.");
+    }
 
     /// <summary>
     /// Reports errors from SLASCONE API operations to the the logger.

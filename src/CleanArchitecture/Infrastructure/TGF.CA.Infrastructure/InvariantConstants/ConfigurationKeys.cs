@@ -10,6 +10,10 @@
             public readonly struct Slascone {
                 public const string Key = $"{Licensing.Key}:{nameof(Slascone)}";
             }
+            public readonly struct SpectronautLicensing {
+                public const string Key = $"{Licensing.Key}:{nameof(SpectronautLicensing)}";
+                public const string LicenseFileSecretName = $"{Key}:LicenseFileSecretName";
+            }
         }
         public readonly struct Logging {
             public const string Key = nameof(Logging);
@@ -31,7 +35,6 @@
                 public const string Key = $"{SecretsFiles.Key}:{nameof(SecretsFileNames)}";
                 public const string PostgresSecrets = $"{Key}:PostgresSecrets";
                 public const string LicenseKeySecret = $"{Key}:LicenseKeySecret";
-                public const string SpectronautLicenseKeySecret = $"{Key}:SpectronautLicenseKeySecret";
                 public const string LicenseProvisioningKeySecret = $"{Key}:LicenseProvisioningKeySecret";
                 public const string LicensePemSecret = $"{Key}:LicensePemSecret";
                 public const string RabbitMQCredentials = $"{Key}:RabbitMQCredentials";
