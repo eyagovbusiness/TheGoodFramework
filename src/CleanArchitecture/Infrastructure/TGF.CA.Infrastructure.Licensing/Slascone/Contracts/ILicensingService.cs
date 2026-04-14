@@ -102,15 +102,6 @@ public interface ILicensingService {
     Task CloseSessionAsync();
 
     /// <summary>
-    /// Closes a session with the SLASCONE service using the specified license secret and session identifiers.
-    /// </summary>
-    /// <param name="licenseKeyConfigurationKey">The configuration key that points to the license secret file.</param>
-    /// <param name="clientId">The client identifier to use. When null, the current device identifier is used.</param>
-    /// <param name="sessionId">The session identifier to use. When null, the current service session identifier is used.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    Task CloseSessionAsync(string licenseKeyConfigurationKey, string? clientId = null, string? sessionId = null);
-
-    /// <summary>
     /// Looks up licenses associated with the given license key.
     /// Logs details of found licenses.
     /// </summary>
@@ -123,15 +114,6 @@ public interface ILicensingService {
     /// </summary>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task OpenSessionAsync();
-
-    /// <summary>
-    /// Opens a new session with the SLASCONE service using the specified license secret and session identifiers.
-    /// </summary>
-    /// <param name="licenseKeyConfigurationKey">The configuration key that points to the license secret file.</param>
-    /// <param name="clientId">The client identifier to use. When null, the current device identifier is used.</param>
-    /// <param name="sessionId">The session identifier to use. When null, the current service session identifier is used.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    Task OpenSessionAsync(string licenseKeyConfigurationKey, string? clientId = null, string? sessionId = null);
 
     /// <summary>
     /// Unassigns the license from the current device.

@@ -255,13 +255,10 @@ internal sealed class LicensingService(
         }
     }
 
-    public Task OpenSessionAsync()
-        => OpenSessionAsync(ConfigurationKeys.SecretsFiles.SecretsFileNames.LicenseKeySecret);
-
-    public async Task OpenSessionAsync(string licenseKeyConfigurationKey, string? clientId = null, string? sessionId = null) {
-        var resolvedClientId = clientId ?? deviceInfoService.GetUniqueDeviceId();
-        var resolvedSessionId = ResolveSessionId(sessionId);
-        var licenseId = await GetLicenseIdFromSecretFile(licenseKeyConfigurationKey);
+    public async Task OpenSessionAsync() {
+        var resolvedClientId = deviceInfoService.GetUniqueDeviceId();
+        var resolvedSessionId = _sessionId;
+        var licenseId = await GetLicenseIdFromSecretFile(ConfigurationKeys.SecretsFiles.SecretsFileNames.LicenseKeySecret);
 
         if (!licenseId.HasValue) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
@@ -305,13 +302,10 @@ internal sealed class LicensingService(
         }
     }
 
-    public Task CloseSessionAsync()
-        => CloseSessionAsync(ConfigurationKeys.SecretsFiles.SecretsFileNames.LicenseKeySecret);
-
-    public async Task CloseSessionAsync(string licenseKeyConfigurationKey, string? clientId = null, string? sessionId = null) {
-        var resolvedClientId = clientId ?? deviceInfoService.GetUniqueDeviceId();
-        var resolvedSessionId = ResolveSessionId(sessionId);
-        var licenseId = await GetLicenseIdFromSecretFile(licenseKeyConfigurationKey);
+    public async Task CloseSessionAsync() {
+        var resolvedClientId = deviceInfoService.GetUniqueDeviceId();
+        var resolvedSessionId = _sessionId;
+        var licenseId = await GetLicenseIdFromSecretFile(ConfigurationKeys.SecretsFiles.SecretsFileNames.LicenseKeySecret);
 
         if (!licenseId.HasValue) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
@@ -413,33 +407,7 @@ internal sealed class LicensingService(
     }
 
     private async Task<string> GetLicenseSecretContentAsync(string licenseKeyConfigurationKey) {
-        if (licenseKeyConfigurationKey != ConfigurationKeys.Licensing.SpectronautLicensing.LicenseFileSecretName)
-            return await secretFilesService.GetSecretFromConfigAsync(licenseKeyConfigurationKey);
-
-        var secretsPathEnvVar = configuration[ConfigurationKeys.SecretsFiles.SecretsPathEnvVar]
-            ?? throw new InvalidOperationException($"[ERROR]: {ConfigurationKeys.SecretsFiles.SecretsPathEnvVar} is not set in configuration.");
-        var secretsPath = Environment.GetEnvironmentVariable(secretsPathEnvVar)
-            ?? throw new InvalidOperationException($"[ERROR]: Environment variable '{secretsPathEnvVar}' is not set!");
-        var configuredPath = configuration[licenseKeyConfigurationKey]
-            ?? throw new KeyNotFoundException($"[ERROR]: Secret name key '{licenseKeyConfigurationKey}' not found in configuration.");
-
-        var fullPath = Path.Combine(secretsPath, configuredPath.TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
-        if (Directory.Exists(fullPath))
-            fullPath = Path.Combine(fullPath, "license.json");
-
-        if (!File.Exists(fullPath))
-            throw new FileNotFoundException($"[ERROR]: Secret file '{fullPath}' not found.");
-
-        return (await File.ReadAllTextAsync(fullPath)).Trim();
-    }
-
-    private Guid ResolveSessionId(string? sessionId) {
-        if (string.IsNullOrWhiteSpace(sessionId))
-            return _sessionId;
-
-        return Guid.TryParse(sessionId, out var parsedSessionId)
-            ? parsedSessionId
-            : throw new InvalidOperationException($"[LICENSE] SessionId '{sessionId}' is not a valid GUID.");
+        return await secretFilesService.GetSecretFromConfigAsync(licenseKeyConfigurationKey);
     }
 
     /// <summary>

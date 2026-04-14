@@ -5,17 +5,18 @@ using TGF.CA.Infrastructure.Licensing.Slascone.Contracts;
 namespace TGF.CA.Infrastructure.Licensing.Slascone.Services;
 
 public sealed class SlasconeSessionReleaseService(
-    ILicensingService licensingService,
+    IExternalLicenseService externalLicenseService,
     ILogger<SlasconeSessionReleaseService> logger) : ISlasconeSessionReleaseService {
 
-    public async Task CloseSessionAsync(Guid clientId, string sessionId, CancellationToken cancellationToken = default) {
+    public async Task CloseSessionAsync(string clientId, string sessionId, CancellationToken cancellationToken = default) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(clientId);
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         cancellationToken.ThrowIfCancellationRequested();
 
         try {
-            await licensingService.CloseSessionAsync(
+            await externalLicenseService.CloseSessionAsync(
                 ConfigurationKeys.Licensing.SpectronautLicensing.LicenseFileSecretName,
-                clientId.ToString(),
+                clientId,
                 sessionId);
             logger.LogInformation("[LICENSE] Session closed successfully {SessionId} for client {ClientId}", sessionId, clientId);
         }
