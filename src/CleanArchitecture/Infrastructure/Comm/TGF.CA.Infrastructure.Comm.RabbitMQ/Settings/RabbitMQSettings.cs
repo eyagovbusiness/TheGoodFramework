@@ -51,4 +51,5 @@ internal record PublisherSettings {
 internal record ConsumerSettings {
     public string? IntegrationQueue { get; init; }
     public string? DomainQueue { get; init; }
+    public int MaxHandlerRetries { get; init; } = 3;
 }
