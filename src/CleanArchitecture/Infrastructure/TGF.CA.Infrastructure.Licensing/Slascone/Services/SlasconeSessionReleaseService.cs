@@ -8,15 +8,14 @@ public sealed class SlasconeSessionReleaseService(
     IExternalLicenseService externalLicenseService,
     ILogger<SlasconeSessionReleaseService> logger) : ISlasconeSessionReleaseService {
 
-    public async Task CloseSessionAsync(string clientId, string sessionId, CancellationToken cancellationToken = default) {
-        ArgumentException.ThrowIfNullOrWhiteSpace(clientId);
+    public async Task CloseSessionAsync(Guid clientId, string sessionId, CancellationToken cancellationToken = default) {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         cancellationToken.ThrowIfCancellationRequested();
 
         try {
             await externalLicenseService.CloseSessionAsync(
                 ConfigurationKeys.Licensing.SpectronautLicensing.LicenseFileSecretName,
-                clientId,
+                clientId.ToString(),
                 sessionId);
             logger.LogInformation("[LICENSE] Session closed successfully {SessionId} for client {ClientId}", sessionId, clientId);
         }
