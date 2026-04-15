@@ -28,7 +28,7 @@ internal class RabbitMQMessageConsumer<TMessage>(RabbitMQSettings rabbitMQSettin
 
         using var lChannel = lConnection.CreateModel();
         lChannel.BasicQos(0, 1, false); // Each consumer will take only 1 message at a time and the next after ACK.
-        var lReceiver = new RabbitMQMessageReceiver(lChannel, serializer, handleMessage, logger);
+        var lReceiver = new RabbitMQMessageReceiver(lChannel, serializer, handleMessage, logger, rabbitMQSettings.Consumer?.MaxHandlerRetries ?? 3);
         var lQueue = GetCorrectQueue();
 
         lChannel.BasicConsume(lQueue, false, lReceiver);
@@ -54,5 +54,4 @@ internal class RabbitMQMessageConsumer<TMessage>(RabbitMQSettings rabbitMQSettin
     #endregion
 
 }
-
 

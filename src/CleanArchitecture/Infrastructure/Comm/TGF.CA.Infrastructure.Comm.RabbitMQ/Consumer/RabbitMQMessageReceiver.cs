@@ -12,7 +12,7 @@ namespace TGF.CA.Infrastructure.Comm.RabbitMQ.Consumer;
 /// <param name="channel"></param>
 /// <param name="serializer"></param>
 /// <param name="handleMessage"></param>
-internal class RabbitMQMessageReceiver(IModel channel, ISerializer serializer, IHandleMessage handleMessage, ILogger logger) : DefaultBasicConsumer(channel) {
+internal class RabbitMQMessageReceiver(IModel channel, ISerializer serializer, IHandleMessage handleMessage, ILogger logger, int maxHandlerRetries) : DefaultBasicConsumer(channel) {
     public override void HandleBasicDeliver(string consumerTag, ulong deliveryTag, bool redelivered, string exchange, string routingKey, IBasicProperties properties, ReadOnlyMemory<byte> body) {
         var messageBody = body.ToArray();
         var messageType = Type.GetType(properties.Type);
@@ -36,12 +36,27 @@ internal class RabbitMQMessageReceiver(IModel channel, ISerializer serializer, I
 
                 logger.LogInformation("Handling message: {MessageIdentifier}", message.MessageIdentifier);
 
-                await handleMessage.Handle(message, CancellationToken.None);
-                channel.BasicAck(deliveryTag, false);
+                var attempts = Math.Max(1, maxHandlerRetries);
+                for (int attempt = 1; attempt <= attempts; attempt++) {
+                    try {
+                        await handleMessage.Handle(message, CancellationToken.None);
+                        channel.BasicAck(deliveryTag, false);
+                        return;
+                    }
+                    catch (Exception ex) when (attempt < attempts) {
+                        logger.LogWarning(ex,
+                            "Error processing message {MessageIdentifier}. Attempt {Attempt}/{MaxAttempts}. Retrying.",
+                            message.MessageIdentifier,
+                            attempt,
+                            attempts);
+                    }
+                }
+
+                throw new InvalidOperationException($"Message {message.MessageIdentifier} failed after {attempts} attempts.");
             }
             catch (Exception ex) {
-                logger.LogError(ex, "Error processing message. DeliveryTag: {DeliveryTag}", deliveryTag);
-                channel.BasicNack(deliveryTag, false, true); // requeue
+                logger.LogError(ex, "Error processing message. DeliveryTag: {DeliveryTag}. Dead-lettering after {MaxRetries} failed attempts.", deliveryTag, Math.Max(1, maxHandlerRetries));
+                channel.BasicNack(deliveryTag, false, false);
             }
         });
     }
