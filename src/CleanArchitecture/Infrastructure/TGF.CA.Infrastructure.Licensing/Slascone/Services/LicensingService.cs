@@ -111,13 +111,18 @@ internal sealed class LicensingService(
                 return;
             }
 
-            
-
             var licenseInfoDto = result.data;
             _tokenId = licenseInfoDto.Token_key;
             LicenseInfo = licenseInfoDto;
-            HeartbeatStatus = LicenseHeartbeatStatus.Success;
-            if(ActivationStatus != LicenseActivationStatus.Activated) // If heartbeat is successful, set activation status to activated. Only activeated devices add heartbeats successfully.
+
+            if(await GetLicenseKeyFromSecretFile() != licenseInfoDto.License_key) { // This is a safety check to make sure that the license key used for heartbeat (the one used for activation) is the same as the one in the secret file. They should never be different so treat the heartbeat as failed, and log a warning, because this will almost guarantee 2006 unknow device error on open floating session.
+                logger.LogWarning("[LICENSE] The license key used for heartbeat is different from the one in the secret file. This could indicate an issue with license activation or heartbeat.");
+                HeartbeatStatus = LicenseHeartbeatStatus.Failed;
+                return; 
+            }
+
+            HeartbeatStatus = LicenseHeartbeatStatus.Success;      
+            if (ActivationStatus != LicenseActivationStatus.Activated) // If heartbeat is successful, set activation status to activated. Only activeated devices add heartbeats successfully.
                 ActivationStatus = LicenseActivationStatus.Activated;
             LimitationMap = licensePrinter.PrintLicenseDetails(licenseInfoDto);
         }
