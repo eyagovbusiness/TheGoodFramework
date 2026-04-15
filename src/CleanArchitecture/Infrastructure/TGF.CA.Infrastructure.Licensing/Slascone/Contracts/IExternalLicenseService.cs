@@ -26,6 +26,15 @@ public interface IExternalLicenseService {
     Task<SessionStatusDto?> OpenSessionAsync(string licenseKeyConfigurationKey, string clientId, string sessionId);
 
     /// <summary>
+    /// Closes a managed external session using the configured external license secret.
+    /// </summary>
+    /// <param name="clientId">The external client identifier to use.</param>
+    /// <param name="sessionId">The external session identifier to close.</param>
+    /// <param name="cancellationToken">Cancellation token for the operation.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    Task CloseManagedSessionAsync(Guid clientId, string sessionId, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Closes a session with the SLASCONE service using the specified external license secret and identifiers.
     /// </summary>
     /// <param name="licenseKeyConfigurationKey">The configuration key that points to the external license secret file.</param>

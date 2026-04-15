@@ -18,7 +18,6 @@ namespace TGF.CA.Infrastructure.Licensing {
             webApplicationBuilder.Services.AddSingleton<ISlasconeLicensePrinter, SlasconeLicensePrinter>();
             webApplicationBuilder.Services.AddSingleton<ILicensingService, LicensingService>();
             webApplicationBuilder.Services.AddSingleton<IExternalLicenseService, ExternalLicenseService>();
-            webApplicationBuilder.Services.AddSingleton<ISlasconeSessionReleaseService, SlasconeSessionReleaseService>();
             webApplicationBuilder.Services.AddSingleton<IDeviceInfoService, DeviceInfoService>();
             webApplicationBuilder.Services.AddHostedService<LicensingStartupHostedService>();
             webApplicationBuilder.ConfigureSlasconeHealthCheck();
