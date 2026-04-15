@@ -17,7 +17,7 @@ internal sealed class ExternalLicenseService(
     IConfiguration configuration
 ) : IExternalLicenseService {
 
-    public Lazy<Task<ISlasconeClientV2>> SlasconeClient => new(GetNewSlasconeClient(slasconeClientFactory));
+    private Lazy<Task<ISlasconeClientV2>> SlasconeClient => new(GetNewSlasconeClient(slasconeClientFactory));
 
     public async Task CloseManagedSessionAsync(Guid clientId, string sessionId, CancellationToken cancellationToken = default) {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
@@ -25,7 +25,7 @@ internal sealed class ExternalLicenseService(
 
         try {
             await CloseSessionAsync(
-                ConfigurationKeys.Licensing.ManagedExternalLicense.LicenseFileSecretName,
+                ConfigurationKeys.Licensing.Slascone.ManagedExternalLicense.LicenseFileSecretName,
                 clientId.ToString(),
                 sessionId);
             logger.LogInformation("[LICENSE] Managed external session closed successfully {SessionId} for client {ClientId}", sessionId, clientId);
@@ -36,42 +36,7 @@ internal sealed class ExternalLicenseService(
         }
     }
 
-    public async Task<SessionStatusDto?> OpenSessionAsync(string licenseKeyConfigurationKey, string clientId, string sessionId) {
-        ArgumentException.ThrowIfNullOrWhiteSpace(licenseKeyConfigurationKey);
-        ArgumentException.ThrowIfNullOrWhiteSpace(clientId);
-        ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
-
-        var licenseId = await GetLicenseIdFromSecretFile(licenseKeyConfigurationKey);
-        if (!licenseId.HasValue) {
-            logger.LogWarning("[LICENSE] External license secret {LicenseKeyConfigurationKey} does not resolve to a license id.", licenseKeyConfigurationKey);
-            return null;
-        }
-
-        try {
-            var sessionDto = new SessionRequestDto {
-                Client_id = clientId,
-                License_id = licenseId.Value,
-                Session_id = ResolveSessionId(sessionId)
-            };
-
-            var slasconeClient = await SlasconeClient.Value;
-            var result = await SlasconeErrorHandlingHelper.Execute(slasconeClient.Provisioning.OpenSessionAsync, sessionDto);
-
-            if (result.data is null) {
-                ReportError(result, nameof(OpenSessionAsync));
-                return null;
-            }
-
-            logger.LogInformation("[LICENSE] External session opened successfully {SessionId} for client {ClientId}", sessionId, clientId);
-            return result.data;
-        }
-        catch (Exception ex) {
-            logger.LogError(ex, "[LICENSE] Opening external session failed for client {ClientId} and session {SessionId}.", clientId, sessionId);
-            throw;
-        }
-    }
-
-    public async Task CloseSessionAsync(string licenseKeyConfigurationKey, string clientId, string sessionId) {
+    private async Task CloseSessionAsync(string licenseKeyConfigurationKey, string clientId, string sessionId) {
         ArgumentException.ThrowIfNullOrWhiteSpace(licenseKeyConfigurationKey);
         ArgumentException.ThrowIfNullOrWhiteSpace(clientId);
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
@@ -134,7 +99,7 @@ internal sealed class ExternalLicenseService(
     }
 
     private async Task<string> GetLicenseSecretContentAsync(string licenseKeyConfigurationKey) {
-        if (licenseKeyConfigurationKey != ConfigurationKeys.Licensing.ManagedExternalLicense.LicenseFileSecretName)
+        if (licenseKeyConfigurationKey != ConfigurationKeys.Licensing.Slascone.ManagedExternalLicense.LicenseFileSecretName)
             return await secretFilesService.GetSecretFromConfigAsync(licenseKeyConfigurationKey);
 
         var secretsPathEnvVar = configuration[ConfigurationKeys.SecretsFiles.SecretsPathEnvVar]
