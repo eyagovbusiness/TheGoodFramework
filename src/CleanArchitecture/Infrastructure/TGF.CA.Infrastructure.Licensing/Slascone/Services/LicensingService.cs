@@ -3,7 +3,6 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slascone.Client;
 using Slascone.Client.Interfaces;
-using System.Text.Json;
 using System.Runtime.CompilerServices;
 using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.Licensing.Slascone.Contracts;
@@ -256,21 +255,17 @@ internal sealed class LicensingService(
     }
 
     public async Task OpenSessionAsync() {
-        var resolvedClientId = deviceInfoService.GetUniqueDeviceId();
-        var resolvedSessionId = _sessionId;
-        var licenseId = await GetLicenseIdFromSecretFile(ConfigurationKeys.SecretsFiles.SecretsFileNames.LicenseKeySecret);
-
-        if (!licenseId.HasValue) {
+        var licensekey = await GetLicenseKeyFromSecretFile();
+        if (string.IsNullOrEmpty(licensekey)) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
             logger.LogWarning("[LICENSE] You have to add a license heartbeat first.");
             return;
         }
-
         try {
             var sessionDto = new SessionRequestDto {
-                Client_id = resolvedClientId,
-                License_id = licenseId.Value,
-                Session_id = resolvedSessionId
+                Client_id = deviceInfoService.GetUniqueDeviceId(),
+                License_id = Guid.Parse(licensekey),
+                Session_id = _sessionId
             };
 
             var slasconeClient = await SlasconeClient.Value;
@@ -284,14 +279,13 @@ internal sealed class LicensingService(
                     // Normally you would inform the user about this and prevent the usage of the software.
                     logger.LogWarning("[LICENSE] Maximum of allowed parallel opened sessions exceeded!");
                 }
-
                 LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
                 return;
             }
 
             var sessionStatus = result.data;
             SessionInfo = sessionStatus;
-            logger.LogInformation("[LICENSE] Session opened successfully {SessionId}", resolvedSessionId);
+            logger.LogInformation("[LICENSE] Session opened successfully {SessionId}", _sessionId);
             logger.LogInformation("[LICENSE] Max number of concurrent sessions: {MaxOpenSessionCount}", sessionStatus.Max_open_session_count);
             logger.LogInformation("[LICENSE] Session valid until {SessionValidUntil}", sessionStatus.Session_valid_until);
             LastOpenSessionAttemptStatus = LicenseSessionStatus.Opened;
@@ -303,11 +297,8 @@ internal sealed class LicensingService(
     }
 
     public async Task CloseSessionAsync() {
-        var resolvedClientId = deviceInfoService.GetUniqueDeviceId();
-        var resolvedSessionId = _sessionId;
-        var licenseId = await GetLicenseIdFromSecretFile(ConfigurationKeys.SecretsFiles.SecretsFileNames.LicenseKeySecret);
-
-        if (!licenseId.HasValue) {
+        var licensekey = await GetLicenseKeyFromSecretFile();
+        if (string.IsNullOrEmpty(licensekey)) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
             logger.LogWarning("[LICENSE] You have to add a license heartbeat first.");
             return;
@@ -315,9 +306,9 @@ internal sealed class LicensingService(
 
         try {
             var sessionDto = new SessionRequestDto {
-                Client_id = resolvedClientId,
-                License_id = licenseId.Value,
-                Session_id = resolvedSessionId
+                Client_id = deviceInfoService.GetUniqueDeviceId(),
+                License_id = Guid.Parse(licensekey),
+                Session_id = _sessionId
             };
 
             var slasconeClient = await SlasconeClient.Value;
@@ -330,7 +321,7 @@ internal sealed class LicensingService(
             }
 
             LastOpenSessionAttemptStatus = LicenseSessionStatus.Closed;
-            logger.LogInformation("[LICENSE] Session closed successfully {SessionId}", resolvedSessionId);
+            logger.LogInformation("[LICENSE] Session closed successfully {SessionId}", _sessionId);
         }
         catch (Exception ex) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
@@ -380,35 +371,6 @@ internal sealed class LicensingService(
     /// </summary>
     private async Task<string> GetLicenseKeyFromSecretFile()
         => await secretFilesService.GetSecretFromConfigAsync(ConfigurationKeys.SecretsFiles.SecretsFileNames.LicenseKeySecret);
-
-    private async Task<Guid?> GetLicenseIdFromSecretFile(string licenseKeyConfigurationKey) {
-        var licenseKeySecret = await GetLicenseSecretContentAsync(licenseKeyConfigurationKey);
-        if (string.IsNullOrWhiteSpace(licenseKeySecret))
-            return null;
-
-        if (Guid.TryParse(licenseKeySecret, out var directLicenseId))
-            return directLicenseId;
-
-        try {
-            using var doc = JsonDocument.Parse(licenseKeySecret);
-            if (!doc.RootElement.TryGetProperty("license_key", out var licenseKeyElement))
-                throw new InvalidOperationException($"[LICENSE] License secret '{licenseKeyConfigurationKey}' does not contain 'license_key'.");
-
-            var parsedLicenseKey = licenseKeyElement.GetString();
-            if (!Guid.TryParse(parsedLicenseKey, out var jsonLicenseId))
-                throw new InvalidOperationException($"[LICENSE] License secret '{licenseKeyConfigurationKey}' contains an invalid license key '{parsedLicenseKey}'.");
-
-            return jsonLicenseId;
-        }
-        catch (JsonException ex) {
-            logger.LogError(ex, "[LICENSE] Failed to parse secret {LicenseKeyConfigurationKey} as JSON.", licenseKeyConfigurationKey);
-            throw new InvalidOperationException($"[LICENSE] License secret '{licenseKeyConfigurationKey}' is neither a GUID nor valid JSON.", ex);
-        }
-    }
-
-    private async Task<string> GetLicenseSecretContentAsync(string licenseKeyConfigurationKey) {
-        return await secretFilesService.GetSecretFromConfigAsync(licenseKeyConfigurationKey);
-    }
 
     /// <summary>
     /// Reports errors from SLASCONE API operations to the the logger.
