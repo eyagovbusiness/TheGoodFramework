@@ -9,6 +9,10 @@
             public const string Key = nameof(Licensing);
             public readonly struct Slascone {
                 public const string Key = $"{Licensing.Key}:{nameof(Slascone)}";
+                public readonly struct ManagedExternalLicense {
+                    public const string Key = $"{Slascone.Key}:{nameof(ManagedExternalLicense)}";
+                    public const string LicenseFileSecretName = $"{Key}:LicenseFileSecretName";
+                }
             }
         }
         public readonly struct Logging {
