@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging.Abstractions;
 using TGF.CA.Infrastructure.Comm.Messages;
 
 namespace TGF.CA.Infrastructure.Comm.Consumer.Handler;
@@ -25,7 +26,7 @@ namespace TGF.CA.Infrastructure.Comm.Consumer.Handler;
 /// <code>
 /// public class MyMessageHandler : ScopedMessageHandlerBase&lt;MyMessage&gt;
 /// {
-///     public MyMessageHandler(IServiceProvider serviceProvider, ILogger&lt;MyMessageHandler&gt; logger) 
+///     public MyMessageHandler(IServiceProvider serviceProvider, ILogger&lt;MyMessageHandler&gt;? logger = null)
 ///         : base(serviceProvider, logger) { }
 /// 
 ///     protected override async Task HandleScoped(MyMessage message, IServiceProvider scopedServices, CancellationToken cancellationToken)
@@ -44,10 +45,10 @@ public abstract class ScopedMessageHandlerBase<TMessage> : IMessageHandler<TMess
 
     protected ScopedMessageHandlerBase(
         IServiceProvider serviceProvider, 
-        Microsoft.Extensions.Logging.ILogger logger)
+        Microsoft.Extensions.Logging.ILogger? logger = null)
     {
         _serviceProvider = serviceProvider;
-        Logger = logger;
+        Logger = logger ?? NullLogger.Instance;
     }
 
     /// <summary>
