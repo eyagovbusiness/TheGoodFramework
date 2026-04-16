@@ -48,7 +48,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v3
         with:
           token: ${{ secrets.PAT_TOKEN }} 
-          repository: Biognosys/SF.Common
+          repository: Biognosys/OF.Common
           event-type: L1-dependency-update
           client-payload: |
             {

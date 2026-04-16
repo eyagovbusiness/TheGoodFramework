@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Slascone.Client;
@@ -267,7 +267,6 @@ internal sealed class LicensingService(
             return;
         }
         try {
-
             var sessionDto = new SessionRequestDto {
                 Client_id = deviceInfoService.GetUniqueDeviceId(),
                 License_id = Guid.Parse(licensekey),
@@ -287,7 +286,6 @@ internal sealed class LicensingService(
                 }
                 LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
                 return;
-
             }
 
             var sessionStatus = result.data;
@@ -310,6 +308,7 @@ internal sealed class LicensingService(
             logger.LogWarning("[LICENSE] You have to add a license heartbeat first.");
             return;
         }
+
         try {
             var sessionDto = new SessionRequestDto {
                 Client_id = deviceInfoService.GetUniqueDeviceId(),
@@ -325,6 +324,7 @@ internal sealed class LicensingService(
                 LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
                 return;
             }
+
             LastOpenSessionAttemptStatus = LicenseSessionStatus.Closed;
             logger.LogInformation("[LICENSE] Session closed successfully {SessionId}", _sessionId);
         }
