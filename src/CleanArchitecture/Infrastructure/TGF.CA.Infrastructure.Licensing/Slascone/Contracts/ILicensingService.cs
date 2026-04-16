@@ -58,9 +58,23 @@ public interface ILicensingService {
     LicenseComplianceStatus ComplianceStatus { get; }
 
     /// <summary>
-    /// Activates a license for the current device using the provided license key.
+    /// Activates the software on the current device using the specified license key.
     /// </summary>
-    /// <returns>A task representing the asynchronous operation.</returns>
+    /// <remarks>
+    /// <para>
+    /// Activation binds the license key to the unique hardware identity of the device, 
+    /// enabling compliance verification and the acquisition of floating license seats.
+    /// This process requires an active internet connection to communicate with the SLASCONE service.
+    /// </para>
+    /// <para>
+    /// <b>Note:</b> If the device is already activated, calling this method will overwrite 
+    /// existing activation data, effectively re-activating the device with the new license key.
+    /// </para>
+    /// </remarks>
+    /// <returns>A <see cref="Task"/> representing the asynchronous activation operation.</returns>
+    /// <exception cref="Exception">
+    /// Thrown if the license key is invalid, already in use, or if a network error occurs.
+    /// </exception>
     Task ActivateLicenseAsync();
 
     /// <summary>
@@ -84,6 +98,7 @@ public interface ILicensingService {
     /// Sends a heartbeat to the SLASCONE service to validate the license.
     /// Updates license information based on the server response.
     /// </summary>
+    /// <remarks>The method checks that the license key used for heartbeat (the one used for activation) is the same as the one in the secret file. If they are different, treat the heartbeat as failed and logs a warning. They should never be different so treat the heartbeat as failed, and log a warning because this will almost guarantee 2006 unknow device error on open floating session.</remarks>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task AddHeartbeatAsync();
 
