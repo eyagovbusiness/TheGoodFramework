@@ -171,7 +171,7 @@ internal static class MessageHandlerValidator
             
             $"public class {handlerType.Name}(\n" +
             "    IServiceProvider serviceProvider,\n" +
-            $"    ILogger<{handlerType.Name}> logger)\n" +
+            $"    ILogger<{handlerType.Name}>? logger = null)\n" +
             $"    : ScopedMessageHandlerBase<{messageTypeName}>(serviceProvider, logger)\n" +
             "{\n" +
             "    protected override async Task HandleScoped(\n" +
