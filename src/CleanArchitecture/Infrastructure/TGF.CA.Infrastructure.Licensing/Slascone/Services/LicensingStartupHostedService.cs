@@ -34,7 +34,7 @@ internal sealed class LicensingStartupHostedService(
     public override async Task StopAsync(CancellationToken cancellationToken) {
         await licensingService.CloseSessionAsync();
         if(licensingService.LastOpenSessionAttemptStatus is LicenseSessionStatus.Closed) {
-            logger.LogWarning("[LICENSE] Session closed successfully during shutdown.");
+            logger.LogInformation("[LICENSE] Session closed successfully during shutdown.");
             return;
         }
         logger.LogError("[LICENSE] Failed to close session during shutdown, this seat will not be freed until the session expires or is manually released by the license server.");
@@ -123,7 +123,7 @@ internal sealed class LicensingStartupHostedService(
     private async Task BackoffDelayAsync(int attempt, CancellationToken cancellationToken) {
         var delay = Backoff(attempt, slasconeOptions.Value.StartupOptions.InitialBackoffSeconds,
                                    slasconeOptions.Value.StartupOptions.MaxBackoffSeconds);
-        logger.LogWarning("[LICENSE] Waiting {Delay} before retrying...", delay);
+        logger.LogInformation("[LICENSE] Waiting {Delay} before retrying...", delay);
         await DelaySafe(delay, cancellationToken);
     }
 
@@ -161,7 +161,7 @@ internal sealed class LicensingStartupHostedService(
             logger.LogInformation("[LICENSE] Session renewed. New valid until {ValidUntil}.",
                 licensingService.SessionInfo?.Session_valid_until);
         } else {
-            logger.LogWarning("[LICENSE] Renewal failed. Seat may be lost.");
+            logger.LogError("[LICENSE] Renewal failed. Seat may be lost.");
         }
     }
 

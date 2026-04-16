@@ -246,7 +246,7 @@ internal sealed class LicensingService(
                 if (null != consumptionDto.Transaction_id)
                     logger.LogInformation("[LICENSE] Consumption recorded for {Limitation}: Transaction ID: {Transaction_id}", limitation, consumptionDto.Transaction_id);
                 else
-                    logger.LogWarning("[LICENSE] Consumption for {Limitation} was not recorded: Limit reached!", limitation);
+                    logger.LogError("[LICENSE] Consumption for {Limitation} was not recorded: Limit reached!", limitation);
             }
         }
         catch (Exception ex) {
@@ -302,7 +302,7 @@ internal sealed class LicensingService(
         var licensekey = await GetLicenseKeyFromSecretFile();
         if (string.IsNullOrEmpty(licensekey)) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
-            logger.LogWarning("[LICENSE] You have to add a license heartbeat first.");
+            logger.LogError("[LICENSE] You have to add a license heartbeat first.");
             return;
         }
         try {
