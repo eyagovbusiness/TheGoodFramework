@@ -16,6 +16,6 @@ public interface IExternalLicenseService {
     /// <param name="sessionId">The external session identifier to close.</param>
     /// <param name="cancellationToken">Cancellation token for the operation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task CloseManagedSessionAsync(Guid clientId, string sessionId, CancellationToken cancellationToken = default);
+    Task CloseManagedSessionAsync(string clientId, string sessionId, CancellationToken cancellationToken = default);
 
 }
