@@ -1,4 +1,4 @@
-name: L1.TheGoodFramework - Build (PR -> dev)
+name: L1 - Build (PR -> dev)
 
 on:
   pull_request:

@@ -1,4 +1,4 @@
-name: L1.TheGoodFramework - Build and Publish (push -> main)
+name: L1 - Build and Publish (push -> main)
 
 on:
   push:
