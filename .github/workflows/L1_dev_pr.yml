@@ -1,16 +1,16 @@
-name: L1 - Build TheGoodFramework (PR → release/0.0.0)
+name: L1 - Build (PR -> dev)
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     branches:
-      - release/0.0.0
+      - dev
 
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to test'
-        default: 'release/0.0.0'
+        description: 'Branch to test (default: dev)'
+        default: 'dev'
 
 jobs:
   build:
@@ -19,7 +19,7 @@ jobs:
       - name: Checkout TheGoodFramework repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref || github.event.inputs.branch || 'release/0.0.0' }}
+          ref: ${{ github.event.pull_request.head.ref || github.event.inputs.branch || 'dev' }}
 
       - name: Log in to image registry
         uses: docker/login-action@v2
