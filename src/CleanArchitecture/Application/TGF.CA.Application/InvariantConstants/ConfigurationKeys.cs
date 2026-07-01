@@ -13,6 +13,7 @@
             public const string AccessTokenLifetimeInMinutes = $"{Key}:AccessTokenLifetimeInMinutes";
             public const string RefreshTokenLifetimeInDays = $"{Key}:RefreshTokenLifetimeInDays";
             public const string AdditionalAllowedHosts = $"{Key}:AdditionalAllowedHosts";
+            public const string RequireHttpsMetadata = $"{Key}:RequireHttpsMetadata";
         }
     }
 }
