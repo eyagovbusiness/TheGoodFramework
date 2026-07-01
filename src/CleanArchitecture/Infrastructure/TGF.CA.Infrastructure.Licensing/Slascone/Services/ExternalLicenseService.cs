@@ -19,14 +19,14 @@ internal sealed class ExternalLicenseService(
 
     private Lazy<Task<ISlasconeClientV2>> SlasconeClient => new(GetNewSlasconeClient(slasconeClientFactory));
 
-    public async Task CloseManagedSessionAsync(Guid clientId, string sessionId, CancellationToken cancellationToken = default) {
+    public async Task CloseManagedSessionAsync(string clientId, string sessionId, CancellationToken cancellationToken = default) {
         ArgumentException.ThrowIfNullOrWhiteSpace(sessionId);
         cancellationToken.ThrowIfCancellationRequested();
 
         try {
             await CloseSessionAsync(
                 ConfigurationKeys.Licensing.Slascone.ManagedExternalLicense.LicenseFileSecretName,
-                clientId.ToString(),
+                clientId,
                 sessionId);
             logger.LogInformation("[LICENSE] Managed external session closed successfully {SessionId} for client {ClientId}", sessionId, clientId);
         }

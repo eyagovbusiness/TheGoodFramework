@@ -158,6 +158,7 @@ namespace TGF.CA.Infrastructure.Identity.Authentication {
                 options.Scope.Add("profile");
                 options.Scope.Add("email");
                 options.CallbackPath = configuration[ConfigurationKeys.Auth.OIDCAuthCallbackURI];
+                options.RequireHttpsMetadata = configuration.GetValue<bool?>(ConfigurationKeys.Auth.RequireHttpsMetadata) ?? true;
 
                 options.TokenValidationParameters = new TokenValidationParameters {
                     NameClaimType = "name",
