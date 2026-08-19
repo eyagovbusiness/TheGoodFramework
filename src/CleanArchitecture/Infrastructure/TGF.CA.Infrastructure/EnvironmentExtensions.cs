@@ -11,7 +11,9 @@ namespace TGF.CA.Infrastructure {
         [Description("AWS")]
         AWS,
         [Description("Docker")]
-        Docker
+        Docker,
+        [Description("GCP")]
+        GCP
     }
 
     /// <summary>
@@ -66,17 +68,28 @@ namespace TGF.CA.Infrastructure {
         public static bool IsDocker(this IWebHostEnvironment webHostEnvironment)
         => webHostEnvironment.GetHostEnvironment() == HostEnvironmentEnum.Docker;
 
+        public static bool IsGCP(this IWebHostEnvironment webHostEnvironment)
+        => webHostEnvironment.GetHostEnvironment() == HostEnvironmentEnum.GCP;
+
         /// <summary>
         /// Gets the cloud provider based on the environment name.
         /// </summary>
         public static HostEnvironmentEnum GetHostEnvironment(this IWebHostEnvironment webHostEnvironment) {
-            var envName = webHostEnvironment.EnvironmentName;
-            string cloudProvider;
-            var parts = envName.Split('_');
-            cloudProvider = parts.Length > 1 ? parts[1] : envName;
-            return Enum.TryParse(typeof(HostEnvironmentEnum), cloudProvider, false, out var result) && result is HostEnvironmentEnum parsedResult
-                ? parsedResult
-                : throw new InvalidOperationException($"Invalid host environment: The value for ASPNETCORE_ENVIRONMENT env variable is expectd in format[dev/stg/(empty)]_[HOST] and the value that was set for HOST is not valid: {cloudProvider}");
+            var environmentName = webHostEnvironment.EnvironmentName;
+            var parts = environmentName.Split('_', StringSplitOptions.None);
+            var providerName = parts.Length switch {
+                1 => parts[0],
+                2 when parts[0] is "dev" or "stg" => parts[1],
+                _ => throw InvalidHostEnvironment()
+            };
+
+            return Enum.TryParse(providerName, ignoreCase: false, out HostEnvironmentEnum provider)
+                && Enum.IsDefined(provider)
+                ? provider
+                : throw InvalidHostEnvironment();
         }
+
+        private static InvalidOperationException InvalidHostEnvironment()
+            => new("Invalid ASPNETCORE_ENVIRONMENT provider configuration. Use Azure, AWS, Docker, or GCP, optionally prefixed by dev_ or stg_.");
     }
 }
