@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="Slascone.Client" Version="2.1.961" />
+    <!-- Fixing CVE-2026-26171, CVE-2026-32203, CVE-2026-33116, CVE-2026-47302, CVE-2026-47304, CVE-2026-50525, CVE-2026-50527, CVE-2026-50648 -->
     <PackageReference Include="System.Security.Cryptography.Xml" Version="9.0.19" />
   </ItemGroup>
 
