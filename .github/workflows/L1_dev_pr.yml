@@ -5,6 +5,7 @@ on:
     types: [opened, synchronize, reopened]
     branches:
       - dev
+      - main
 
   workflow_dispatch:
     inputs:
@@ -16,12 +17,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout TheGoodFramework repository
+      - name: Checkout pull request
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/checkout@v4
+
+      - name: Checkout requested branch
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref || github.event.inputs.branch || 'dev' }}
+          ref: ${{ github.event.inputs.branch || 'dev' }}
 
       - name: Log in to image registry
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         uses: docker/login-action@v2
         with:
           registry: ${{ secrets.REG_ADDRESS }}
@@ -29,9 +36,14 @@ jobs:
           password: ${{ secrets.REG_PASSWORD }}
 
       - name: Run local_deploy.sh
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         run: |
           chmod +x ./local_deploy.sh
           ./local_deploy.sh --no-cache --bgs
         env:
           IMAGE_REGISTRY: ${{ secrets.REG_ADDRESS }}
           OMICSFLOW_ENVIRONMENT: development
+
+      - name: Build fork pull request
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        run: dotnet build TheGoodFramework.sln --configuration Release
