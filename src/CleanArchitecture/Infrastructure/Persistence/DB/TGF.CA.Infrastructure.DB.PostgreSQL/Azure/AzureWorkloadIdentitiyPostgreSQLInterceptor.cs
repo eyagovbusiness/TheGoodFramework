@@ -31,7 +31,8 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL.Azure {
             var accessToken = await GetValidAccessTokenAsync(cancellationToken);
             var postgresSecrets = await secretFilesService.GetSecretFromConfigAsync<PostgreSQLConnectionSecret>(ConfigurationKeys.SecretsFiles.SecretsFileNames.PostgresSecrets);
             var connectionString = postgresSecrets.ToConnectionString(passwordOverride: accessToken) + "Pooling=true;MinPoolSize=0;MaxPoolSize=50;";
-            logger.LogInformation("GetValidNpgsqlConnectionStringAsync: {ConnectionString}", connectionString);
+            // Connection strings contain either a password or an access token; retain only safe operational context.
+            logger.LogInformation("Generated PostgreSQL connection settings using workload identity.");
             return connectionString;
         }
 
