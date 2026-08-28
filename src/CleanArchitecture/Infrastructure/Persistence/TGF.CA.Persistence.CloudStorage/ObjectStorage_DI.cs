@@ -2,9 +2,9 @@
 using Amazon.Runtime;
 using Amazon.S3;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TGF.CA.Application;
 using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.Persistence.CloudStorage.ObjectStorage;
 
@@ -18,15 +18,15 @@ public static class ObjectStorage_DI {
     /// detected environment (Azure, AWS, or Docker in development). It also adds a health check for the object storage
     /// provider. Ensure that the environment is correctly set to avoid unsupported configuration errors.</remarks>
     /// <param name="webApplicationBuilder">The WebApplicationBuilder instance to configure with cloud storage services.</param>
-    /// <param name="webHostEnvironment">The current hosting environment, used to determine which cloud storage provider to register.</param>
+    /// <param name="deploymentEnvironment">The deployment environment used to determine which cloud storage provider to register.</param>
     /// <exception cref="NotSupportedException">Thrown if the hosting environment is not supported or if Docker is used outside of development.</exception>
-    public static void AddCloudStorage(this WebApplicationBuilder webApplicationBuilder, IWebHostEnvironment webHostEnvironment) {
-        _ = webHostEnvironment.GetHostEnvironment() switch {
-            HostEnvironmentEnum.Azure => webApplicationBuilder.Services.AddSingleton<IObjectStorageProvider, StorageAccountProvider>(),
-            HostEnvironmentEnum.AWS => webApplicationBuilder.AddS3RequiredServices(),
-            HostEnvironmentEnum.Docker => webHostEnvironment.IsDevelopment()
-                ? webApplicationBuilder.Services.AddSingleton<IObjectStorageProvider, StorageAccountProvider>()
-                : throw new NotSupportedException("[ERROR]: Docker only supports cloud storage in development."),
+    public static void AddCloudStorage(this WebApplicationBuilder webApplicationBuilder, IDeploymentEnvironment deploymentEnvironment) {
+        _ = deploymentEnvironment.Platform switch {
+            DeploymentPlatform.Azure => webApplicationBuilder.Services.AddSingleton<IObjectStorageProvider, StorageAccountProvider>(),
+            DeploymentPlatform.AWS => webApplicationBuilder.AddS3RequiredServices(),
+            DeploymentPlatform.Docker when deploymentEnvironment.Stage == DeploymentStage.Development
+                => webApplicationBuilder.Services.AddSingleton<IObjectStorageProvider, StorageAccountProvider>(),
+            DeploymentPlatform.Docker => throw new NotSupportedException("[ERROR]: Docker only supports cloud storage in development."),
             _ => throw new NotSupportedException("[ERROR]: Unsupported cloud provider.")
         };
 
