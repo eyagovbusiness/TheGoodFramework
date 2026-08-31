@@ -9,8 +9,8 @@ public class ObjectStorageHealthCheck(IObjectStorageProvider objectStorageProvid
                 ? HealthCheckResult.Healthy($"Connection to {GetObjectStorageType()} established successfully.")
                 : HealthCheckResult.Unhealthy($"Failed to connect to {GetObjectStorageType()}. Check connection string or network.");
         }
-        catch (Exception ex) {
-            return HealthCheckResult.Unhealthy($"($\"Failed to connect to {GetObjectStorageType()}. An exception occurred while trying to conenct: {ex.Message}", ex);
+        catch (Exception) {
+            return HealthCheckResult.Unhealthy($"Failed to connect to {GetObjectStorageType()}.");
         }
     }
     private string GetObjectStorageType()
