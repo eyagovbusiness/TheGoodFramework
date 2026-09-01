@@ -8,6 +8,7 @@
         public const string SOFTWARE_VERSION = "SOFTWARE_VERSION";
 
         public const string AWS_REGION = "AWS_REGION";
+        public const string GOOGLE_APPLICATION_CREDENTIALS = "GOOGLE_APPLICATION_CREDENTIALS";
 
         public struct Postgres {
             public const string PGHOST = "PGHOST";

@@ -39,6 +39,7 @@
                 public const string LicensePemSecret = $"{Key}:LicensePemSecret";
                 public const string RabbitMQCredentials = $"{Key}:RabbitMQCredentials";
                 public const string ObjectStorageConnectionString = $"{Key}:ObjectStorageConnectionString";
+                public const string ObjectStorageCredentials = $"{Key}:ObjectStorageCredentials";
                 public const string ImagePullSecret = $"{Key}:ImagePullSecret";
             }
         }
@@ -51,6 +52,25 @@
         public readonly struct ObjectStorage {
             public const string Key = nameof(ObjectStorage);
             public const string SecretsSourceType = $"{Key}:SecretsSourceType";
+            public const string BucketName = $"{Key}:BucketName";
+
+            public readonly struct Locations {
+                public const string Key = $"{ObjectStorage.Key}:{nameof(Locations)}";
+                public const string Raw = $"{Key}:Raw";
+                public const string Fasta = $"{Key}:Fasta";
+                public const string Results = $"{Key}:Results";
+            }
+
+            public readonly struct Gcp {
+                public const string Key = $"{ObjectStorage.Key}:{nameof(Gcp)}";
+                public const string SignedUrlExpiryMinutes = $"{Key}:SignedUrlExpiryMinutes";
+
+                public readonly struct UploadProtection {
+                    public const string Key = $"{Gcp.Key}:{nameof(UploadProtection)}";
+                    public const string KeyRingFileName = $"{Key}:KeyRingFileName";
+                    public const string TokenLifetimeMinutes = $"{Key}:TokenLifetimeMinutes";
+                }
+            }
 
             public readonly struct AWS {
                 public const string AccessKeyId = $"{Key}:AccessKeyId";
