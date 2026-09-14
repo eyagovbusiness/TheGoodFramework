@@ -38,6 +38,9 @@
                 public const string LicenseProvisioningKeySecret = $"{Key}:LicenseProvisioningKeySecret";
                 public const string LicensePemSecret = $"{Key}:LicensePemSecret";
                 public const string RabbitMQCredentials = $"{Key}:RabbitMQCredentials";
+                public const string RabbitMQConnectionConfigMap = $"{Key}:RabbitMQConnectionConfigMap";
+                public const string RabbitMQPasswordSecretName = $"{Key}:RabbitMQPasswordSecretName";
+                public const string RabbitMQPasswordSecretKey = $"{Key}:RabbitMQPasswordSecretKey";
                 public const string ObjectStorageConnectionString = $"{Key}:ObjectStorageConnectionString";
                 public const string ObjectStorageCredentials = $"{Key}:ObjectStorageCredentials";
                 public const string ImagePullSecret = $"{Key}:ImagePullSecret";
