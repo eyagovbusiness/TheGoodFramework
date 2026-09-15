@@ -1,8 +1,10 @@
-﻿using Slascone.Client.DeviceInfos;
+﻿using Microsoft.Extensions.Logging;
+using Slascone.Client.DeviceInfos;
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
+using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.Licensing.Slascone.Contracts;
 
 namespace TGF.CA.Infrastructure.Licensing.Slascone.Services;
@@ -12,11 +14,31 @@ namespace TGF.CA.Infrastructure.Licensing.Slascone.Services;
 /// Handles detection of device IDs, operating system information, and virtualization environments.
 /// </summary>
 internal class DeviceInfoService : IDeviceInfoService {
+    private readonly ILogger<DeviceInfoService> _logger;
     private string? UniqueDeviceId { get; set; }
 
+    public DeviceInfoService(ILogger<DeviceInfoService> logger) {
+        _logger = logger;
+    }
+
+    /// <summary>
+    /// Gets the Slascone license client identifier. Kubernetes deployments must prefer the configured
+    /// <see cref="EnvironmentVariableNames.LICENSE_CLIENT_ID"/> value because cloud instance identifiers can change after node
+    /// replacement and the historical Linux container fallback is based on the pod hostname, which changes on every restart.
+    /// Those volatile identities leak Slascone activation seats and can make the license health check fail, causing probe-driven
+    /// restart loops that burn additional seats. Cloud and OS-derived identifiers are intentionally retained as last-resort
+    /// fallbacks so existing installations that upgrade without the new Secret keep their current activation identity.
+    /// </summary>
     public string GetUniqueDeviceId(bool skipCloudAndVirtualizationDetection = false) {
         if (!string.IsNullOrEmpty(UniqueDeviceId))
             return UniqueDeviceId;
+
+        var configuredClientId = Environment.GetEnvironmentVariable(EnvironmentVariableNames.LICENSE_CLIENT_ID);
+        if (!string.IsNullOrWhiteSpace(configuredClientId)) {
+            UniqueDeviceId = configuredClientId.Trim();
+            _logger.LogInformation("[LICENSE] Client id resolved from configured environment variable {EnvironmentVariableName}: {ClientId}", EnvironmentVariableNames.LICENSE_CLIENT_ID, UniqueDeviceId);
+            return UniqueDeviceId;
+        }
 
         if (!skipCloudAndVirtualizationDetection) {
             var awsEc2Infos = new AwsEc2Infos() { TimeoutSeconds = 2 };
@@ -36,10 +58,14 @@ internal class DeviceInfoService : IDeviceInfoService {
             var virtualizationDetected = detectVirtualization.Result;
 
             if (awsDetected) {
-                return UniqueDeviceId = awsEc2Infos.InstanceId;
+                UniqueDeviceId = awsEc2Infos.InstanceId;
+                _logger.LogInformation("[LICENSE] Client id resolved from AWS IMDS instance id: {ClientId}", UniqueDeviceId);
+                return UniqueDeviceId;
             }
             if (azureDetected) {
-                return UniqueDeviceId = azureVmInfos.VmId;
+                UniqueDeviceId = azureVmInfos.VmId;
+                _logger.LogInformation("[LICENSE] Client id resolved from Azure IMDS VM id: {ClientId}", UniqueDeviceId);
+                return UniqueDeviceId;
             }
         }
 
@@ -54,6 +80,7 @@ internal class DeviceInfoService : IDeviceInfoService {
                 UniqueDeviceId = $"{Guid.NewGuid()}-fallback";
             }
 
+            _logger.LogInformation("[LICENSE] Client id resolved from Windows device information fallback: {ClientId}", UniqueDeviceId);
             return UniqueDeviceId;
         }
 
@@ -62,7 +89,9 @@ internal class DeviceInfoService : IDeviceInfoService {
                                ? LinuxDeviceInfos.Hostname
                                : string.Concat(LinuxDeviceInfos.MachineId, LinuxDeviceInfos.RootDeviceSerial);
 
-            return UniqueDeviceId = BitConverter.ToString(MD5.HashData(UTF8Encoding.UTF8.GetBytes(deviceId)));
+            UniqueDeviceId = BitConverter.ToString(MD5.HashData(UTF8Encoding.UTF8.GetBytes(deviceId)));
+            _logger.LogInformation("[LICENSE] Client id resolved from Linux device information fallback: {ClientId}", UniqueDeviceId);
+            return UniqueDeviceId;
         }
 
         throw new NotSupportedException("GetUniqueDeviceId() is supported only on Windows and Linux");

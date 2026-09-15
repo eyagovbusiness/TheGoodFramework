@@ -38,7 +38,9 @@ namespace TGF.CA.Infrastructure.Licensing {
         /// </summary>
         /// <param name="webApplicationBuilder"></param>
         private static void ConfigureSlasconeHealthCheck(this WebApplicationBuilder webApplicationBuilder) {
-            webApplicationBuilder.Services.AddHealthChecks().AddCheck<SlasconeLicensingHealthCheck>(InfrastrcutureConstants.HealthCheckNames.LicenseCompliance);
+            webApplicationBuilder.Services.AddHealthChecks().AddCheck<SlasconeLicensingHealthCheck>(
+                InfrastrcutureConstants.HealthCheckNames.LicenseCompliance,
+                tags: [InfrastrcutureConstants.HealthCheckTags.Ready]);
             webApplicationBuilder.Services.AddSingleton<SlasconeLicensingHealthCheckCacheService>();
         }
         #endregion

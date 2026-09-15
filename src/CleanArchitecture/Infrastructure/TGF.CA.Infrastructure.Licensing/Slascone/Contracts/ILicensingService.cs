@@ -25,6 +25,18 @@ public interface ILicensingService {
     Lazy<Task<ISlasconeClientV2>> SlasconeClient { get; }
 
     /// <summary>
+    /// Gets the unique client or device identifier used when activating this deployment with SLASCONE.
+    /// </summary>
+    /// <remarks>Operators can use this value to correlate a failing deployment with the client row in the SLASCONE portal.</remarks>
+    string ClientId { get; }
+
+    /// <summary>
+    /// Gets the most recent failed licensing operation, or <see langword="null"/> when the last licensing operation succeeded.
+    /// </summary>
+    /// <remarks>This value intentionally excludes license keys and other secrets so it can be surfaced in health diagnostics.</remarks>
+    LicensingOperationError? LastError { get; }
+
+    /// <summary>
     /// Gets the license information associated with the current instance.
     /// </summary>
     LicenseInfoDto? LicenseInfo { get; }
