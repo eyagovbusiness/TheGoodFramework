@@ -50,7 +50,7 @@ namespace TGF.CA.Infrastructure.Discovery {
             setup.HostName = hostName;
             setup.RequireHttps = false;
             setup.Port = port;
-        }, name: healthCheckName)
+        }, name: healthCheckName, tags: [InfrastrcutureConstants.HealthCheckTags.Ready])
         .Services;
     }
 

@@ -2,6 +2,79 @@
 namespace TGF.CA.Infrastructure.Licensing.Slascone.Contracts;
 
 /// <summary>
+/// Represents SLASCONE API error codes returned by licensing operations.
+/// </summary>
+/// <remarks>
+/// See https://support.slascone.com/hc/en-us/articles/360016160398-ERROR-CODES.
+/// </remarks>
+public enum SlasconeApiErrorCode {
+    /// <summary>
+    /// No error occurred.
+    /// </summary>
+    NONE = 0,
+
+    /// <summary>
+    /// The supplied license key is invalid.
+    /// </summary>
+    INVALID_KEY = 1000,
+
+    /// <summary>
+    /// The supplied license key has expired.
+    /// </summary>
+    EXPIRED_KEY = 1001,
+
+    /// <summary>
+    /// The license has not been activated.
+    /// </summary>
+    NOT_ACTIVATED = 1002,
+
+    /// <summary>
+    /// The running software version is not compliant with the license.
+    /// </summary>
+    NON_COMPLIANT_VERSION = 1003,
+
+    /// <summary>
+    /// The maximum number of allowed concurrent connections or sessions has been exceeded.
+    /// </summary>
+    EXCEEDED_ALLOWED_CONNECTIONS = 1007,
+
+    /// <summary>
+    /// The token is already assigned to another device.
+    /// </summary>
+    TOKEN_ALREADY_ASSINGED = 2001,
+
+    /// <summary>
+    /// The client device is unknown to SLASCONE for this license.
+    /// </summary>
+    UNKNOWN_CLIENT = 2006,
+
+    /// <summary>
+    /// The SLASCONE API failed or could not be reached by the local licensing operation.
+    /// </summary>
+    API_CRASH = 9998,
+
+    /// <summary>
+    /// The error code is unknown or was not supplied.
+    /// </summary>
+    UNKNOWN = 9999
+}
+
+/// <summary>
+/// Captures the most recent failed licensing operation.
+/// </summary>
+/// <param name="OperationName">The name of the licensing operation that failed.</param>
+/// <param name="Code">The numeric SLASCONE error code, or a local mapped code for network-class failures.</param>
+/// <param name="ErrorCode">The mapped SLASCONE API error code.</param>
+/// <param name="Message">A human-readable error message without license keys or other secrets.</param>
+/// <param name="UtcTimestamp">The UTC timestamp when the failure was recorded.</param>
+public sealed record LicensingOperationError(
+    string OperationName,
+    int Code,
+    SlasconeApiErrorCode ErrorCode,
+    string Message,
+    DateTimeOffset UtcTimestamp);
+
+/// <summary>
 /// Represents the status of the last license heartbeat operation.
 /// </summary>
 public enum LicenseHeartbeatStatus {
@@ -103,4 +176,3 @@ public enum LicenseComplianceStatus {
     ///// </summary>
     //Inactive
 }
-

@@ -9,14 +9,14 @@ namespace TGF.CA.Infrastructure.Licensing.Slascone.Contracts {
     /// application behavior.</remarks>
     internal interface IDeviceInfoService {
         /// <summary>
-        /// Gets a unique device identifier based on the system's hardware or cloud environment.
-        /// This identifier is used to uniquely identify the device for licensing purposes.
+        /// Gets the Slascone license client identifier. Kubernetes deployments must prefer the configured
+        /// LICENSE_CLIENT_ID value because cloud instance identifiers can change after node replacement and the historical Linux
+        /// container fallback is based on the pod hostname, which changes on every restart. Those volatile identities leak
+        /// Slascone activation seats and can make the license health check fail, causing probe-driven restart loops that burn
+        /// additional seats. Cloud and OS-derived identifiers are intentionally retained as last-resort fallbacks so existing
+        /// installations that upgrade without the new Secret keep their current activation identity.
         /// </summary>
         /// <returns>A string containing a unique device identifier.</returns>
-        /// <summary>
-        /// Get a unique device id based on the system
-        /// </summary>
-        /// <returns>UUID via string</returns>
         string GetUniqueDeviceId(bool skipCloudAndVirtualizationDetection = false);
 
         /// <summary>
