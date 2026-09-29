@@ -1,13 +1,11 @@
 ﻿
-namespace TGF.CA.Domain.Contracts.Repositories
-{
+namespace TGF.CA.Domain.Contracts.Repositories {
     /// <summary>
     /// Interface for repositories working with any class as entity type with the base default CRUD implementations.
     /// </summary>
-    public interface IRepository<T> 
+    public interface IRepository<T>
         : ICommandRepository<T>, IQueryRepository<T>
-        where T : class
-    {
+        where T : class {
 
     }
 }

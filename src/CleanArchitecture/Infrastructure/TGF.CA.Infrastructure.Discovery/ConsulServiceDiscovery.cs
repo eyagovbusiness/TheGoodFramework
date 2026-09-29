@@ -3,25 +3,20 @@ using Microsoft.Extensions.Caching.Memory;
 using System.Text;
 using TGF.CA.Application;
 
-namespace TGF.CA.Infrastructure.Discovery
-{
-    public class ConsulServiceDiscovery : IServiceDiscovery
-    {
+namespace TGF.CA.Infrastructure.Discovery {
+    public class ConsulServiceDiscovery : IServiceDiscovery {
         private readonly IConsulClient _client;
         private readonly MemoryCache _cache;
 
-        public ConsulServiceDiscovery(IConsulClient aClient)
-        {
+        public ConsulServiceDiscovery(IConsulClient aClient) {
             _client = aClient;
             _cache = new MemoryCache(new MemoryCacheOptions());
         }
 
 
-        public async Task<string> GetFullAddress(string aServiceKey, CancellationToken aCancellationToken = default)
-        {
+        public async Task<string> GetFullAddress(string aServiceKey, CancellationToken aCancellationToken = default) {
 #pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-            if (_cache.TryGetValue(aServiceKey, out DiscoveryData lCachedData))
-            {
+            if (_cache.TryGetValue(aServiceKey, out DiscoveryData lCachedData)) {
 #pragma warning disable CS8604 // Possible null reference argument.
                 return GetAddressFromData(lCachedData);
 #pragma warning restore CS8604 // Possible null reference argument.
@@ -32,11 +27,9 @@ namespace TGF.CA.Infrastructure.Discovery
             return GetAddressFromData(lData);
         }
 
-        public async Task<DiscoveryData> GetDiscoveryData(string aServiceKey, CancellationToken aCancellationToken = default)
-        {
+        public async Task<DiscoveryData> GetDiscoveryData(string aServiceKey, CancellationToken aCancellationToken = default) {
             var lServices = await _client.Catalog.Service(aServiceKey, aCancellationToken);
-            if (lServices.Response != null && lServices.Response.Any())
-            {
+            if (lServices.Response != null && lServices.Response.Any()) {
                 var lService = lServices.Response.First();
                 DiscoveryData lData = new(lService.ServiceAddress, lService.ServicePort);
                 AddToCache(aServiceKey, lData);
@@ -47,12 +40,10 @@ namespace TGF.CA.Infrastructure.Discovery
         }
 
 
-        private static string GetAddressFromData(DiscoveryData aData)
-        {
+        private static string GetAddressFromData(DiscoveryData aData) {
             StringBuilder lServiceAddress = new();
             lServiceAddress.Append(aData.Server);
-            if (aData.Port != 0)
-            {
+            if (aData.Port != 0) {
                 lServiceAddress.Append($":{aData.Port}");
             }
 
@@ -62,8 +53,7 @@ namespace TGF.CA.Infrastructure.Discovery
         }
 
 
-        private void AddToCache(string aServiceKey, DiscoveryData aServiceAddress)
-        {
+        private void AddToCache(string aServiceKey, DiscoveryData aServiceAddress) {
             _cache.Set(aServiceKey, aServiceAddress);
         }
     }

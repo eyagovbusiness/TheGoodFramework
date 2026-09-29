@@ -1,15 +1,11 @@
 ﻿using Newtonsoft.Json;
 
-namespace TGF.Common.Serialization.Converters
-{
-    public class UlongConverter : JsonConverter<ulong>
-    {
-        public override ulong ReadJson(JsonReader aReader, Type aObjectType, ulong aExistingValue, bool aHasExistingValue, JsonSerializer aSerializer)
-        {
+namespace TGF.Common.Serialization.Converters {
+    public class UlongConverter : JsonConverter<ulong> {
+        public override ulong ReadJson(JsonReader aReader, Type aObjectType, ulong aExistingValue, bool aHasExistingValue, JsonSerializer aSerializer) {
             if (aReader?.Value == null)
                 throw new JsonSerializationException($"Failed to deserialize {aObjectType.Name} from JSON. JsonReader.Value was null!!");
-            if (aReader.TokenType == JsonToken.String)
-            {
+            if (aReader.TokenType == JsonToken.String) {
                 string lStringValue = (string)aReader.Value;
                 if (ulong.TryParse(lStringValue, out ulong lResult))
                     return lResult;

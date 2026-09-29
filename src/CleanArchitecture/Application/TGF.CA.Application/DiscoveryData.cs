@@ -1,5 +1,4 @@
 ﻿
-namespace TGF.CA.Application
-{
+namespace TGF.CA.Application {
     public record DiscoveryData(string Server, int Port);
 }

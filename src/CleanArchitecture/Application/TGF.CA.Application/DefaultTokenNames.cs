@@ -1,8 +1,6 @@
 ﻿
-namespace TGF.CA.Application
-{
-    public static class DefaultTokenNames
-    {
+namespace TGF.CA.Application {
+    public static class DefaultTokenNames {
         public const string AccessToken = "AccessToken";
     }
 }

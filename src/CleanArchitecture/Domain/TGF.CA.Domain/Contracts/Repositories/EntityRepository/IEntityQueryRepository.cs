@@ -1,16 +1,14 @@
 ﻿using Ardalis.Specification;
 using TGF.Common.ROP.HttpResult;
 
-namespace TGF.CA.Domain.Contracts.Repositories.EntityRepository
-{
+namespace TGF.CA.Domain.Contracts.Repositories.EntityRepository {
     /// <summary>
     /// Provides a set of methods for executing queries and retrieving entities in a read only repository(CQRS friendly).
     /// </summary>
     public interface IEntityQueryRepository<T, TKey>
         : IQueryRepository<T>
         where T : class, IEntity<TKey>
-        where TKey : IEquatable<TKey>
-    {
+        where TKey : IEquatable<TKey> {
 
         #region Read
 

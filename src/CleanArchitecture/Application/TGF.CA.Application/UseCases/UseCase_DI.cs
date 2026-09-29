@@ -1,13 +1,11 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 
-namespace TGF.CA.Application.UseCases
-{
+namespace TGF.CA.Application.UseCases {
     /// <summary>
     /// Provides extension methods for registering use cases in the dependency injection container.
     /// </summary>
-    public static class UseCase_DI
-    {
+    public static class UseCase_DI {
         /// <summary>
         /// Registers all implementations of <see cref="IUseCase{TResponse, TRequest}"/> in the specified assembly with the dependency injection container.
         /// </summary>
@@ -15,8 +13,7 @@ namespace TGF.CA.Application.UseCases
         /// <param name="aAssembly">The assembly to scan for use case implementations.</param>
         /// <returns>The <see cref="IServiceCollection"/> for chaining.</returns>
         /// <exception cref="InvalidOperationException">Thrown when a use case implementation cannot be registered.</exception>
-        public static IServiceCollection AddUseCases(this IServiceCollection services, Assembly assembly)
-        {
+        public static IServiceCollection AddUseCases(this IServiceCollection services, Assembly assembly) {
             // Cache the types from the assembly to avoid multiple enumeration
             var allTypes = assembly.GetTypes();
 
@@ -27,16 +24,13 @@ namespace TGF.CA.Application.UseCases
                     .Where(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IUseCase<,>))
                     .Select(i => new { InterfaceType = i, ImplementationType = t }));
 
-            foreach (var useCase in useCaseTypes)
-            {
-                try
-                {
+            foreach (var useCase in useCaseTypes) {
+                try {
                     // Register the service by interface and by concrete type
                     services.AddScoped(useCase.InterfaceType, useCase.ImplementationType);
                     services.AddScoped(useCase.ImplementationType); // Register by concrete type as well since otherwise there could be no multiple use case with the same input and output types in the generic interface registered in DI.
                 }
-                catch (Exception ex)
-                {
+                catch (Exception ex) {
                     // Handle or log the exception as needed
                     throw new InvalidOperationException($"Failed to register use case {useCase.ImplementationType.Name}", ex);
                 }

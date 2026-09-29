@@ -2,12 +2,12 @@
 using Ardalis.Specification.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TGF.CA.Domain.Contracts.Repositories;
+using TGF.CA.Infrastructure.DB.Repository.CQRS.Base;
 using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.Result;
-using TGF.CA.Infrastructure.DB.Repository.CQRS.Base;
-using TGF.CA.Domain.Contracts.Repositories;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal {  
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal {
     /// <summary>
     /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
     /// </summary>
@@ -17,8 +17,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Internal {
     : QueryRepositoryBase<TRepository, TDbContext, T>(aContext, aLogger, specificationEvaluator), IQueryRepository<T>
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     where TRepository : class
-    where T : class
-    {
+    where T : class {
 
         public QueryRepositoryInternal(TDbContext aContext, ILogger<TRepository> aLogger)
             : this(aContext, aLogger, SpecificationEvaluator.Default) {

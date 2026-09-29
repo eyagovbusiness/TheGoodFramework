@@ -1,13 +1,10 @@
 ﻿using FluentValidation;
-using TGF.Common.ROP.Errors;
 using TGF.CA.Application.Errors.Validation;
+using TGF.Common.ROP.Errors;
 
-namespace TGF.CA.Application.Validation
-{
-    public class PaginationValidator : AbstractValidator<PaginationValParams>
-    {
-        public PaginationValidator()
-        {
+namespace TGF.CA.Application.Validation {
+    public class PaginationValidator : AbstractValidator<PaginationValParams> {
+        public PaginationValidator() {
             // Custom rule to ensure either both are specified or neither must be specified
             RuleFor(x => x)
                 .Must(x =>

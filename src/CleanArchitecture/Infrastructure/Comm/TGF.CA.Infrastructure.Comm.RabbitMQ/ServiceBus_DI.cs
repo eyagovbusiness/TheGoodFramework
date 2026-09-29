@@ -14,7 +14,7 @@ public static class ServiceBus_DI {
         aServiceCollection.AddRabbitMQInfrastructureServices(configuration, InfrastrcutureConstants.HealthCheckNames.IntegrationPublisher);
         aServiceCollection.AddRabbitMQPublisher<IntegrationMessage>();
     }
-    
+
     /// <summary>
     /// Adds an integration message consumer. It also ensures the required services for RabbitMQ infrastructure are added.
     /// </summary>
@@ -22,7 +22,7 @@ public static class ServiceBus_DI {
         aServiceCollection.AddRabbitMQInfrastructureServices(configuration, InfrastrcutureConstants.HealthCheckNames.IntegrationConsumer);
         aServiceCollection.AddRabbitMqConsumer<IntegrationMessage>();
     }
-    
+
     /// <summary>
     /// Adds a domain message publisher. It also ensures the required services for RabbitMQ infrastructure are added.
     /// </summary>
@@ -30,7 +30,7 @@ public static class ServiceBus_DI {
         aServiceCollection.AddRabbitMQInfrastructureServices(configuration, InfrastrcutureConstants.HealthCheckNames.DomainPublisher);
         aServiceCollection.AddRabbitMQPublisher<DomainMessage>();
     }
-    
+
     /// <summary>
     /// Adds a domain message consumer. It also ensures the required services for RabbitMQ infrastructure are added.
     /// </summary>
@@ -48,9 +48,9 @@ public static class ServiceBus_DI {
     public static void AddMessageHandlersInAssembly<T>(this IServiceCollection services) {
         // Find all message handler types in the assembly
         var handlerTypes = typeof(T).Assembly.GetTypes()
-            .Where(t => t.IsClass && 
-                       !t.IsAbstract && 
-                       !t.IsGenericType && 
+            .Where(t => t.IsClass &&
+                       !t.IsAbstract &&
+                       !t.IsGenericType &&
                        typeof(IMessageHandler).IsAssignableFrom(t))
             .ToList();
 
@@ -63,13 +63,13 @@ public static class ServiceBus_DI {
         foreach (var handlerType in handlerTypes) {
             // Validate before registration to catch issues at startup
             MessageHandlerValidator.Validate(handlerType, services);
-            
+
             // Register as transient
             services.AddTransient(typeof(IMessageHandler), handlerType);
-            
+
             // Register for all implemented interfaces (except base IMessageHandler)
             foreach (var iface in handlerType.GetInterfaces()
-                .Where(i => i != typeof(IMessageHandler) && 
+                .Where(i => i != typeof(IMessageHandler) &&
                           typeof(IMessageHandler).IsAssignableFrom(i))) {
                 services.AddTransient(iface, handlerType);
             }

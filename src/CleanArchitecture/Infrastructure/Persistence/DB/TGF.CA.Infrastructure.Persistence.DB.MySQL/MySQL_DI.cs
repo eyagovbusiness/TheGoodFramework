@@ -1,14 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace TGF.CA.Infrastructure.DB.MySQL
-{
+namespace TGF.CA.Infrastructure.DB.MySQL {
 
     /// <summary>
     /// Static lass to support MySQL within the DI framework.
     /// </summary>
-    public static class MySQL_DI
-    {
+    public static class MySQL_DI {
 
         /// <summary>
         /// Adds MySql service with connection to the specified database and using the given DbContext type. Also includes its own healthcheck.
@@ -18,8 +16,7 @@ namespace TGF.CA.Infrastructure.DB.MySQL
         /// <param name="aDatabaseName">Name of the database to connect with.</param>
         /// <returns>Updated <see cref="IServiceCollection"/>.</returns>
         public static async Task<IServiceCollection> AddMySQL<TDbContext>(this IServiceCollection aServiceCollection, string aDatabaseName)
-            where TDbContext : Microsoft.EntityFrameworkCore.DbContext
-        {
+            where TDbContext : Microsoft.EntityFrameworkCore.DbContext {
             var lConnectionString = await MySQLHelpers.GetConnectionString(aServiceCollection.BuildServiceProvider(), aDatabaseName);
             return aServiceCollection
                 .AddDbContext<TDbContext>(options => options.UseMySql(lConnectionString, ServerVersion.AutoDetect(lConnectionString)))

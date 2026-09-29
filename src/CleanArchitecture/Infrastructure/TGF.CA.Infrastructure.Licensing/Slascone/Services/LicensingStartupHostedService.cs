@@ -33,7 +33,7 @@ internal sealed class LicensingStartupHostedService(
     /// </summary>
     public override async Task StopAsync(CancellationToken cancellationToken) {
         await licensingService.CloseSessionAsync();
-        if(licensingService.LastOpenSessionAttemptStatus is LicenseSessionStatus.Closed) {
+        if (licensingService.LastOpenSessionAttemptStatus is LicenseSessionStatus.Closed) {
             logger.LogInformation("[LICENSE] Session closed successfully during shutdown.");
             return;
         }

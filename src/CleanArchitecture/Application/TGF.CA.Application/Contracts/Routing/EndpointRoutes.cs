@@ -1,7 +1,5 @@
-﻿namespace TGF.CA.Application.Contracts.Routing
-{
-    public readonly struct TGFEndpointRoutes
-    {
+﻿namespace TGF.CA.Application.Contracts.Routing {
+    public readonly struct TGFEndpointRoutes {
         public const string health = "/health";
         public const string healthUi = "/health-ui";
         public const string error = "/error";

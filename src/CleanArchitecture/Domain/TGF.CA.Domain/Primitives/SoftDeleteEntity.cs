@@ -1,6 +1,5 @@
 ﻿
-namespace TGF.CA.Domain.Primitives
-{
+namespace TGF.CA.Domain.Primitives {
     /// <summary>
     /// Represents a base class for entities that support soft deletion.
     /// Inherits from <see cref="Entity{TKey}"/> to leverage the generic key handling and
@@ -11,10 +10,9 @@ namespace TGF.CA.Domain.Primitives
     /// (struct) and implement IEquatable<TKey> for efficient equality comparison.
     /// Examples of valid types include int, long, Guid, etc.
     /// </typeparam>
-    public abstract class SoftDeleteEntity<TKey> 
+    public abstract class SoftDeleteEntity<TKey>
         : Entity<TKey>, ISoftDelete
-        where TKey : IEquatable<TKey>
-    {
+        where TKey : IEquatable<TKey> {
         public bool IsDeleted { get; private set; }
 
         protected SoftDeleteEntity() { }

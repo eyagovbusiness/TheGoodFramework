@@ -2,8 +2,7 @@
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
-namespace TGF.CA.Infrastructure.DB.PostgreSQL
-{
+namespace TGF.CA.Infrastructure.DB.PostgreSQL {
     /// <summary>
     /// Provides an abstract factory for creating instances of DbContext during design time for PostgreSQL.
     /// This is used primarily for Entity Framework migrations and other design-time operations.
@@ -14,8 +13,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
     /// Production or Staging connection strings will never be used for design-time operations. 
     /// </remarks>
     public abstract class PostgreSQLDesignTimeDbContextFactory<TDbContext> : IDesignTimeDbContextFactory<TDbContext>
-        where TDbContext : Microsoft.EntityFrameworkCore.DbContext
-    {
+        where TDbContext : Microsoft.EntityFrameworkCore.DbContext {
         /// <summary>
         /// Provides the schema name for the PostgreSQL database.
         /// Derived classes can override this to specify a different schema name.
@@ -28,8 +26,7 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL
         /// </summary>
         /// <param name="args">Arguments provided at design time.</param>
         /// <returns>A new instance of <typeparamref name="TDbContext"/>.</returns>
-        public TDbContext CreateDbContext(string[] args)
-        {
+        public TDbContext CreateDbContext(string[] args) {
             IConfigurationRoot lConfiguration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.Design.json")
