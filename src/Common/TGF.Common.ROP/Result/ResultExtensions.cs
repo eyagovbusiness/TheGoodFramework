@@ -1,10 +1,8 @@
 ﻿using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
 
-namespace TGF.Common.ROP.Result
-{
-    public static class ResultExtensions
-    {
+namespace TGF.Common.ROP.Result {
+    public static class ResultExtensions {
         public static bool HasValidationErrors<T>(this IResult<T> aResult)
             => aResult.ErrorList.Any(error => error is ValidationError);
 

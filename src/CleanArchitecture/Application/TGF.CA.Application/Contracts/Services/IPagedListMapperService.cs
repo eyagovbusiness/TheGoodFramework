@@ -1,10 +1,8 @@
 ﻿using Ardalis.Specification;
 using TGF.CA.Application.DTOs;
 
-namespace TGF.CA.Application.Contracts.Services
-{
-    public interface IPagedListMapperService
-    {
+namespace TGF.CA.Application.Contracts.Services {
+    public interface IPagedListMapperService {
         /// <summary>
         /// Converts a collection of items to a PagedListDTO based on the provided specification.
         /// </summary>

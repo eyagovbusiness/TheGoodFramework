@@ -82,7 +82,7 @@ namespace TGF.CA.Presentation {
                 ?? throw new Exception("Error while configuring the default presentation, FrontendURL was not found in appsettings or environment variables. Please add this configuration.");
 
             var lLocalDevelopmentUrl = aConfiguration.GetValue<string>("DevelopmentDomain");
-            
+
             // Get additional allowed hosts from configuration
             var lAdditionalAllowedHosts = aConfiguration.GetSection(ConfigurationKeys.Auth.AdditionalAllowedHosts)
                 .Get<string[]>() ?? [];
@@ -121,7 +121,7 @@ namespace TGF.CA.Presentation {
                     return true;
 
                 // Check if origin matches any additional allowed host (case-insensitive)
-                if (aAdditionalAllowedHosts.Any(host => 
+                if (aAdditionalAllowedHosts.Any(host =>
                     aOrigin.Equals(host, StringComparison.OrdinalIgnoreCase)))
                     return true;
 

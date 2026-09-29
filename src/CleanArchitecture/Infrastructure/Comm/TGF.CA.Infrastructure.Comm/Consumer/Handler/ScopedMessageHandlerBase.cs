@@ -37,16 +37,14 @@ namespace TGF.CA.Infrastructure.Comm.Consumer.Handler;
 /// }
 /// </code>
 /// </remarks>
-public abstract class ScopedMessageHandlerBase<TMessage> : IMessageHandler<TMessage> 
-    where TMessage : IMessage
-{
+public abstract class ScopedMessageHandlerBase<TMessage> : IMessageHandler<TMessage>
+    where TMessage : IMessage {
     private readonly IServiceProvider _serviceProvider;
     protected readonly Microsoft.Extensions.Logging.ILogger Logger;
 
     protected ScopedMessageHandlerBase(
-        IServiceProvider serviceProvider, 
-        Microsoft.Extensions.Logging.ILogger? logger = null)
-    {
+        IServiceProvider serviceProvider,
+        Microsoft.Extensions.Logging.ILogger? logger = null) {
         _serviceProvider = serviceProvider;
         Logger = logger ?? NullLogger.Instance;
     }
@@ -55,8 +53,7 @@ public abstract class ScopedMessageHandlerBase<TMessage> : IMessageHandler<TMess
     /// Implements the IMessageHandler interface by creating a new scope and delegating to HandleScoped.
     /// DO NOT OVERRIDE THIS METHOD - override HandleScoped instead.
     /// </summary>
-    public async Task Handle(TMessage message, CancellationToken cancellationToken = default)
-    {
+    public async Task Handle(TMessage message, CancellationToken cancellationToken = default) {
         using var scope = _serviceProvider.CreateScope();
         await HandleScoped(message, scope.ServiceProvider, cancellationToken);
     }

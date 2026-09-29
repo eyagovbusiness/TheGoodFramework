@@ -49,10 +49,10 @@ namespace TGF.CA.Presentation.Authorization {
             string claimType,
             params string[] requiredValues)
             where TBuilder : IEndpointConventionBuilder {
-            
+
             ArgumentNullException.ThrowIfNull(builder);
             ArgumentException.ThrowIfNullOrWhiteSpace(claimType);
-            
+
             if (requiredValues == null || requiredValues.Length == 0)
                 throw new ArgumentException("At least one claim value must be provided.", nameof(requiredValues));
 

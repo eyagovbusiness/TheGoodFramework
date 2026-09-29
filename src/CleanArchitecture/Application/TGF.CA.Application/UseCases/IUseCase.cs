@@ -1,13 +1,11 @@
 ﻿
-namespace TGF.CA.Application.UseCases
-{
+namespace TGF.CA.Application.UseCases {
     /// <summary>
     /// Defines a use case with an asynchronous execution method.
     /// </summary>
     /// <typeparam name="TResponse">The type of the response produced by the use case.</typeparam>
     /// <typeparam name="TRequest">The type of the request consumed by the use case.</typeparam>
-    public interface IUseCase<TResponse, TRequest>
-    {
+    public interface IUseCase<TResponse, TRequest> {
         /// <summary>
         /// Executes the use case asynchronously.
         /// </summary>

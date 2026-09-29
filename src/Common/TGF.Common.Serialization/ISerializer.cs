@@ -1,7 +1,6 @@
 namespace TGF.Common.Serialization;
 
-public interface ISerializer
-{
+public interface ISerializer {
     T DeserializeObject<T>(string input);
     string SerializeObject<T>(T obj);
     T DeserializeObject<T>(byte[] input) where T : class;

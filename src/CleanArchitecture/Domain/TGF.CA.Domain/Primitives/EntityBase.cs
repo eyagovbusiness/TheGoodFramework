@@ -1,10 +1,8 @@
 ﻿
 using System.ComponentModel.DataAnnotations;
 
-namespace TGF.CA.Domain.Primitives
-{
-    public abstract class EntityBase
-    {
+namespace TGF.CA.Domain.Primitives {
+    public abstract class EntityBase {
         [Required]
         /// <summary>
         /// When the entity was created in DB

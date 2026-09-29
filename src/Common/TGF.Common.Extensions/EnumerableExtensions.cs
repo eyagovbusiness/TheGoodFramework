@@ -1,9 +1,7 @@
 ﻿using System.Collections.Concurrent;
 
-namespace TGF.Common.Extensions
-{
-    public static class EnumerableExtensions
-    {
+namespace TGF.Common.Extensions {
+    public static class EnumerableExtensions {
 
         /// <summary>
         /// Check whether the IEnumerable has any items.
@@ -11,8 +9,7 @@ namespace TGF.Common.Extensions
         /// <typeparam name="T">Type of elements in IEnumerable</typeparam>
         /// <param name="aEnumerable">Source IEnumerable</param>
         /// <returns>Returns true when <paramref name="aEnumerable"/> is empty.</returns>
-        public static bool IsEmpty<T>(this IEnumerable<T> aEnumerable)
-        {
+        public static bool IsEmpty<T>(this IEnumerable<T> aEnumerable) {
             return !aEnumerable.Any();
         }
 
@@ -22,8 +19,7 @@ namespace TGF.Common.Extensions
         /// <typeparam name="T">Type of the Enumerable</typeparam>
         /// <param name="source">Enumeable source to check if it is materialized or not</param>
         /// <returns>Array or ICollection<T> depending if the aSource was materialized or not.</returns>
-        public static ICollection<T> MaterializeToArray<T>(this IEnumerable<T> aSource)
-        {
+        public static ICollection<T> MaterializeToArray<T>(this IEnumerable<T> aSource) {
             return aSource as ICollection<T> ?? aSource.ToArray();
         }
 
@@ -33,8 +29,7 @@ namespace TGF.Common.Extensions
         /// <typeparam name="T">Type of elements in IEnumerable</typeparam>
         /// <param name="aEnumerable"></param>
         /// <returns>Returns true when <paramref name="aEnumerable"/> is null or empty.</returns>
-        public static bool IsNullOrEmpty<T>(this IEnumerable<T> aEnumerable)
-        {
+        public static bool IsNullOrEmpty<T>(this IEnumerable<T> aEnumerable) {
             return aEnumerable == null || !aEnumerable.Any();
         }
 
@@ -44,8 +39,7 @@ namespace TGF.Common.Extensions
         /// <typeparam name="T">Type of list item</typeparam>
         /// <param name="aList">List of items</param>
         /// <param name="aAction">Action for each item</param>
-        public static void ForEach<T>(this IEnumerable<T> aList, Action<T> aAction)
-        {
+        public static void ForEach<T>(this IEnumerable<T> aList, Action<T> aAction) {
             foreach (T aItem in aList)
                 aAction(aItem);
         }
@@ -64,14 +58,11 @@ namespace TGF.Common.Extensions
             byte aDegreeOfParallelization,
             Func<T, Task> aBody,
             CancellationToken aCancellationToken = default
-            )
-        {
+            ) {
             //Creates a method that rturns a task to perform from a given partition enumerator asynchronous execution of the ForEach body function.
-            async Task AwaitPartition(IEnumerator<T> lPartition)
-            {
+            async Task AwaitPartition(IEnumerator<T> lPartition) {
                 using (lPartition)
-                    while (lPartition.MoveNext())
-                    {
+                    while (lPartition.MoveNext()) {
                         aCancellationToken.ThrowIfCancellationRequested();
                         await aBody(lPartition.Current);
                     }

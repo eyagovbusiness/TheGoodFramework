@@ -1,13 +1,11 @@
 ﻿using TGF.Common.ROP.HttpResult;
 
-namespace TGF.CA.Domain.Contracts.Repositories.Base
-{
+namespace TGF.CA.Domain.Contracts.Repositories.Base {
     /// <summary>
     /// Interface for command repositorties working with any class as entities which defines the TryCommand methods.
     /// </summary>
     public interface ICommandRepositoryBase<T>
-       where T : class
-    {
+       where T : class {
 
         #region Command
         /// <summary>

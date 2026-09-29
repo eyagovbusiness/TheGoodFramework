@@ -7,8 +7,7 @@ using TGF.CA.Infrastructure.DB.DbContext;
 using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
-{
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository {
     /// <summary>
     /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
     /// </summary>
@@ -19,12 +18,10 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext, IReadOnlyDbContext
     where TRepository : class
     where T : class, Domain.Contracts.IEntity<TKey>
-    where TKey : IEquatable<TKey>
-    {
+    where TKey : IEquatable<TKey> {
 
         public EntityQueryRepository(TDbContext aContext, ILogger<TRepository> aLogger)
-            : this(aContext, aLogger, SpecificationEvaluator.Default)
-        {
+            : this(aContext, aLogger, SpecificationEvaluator.Default) {
         }
 
 
@@ -34,9 +31,8 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
         => await GetByIdAsync(entityId, null, cancellationToken);
 
         public virtual async Task<IHttpResult<T>> GetByIdAsync(TKey entityId, ISpecification<T>? specification, CancellationToken cancellationToken = default)
-        => await TryQueryAsync(async cancellationToken =>
-        {
-            var entity = specification != null 
+        => await TryQueryAsync(async cancellationToken => {
+            var entity = specification != null
             ? await _specificationEvaluator.GetQuery(Queryable, specification).FirstOrDefaultAsync(e => e.Id.Equals(entityId), cancellationToken)
             : await Queryable.FirstOrDefaultAsync(e => e.Id.Equals(entityId), cancellationToken);
             return entity != null ? Result.SuccessHttp(entity!) : Result.Failure<T>(DBErrors.Repository.Entity.NotFound);
@@ -46,8 +42,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
         => await GetByIdListAsync(entityIds, null, cancellationToken);
 
         public virtual async Task<IHttpResult<IEnumerable<T>>> GetByIdListAsync(IEnumerable<TKey> entityIds, ISpecification<T>? specification, CancellationToken cancellationToken = default)
-        => await TryQueryAsync(async cancellationToken =>
-        {
+        => await TryQueryAsync(async cancellationToken => {
             var entityIdList = entityIds.ToList();
             if (entityIdList.Count == 0) return Result.SuccessHttp(Enumerable.Empty<T>());
 

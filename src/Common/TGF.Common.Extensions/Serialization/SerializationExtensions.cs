@@ -1,12 +1,10 @@
 ﻿using System.Runtime.Serialization;
 
-namespace TGF.Common.Extensions.Serialization
-{
+namespace TGF.Common.Extensions.Serialization {
     /// <summary>
     /// Static class supporting extension methods for serializeation and deserializeation
     /// </summary>
-    public static class SerializationExtensions
-    {
+    public static class SerializationExtensions {
 
         /// <summary>
         /// Uses the the best mempry/performance option to Try to serialize this object.
@@ -15,8 +13,7 @@ namespace TGF.Common.Extensions.Serialization
         /// <param name="aJsonObject">Serializable object.</param>
         /// <returns>UTF8 string representing the json serialized object.</returns>
         public static string Serialize8<T>(this T aJsonObject)
-             where T : class, new()
-        {
+             where T : class, new() {
             return Utf8Json.JsonSerializer.ToJsonString(aJsonObject);
         }
 
@@ -27,8 +24,7 @@ namespace TGF.Common.Extensions.Serialization
         /// <param name="aString">string representing the json serialized object.</param>
         /// <returns>The deserialized object into the T specified type.</returns>
         public static T Deserialize8<T>(this string aString)
-             where T : class, new()
-        {
+             where T : class, new() {
             return System.Text.Json.JsonSerializer.Deserialize<T>(aString) ?? new T();
         }
 
@@ -41,8 +37,7 @@ namespace TGF.Common.Extensions.Serialization
         /// <param name="aFilePathString">string representing the file path.</param>
         /// <returns>The deserialized object into the T specified type.</returns>
         public static T DeserializeFromFile<T>(this string aFilePathString)
-            where T : class, new()
-        {
+            where T : class, new() {
             if (aFilePathString.IsNullOrWhiteSpace()
                 && !IsTypeSerializable(typeof(T)))
                 return new T();
@@ -64,8 +59,7 @@ namespace TGF.Common.Extensions.Serialization
         /// <param name="aConfigureAwait"></param>
         /// <returns>Awaitable Task with the deserialized object into the T specified type.</returns>
         public static async Task<T> DeserializeFromFileAsync<T>(this string aFilePathString, bool aConfigureAwait = true)
-             where T : class, new()
-        {
+             where T : class, new() {
             if (aFilePathString.IsNullOrWhiteSpace()
                 && !IsTypeSerializable(typeof(T)))
                 return new T();
@@ -82,8 +76,7 @@ namespace TGF.Common.Extensions.Serialization
         /// <param name="aJsonObject">Serializable object.</param>
         /// <param name="aFilePathString">string representing the file path.</param>
         public static void SerializeToFile<T>(this T aJsonObject, string aFilePathString, bool aOverride = false)
-            where T : class, new()
-        {
+            where T : class, new() {
             if (!IsTypeSerializable(typeof(T)))
                 throw new InvalidDataException("Error trying to serialize to file..");
 
@@ -104,8 +97,7 @@ namespace TGF.Common.Extensions.Serialization
         /// <param name="aConfigureAwait"></param>
         /// <returns>Awaitable Task</returns>
         public static async Task SerializeToFileAsync<T>(this T aJsonObject, string aFilePathString, bool aOverride = false, bool aConfigureAwait = true)
-            where T : class, new()
-        {
+            where T : class, new() {
             if (!IsTypeSerializable(typeof(T)))
                 throw new InvalidDataException("Error trying to serialize async to file..");
 
@@ -117,8 +109,7 @@ namespace TGF.Common.Extensions.Serialization
         #endregion
 
         // Custom method to check for serializability
-        private static bool IsTypeSerializable(Type aType)
-        {
+        private static bool IsTypeSerializable(Type aType) {
             return aType.GetCustomAttributes(typeof(SerializableAttribute), false).Length > 0
                 || typeof(ISerializable).IsAssignableFrom(aType);
         }

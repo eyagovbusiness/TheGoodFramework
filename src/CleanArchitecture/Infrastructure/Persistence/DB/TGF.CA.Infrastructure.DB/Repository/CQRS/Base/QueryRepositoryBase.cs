@@ -8,8 +8,7 @@ using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.HttpResult.RailwaySwitches;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
-{
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base {
 
     /// <summary>
     /// Base class for quiery repositories with the TryQuery result abstractions.
@@ -20,8 +19,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
     ISpecificationEvaluator specificationEvaluator)
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     where TRepository : class
-    where T : class
-    {
+    where T : class {
 
         protected readonly TDbContext _context = aContext;
         protected readonly ILogger<TRepository> _logger = aLogger;
@@ -34,7 +32,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
         }
 
         // Check if context implements IReadOnlyDbContext and return the appropriate IQueryable<T>
-        protected IQueryable<T> Queryable 
+        protected IQueryable<T> Queryable
         => _context is IReadOnlyDbContext readOnlyDbContext
             ? readOnlyDbContext.Query<T>()
             : _context.Set<T>().AsQueryable();

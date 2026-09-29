@@ -2,8 +2,7 @@
 using TGF.CA.Domain.Contracts;
 using TGF.CA.Infrastructure.DB.Repository.CQRS.Internal;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
-{
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository {
     /// <summary>
     /// A base class for a CQRS write repository with native error handling logic for Command operations using ROP.
     /// </summary>
@@ -14,8 +13,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         where TRepository : class
         where T : class, IEntity<TKey>
-        where TKey : IEquatable<TKey>
-    {
+        where TKey : IEquatable<TKey> {
 
     }
 }

@@ -36,7 +36,7 @@ internal sealed class LicensingService(
     ISlasconeLicensePrinter licensePrinter,
     IDeviceInfoService deviceInfoService,
     IOptions<SlasconeOptions> slasconeOptions,
-    ILogger<LicensingService> logger, 
+    ILogger<LicensingService> logger,
     IConfiguration configuration
 ) : ILicensingService {
 
@@ -51,7 +51,7 @@ internal sealed class LicensingService(
 
     private Guid? _tokenId;
     private readonly Guid _sessionId = Guid.NewGuid();
-    private readonly string _softwareVersion = Environment.GetEnvironmentVariable(EnvironmentVariableNames.SOFTWARE_VERSION) 
+    private readonly string _softwareVersion = Environment.GetEnvironmentVariable(EnvironmentVariableNames.SOFTWARE_VERSION)
         ?? throw new InvalidOperationException($"[LICENSING][ERROR]: {EnvironmentVariableNames.SOFTWARE_VERSION} environment variable is not set.");
 
     public async Task ActivateLicenseAsync() {
@@ -97,7 +97,7 @@ internal sealed class LicensingService(
 
         try {
             var slasconeClient = await SlasconeClient.Value;
-            var result= await SlasconeErrorHandlingHelper.Execute(slasconeClient.Provisioning.AddHeartbeatAsync, heartbeatDto);
+            var result = await SlasconeErrorHandlingHelper.Execute(slasconeClient.Provisioning.AddHeartbeatAsync, heartbeatDto);
 
             if (null == result.data) {
                 ReportError(result);
@@ -115,13 +115,13 @@ internal sealed class LicensingService(
             _tokenId = licenseInfoDto.Token_key;
             LicenseInfo = licenseInfoDto;
 
-            if(await GetLicenseKeyFromSecretFile() != licenseInfoDto.License_key) { // This is a safety check to make sure that the license key used for heartbeat (the one used for activation) is the same as the one in the secret file. They should never be different so treat the heartbeat as failed, and log a warning, because this will almost guarantee 2006 unknow device error on open floating session.
+            if (await GetLicenseKeyFromSecretFile() != licenseInfoDto.License_key) { // This is a safety check to make sure that the license key used for heartbeat (the one used for activation) is the same as the one in the secret file. They should never be different so treat the heartbeat as failed, and log a warning, because this will almost guarantee 2006 unknow device error on open floating session.
                 logger.LogWarning("[LICENSE] The license key used for heartbeat is different from the one in the secret file. This could indicate an issue with license activation or heartbeat.");
                 HeartbeatStatus = LicenseHeartbeatStatus.Failed;
-                return; 
+                return;
             }
 
-            HeartbeatStatus = LicenseHeartbeatStatus.Success;      
+            HeartbeatStatus = LicenseHeartbeatStatus.Success;
             if (ActivationStatus != LicenseActivationStatus.Activated) // If heartbeat is successful, set activation status to activated. Only activeated devices add heartbeats successfully.
                 ActivationStatus = LicenseActivationStatus.Activated;
             LimitationMap = licensePrinter.PrintLicenseDetails(licenseInfoDto);
@@ -334,7 +334,7 @@ internal sealed class LicensingService(
             throw;
         }
     }
-    
+
     public async Task LookupLicensesAsync() {
         var licensekey = await GetLicenseKeyFromSecretFile();
         var getLicenses = new GetLicensesByLicenseKeyDto {
@@ -345,7 +345,7 @@ internal sealed class LicensingService(
         try {
             var slasconeClient = await SlasconeClient.Value;
             var result = await SlasconeErrorHandlingHelper.Execute(slasconeClient.Provisioning.GetLicensesByLicenseKeyAsync, getLicenses);
-                
+
             if (null == result.data) {
                 ReportError(result);
                 return;

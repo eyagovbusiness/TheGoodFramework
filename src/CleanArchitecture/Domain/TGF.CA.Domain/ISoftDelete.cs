@@ -1,10 +1,8 @@
-﻿namespace TGF.CA.Domain
-{
+﻿namespace TGF.CA.Domain {
     /// <summary>
     /// Interface for soft deletable entities.
     /// </summary>
-    public interface ISoftDelete
-    {
+    public interface ISoftDelete {
         /// <summary>
         /// Indicates whether this Entity has been marked as deleted.
         /// This is the flag used for soft deletion.

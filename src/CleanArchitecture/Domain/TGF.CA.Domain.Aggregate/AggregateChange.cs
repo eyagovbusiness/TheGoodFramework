@@ -1,12 +1,11 @@
 ﻿
-namespace TGF.CA.Domain.Aggregate
-{
+namespace TGF.CA.Domain.Aggregate {
     public record AggregateChange<TKey>(
         object Content,
-        TKey Id, 
-        Type Type, 
-        string TransactionId, 
-        int Version, 
+        TKey Id,
+        Type Type,
+        string TransactionId,
+        int Version,
         bool IsNew
     ) where TKey : struct, IEquatable<TKey>;
 
@@ -16,9 +15,8 @@ namespace TGF.CA.Domain.Aggregate
         object aContent,
         string aAggregateType,
         string aTransactionId,
-        int aAggregateVersion) 
-        where TKey : struct, IEquatable<TKey>
-    {
+        int aAggregateVersion)
+        where TKey : struct, IEquatable<TKey> {
         public TKey AggregateId { get; init; } = aAggregateId;
         public object Content { get; init; } = aContent;
 

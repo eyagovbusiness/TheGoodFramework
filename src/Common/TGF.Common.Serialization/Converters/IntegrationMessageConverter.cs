@@ -6,8 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TGF.Common.Serialization.Converters
-{
+namespace TGF.Common.Serialization.Converters {
     //maybe good to use it on the top of the Integration message class insted of having to add it in the serializer to avoid referencing ingra library.
     ///// <summary>
     ///// Integration message is a complex geeric type so it need custom json converter
