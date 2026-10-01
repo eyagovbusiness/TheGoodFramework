@@ -36,7 +36,7 @@ chmod +x "$mock_bin/find" "$mock_bin/tar" "$mock_bin/docker"
 
 run_build() {
     DOCKER_LOG="$mock_bin/docker.log" PATH="$mock_bin:$PATH" IMAGE_REGISTRY="destination.example" ALPINE_BASE_IMAGE="$valid" \
-        "$repo_root/local_deploy.sh" "$@" >/dev/null
+        bash "$repo_root/local_deploy.sh" "$@" >/dev/null
 }
 
 run_build --bgs
@@ -44,10 +44,10 @@ grep -q -- '--build-arg ALPINE_BASE_IMAGE=registry.example:5000/base-images/alpi
 run_build --no-cache --bgs
 grep -q -- '--no-cache' "$mock_bin/docker.log"
 DOCKER_LOG="$mock_bin/docker.log" PATH="$mock_bin:$PATH" IMAGE_REGISTRY="destination.example" \
-    "$repo_root/local_deploy.sh" --bgs >/dev/null 2>&1 && exit 1
+    bash "$repo_root/local_deploy.sh" --bgs >/dev/null 2>&1 && exit 1
 DOCKER_LOG="$mock_bin/docker.log" PATH="$mock_bin:$PATH" IMAGE_REGISTRY="destination.example" ALPINE_BASE_IMAGE="registry.example/base-images/wrong@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
-    "$repo_root/local_deploy.sh" --bgs >/dev/null 2>&1 && exit 1
+    bash "$repo_root/local_deploy.sh" --bgs >/dev/null 2>&1 && exit 1
 DOCKER_LOG="$mock_bin/docker.log" PATH="$mock_bin:$PATH" IMAGE_REGISTRY="destination.example" ALPINE_BASE_IMAGE="registry.example/base-images/alpine:latest@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" \
-    "$repo_root/local_deploy.sh" --bgs >/dev/null 2>&1 && exit 1
+    bash "$repo_root/local_deploy.sh" --bgs >/dev/null 2>&1 && exit 1
 DOCKER_LOG="$mock_bin/docker.log" PATH="$mock_bin:$PATH" IMAGE_REGISTRY="destination.example" \
-    "$repo_root/local_deploy.sh" >/dev/null
+    bash "$repo_root/local_deploy.sh" >/dev/null
