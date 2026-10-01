@@ -34,4 +34,5 @@ jobs:
           ./local_deploy.sh --no-cache --bgs
         env:
           IMAGE_REGISTRY: ${{ secrets.REG_ADDRESS }}
+          ALPINE_BASE_IMAGE: ${{ vars.ALPINE_BASE_IMAGE }}
           OMICSFLOW_ENVIRONMENT: development

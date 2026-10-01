@@ -39,6 +39,10 @@ if [[ -z "${IMAGE_REGISTRY:-}" ]]; then
     exit 1
 fi
 
+if [[ "$DOCKERFILE" == "-f Dockerfile_bgs" ]]; then
+    ./scripts/validate_bgs_alpine_base_image.sh
+fi
+
 # Ensure the tarball is always removed, even if the script fails
 trap 'rm -f projectfiles.tar' EXIT
 
@@ -50,9 +54,9 @@ IMAGE_TAG="${IMAGE_REGISTRY}/base-images/${ENVIRONMENT}/the_good_framework:${TAG
 
 # Build the Docker image with or without cache
 if [ "$NO_CACHE" = true ]; then
-	docker build $DOCKERFILE . --no-cache --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${ENVIRONMENT} -t ${IMAGE_TAG}
+	docker build $DOCKERFILE . --no-cache --build-arg ALPINE_BASE_IMAGE="${ALPINE_BASE_IMAGE:-}" --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${ENVIRONMENT} -t ${IMAGE_TAG}
 else
-    docker build $DOCKERFILE . --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${ENVIRONMENT} -t ${IMAGE_TAG}
+    docker build $DOCKERFILE . --build-arg ALPINE_BASE_IMAGE="${ALPINE_BASE_IMAGE:-}" --build-arg IMAGE_REGISTRY=${IMAGE_REGISTRY} --build-arg ENVIRONMENT=${ENVIRONMENT} -t ${IMAGE_TAG}
 fi
 
 # If the --registry-push argument is provided, push the image
