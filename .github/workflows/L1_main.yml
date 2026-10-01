@@ -1,4 +1,4 @@
-name: L1 - Build and Publish (push -> main)
+name: L1 - Build (push -> main)
 
 on:
   push:
@@ -13,7 +13,7 @@ on:
         default: "latest"
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout TheGoodFramework repository
@@ -28,31 +28,15 @@ jobs:
           username: ${{ secrets.REG_USERNAME }}
           password: ${{ secrets.REG_PASSWORD }}
 
-      - name: Build and push with local_deploy.sh
+      # Keep registry login for legacy base-image pulls; BGS publication is paused.
+      - name: Build with local_deploy.sh
         run: |
           chmod +x ./local_deploy.sh
 
           TAG="${{ github.event.inputs.tag || 'latest' }}"
 
-          echo "Building and pushing with tag: $TAG"
-          ./local_deploy.sh $TAG --no-cache --bgs --registry-push
+          echo "Building with tag: $TAG"
+          ./local_deploy.sh $TAG --no-cache --bgs
         env:
           IMAGE_REGISTRY: ${{ secrets.REG_ADDRESS }}
           OMICSFLOW_ENVIRONMENT: production
-
-  dispatch:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger main workflow in L2.Common
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.PAT_TOKEN }} 
-          repository: Biognosys/OF.Common
-          event-type: L1-dependency-update
-          client-payload: |
-            {
-              "source_repo": "${{ github.repository }}",
-              "source_tag": "${{ github.event.inputs.tag || 'latest' }}",
-              "source_commit": "${{ github.sha }}"
-            }

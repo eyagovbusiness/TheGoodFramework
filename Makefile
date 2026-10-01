@@ -10,6 +10,13 @@ ifndef IMAGE_REGISTRY
 $(error Required environment variable IMAGE_REGISTRY is not set)
 endif
 
+# Fail before any prerequisites, including for parallel or reordered goals.
+ifneq ($(filter push,$(MAKECMDGOALS)),)
+ifneq ($(filter local-bgs,$(MAKECMDGOALS))$(filter Dockerfile_bgs %/Dockerfile_bgs,$(DOCKERFILE))$(filter omicsflowinternal.azurecr.io omicsflowinternal.azurecr.io/%,$(IMAGE_REGISTRY)),)
+$(error Internal BGS image publication is paused. Use local-bgs without push)
+endif
+endif
+
 # Parse arguments
 define parse_arguments
 $(eval NO_CACHE := $(if $(findstring --no-cache,$(MAKECMDGOALS)),--no-cache))

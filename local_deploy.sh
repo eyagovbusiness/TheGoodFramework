@@ -22,7 +22,8 @@ while [[ "$#" -gt 0 ]]; do
 		--bgs) 
 			DOCKERFILE="-f Dockerfile_bgs" ;;
         --help) 
-            echo "Usage: $0 [--no-cache] [--registry-push] [--bgs]"
+            echo "Usage: $0 [tag] [--no-cache] [--registry-push] [--bgs]"
+            echo "Internal BGS image publication is paused; --registry-push is for non-BGS images only."
             exit 0
             ;;
         *) 
@@ -32,6 +33,11 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
+# Reject BGS publication before preparing files or invoking Docker.
+if [[ "$REGISTRY_PUSH" = true && ( "$DOCKERFILE" = "-f Dockerfile_bgs" || "${IMAGE_REGISTRY:-}" = omicsflowinternal.azurecr.io || "${IMAGE_REGISTRY:-}" = omicsflowinternal.azurecr.io/* ) ]]; then
+    echo "Internal BGS image publication is paused. Build without --registry-push." >&2
+    exit 1
+fi
 
 # Check if required environment variables are set
 if [[ -z "${IMAGE_REGISTRY:-}" ]]; then
