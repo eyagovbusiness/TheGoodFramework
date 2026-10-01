@@ -38,6 +38,7 @@ jobs:
           ./local_deploy.sh $TAG --no-cache --bgs --registry-push
         env:
           IMAGE_REGISTRY: ${{ secrets.REG_ADDRESS }}
+          ALPINE_BASE_IMAGE: ${{ vars.ALPINE_BASE_IMAGE }}
           OMICSFLOW_ENVIRONMENT: production
 
   dispatch:

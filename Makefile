@@ -23,9 +23,11 @@ tarball:
 
 # Target to build Docker image with or without cache
 .PHONY: build
-build: tarball
+build:
 	$(call parse_arguments)
-	docker build -f $(DOCKERFILE) . $(NO_CACHE) --build-arg IMAGE_REGISTRY=$(IMAGE_REGISTRY) --build-arg ENVIRONMENT=$(ENVIRONMENT) -t $(IMAGE_REGISTRY)/base-images/$(ENVIRONMENT)/the_good_framework:latest
+	@if [ "$(DOCKERFILE)" = "Dockerfile_bgs" ]; then ./scripts/validate_bgs_alpine_base_image.sh; fi
+	$(MAKE) tarball
+	docker build -f $(DOCKERFILE) . $(NO_CACHE) --build-arg ALPINE_BASE_IMAGE --build-arg IMAGE_REGISTRY=$(IMAGE_REGISTRY) --build-arg ENVIRONMENT=$(ENVIRONMENT) -t $(IMAGE_REGISTRY)/base-images/$(ENVIRONMENT)/the_good_framework:latest
 
 # Target to push Docker image to registry
 .PHONY: push
