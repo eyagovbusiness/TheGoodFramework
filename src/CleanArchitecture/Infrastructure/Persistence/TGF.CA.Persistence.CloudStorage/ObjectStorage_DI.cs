@@ -1,8 +1,6 @@
 ﻿using Amazon;
-using Amazon.Runtime;
 using Amazon.S3;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using TGF.CA.Application;
 using TGF.CA.Infrastructure.InvariantConstants;
@@ -34,19 +32,13 @@ public static class ObjectStorage_DI {
     }
 
     private static IServiceCollection AddS3RequiredServices(this WebApplicationBuilder webApplicationBuilder) {
-        //TODO-BEGIN: Remove all this and use secret file based configuration instead like StorageAccountProvider 
-        var awsOptions = webApplicationBuilder.Configuration.GetAWSOptions();
-        webApplicationBuilder.Services.AddDefaultAWSOptions(awsOptions);
         webApplicationBuilder.Services.AddSingleton<IAmazonS3>(sp => {
-            var credentials = new EnvironmentVariablesAWSCredentials();
             var regionEnv = Environment.GetEnvironmentVariable(EnvironmentVariableNames.AWS_REGION);
             var region = !string.IsNullOrEmpty(regionEnv) ? RegionEndpoint.GetBySystemName(regionEnv) : RegionEndpoint.EUNorth1;
-            return new AmazonS3Client(credentials, region);
+            return new AmazonS3Client(region);
         });
-        //TODO-END
 
         return webApplicationBuilder.Services.AddSingleton<IObjectStorageProvider, S3StorageProvider>();
     }
 
 }
-
