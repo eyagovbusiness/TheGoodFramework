@@ -79,10 +79,10 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
         }
 
         private IHttpResult<TResult> GetQueryExceptionResult<TResult>(Exception exception) {
-            const string errorMessageTemplate = "An error occurred trying to execute a DB query in {TRepository} for entity {EntityName}: {ExceptionMessage}";
-            _logger.LogError(exception, errorMessageTemplate, nameof(TRepository), nameof(TResult), exception.Message);
+            const string errorMessageTemplate = "An error occurred trying to execute a DB query in {TRepository} for entity {EntityName}. Exception type: {ExceptionType}";
+            _logger.LogError(errorMessageTemplate, nameof(TRepository), nameof(TResult), exception.GetType().Name);
 
-            var errorMessage = $"An error occurred trying to execute a DB query in {nameof(TRepository)} for entity {nameof(TResult)}: {exception.Message}";
+            var errorMessage = $"An error occurred trying to execute a DB query in {nameof(TRepository)} for entity {nameof(TResult)}.";
             return Result.Failure<TResult>(CommonErrors.UnhandledException.New(errorMessage));
         }
 

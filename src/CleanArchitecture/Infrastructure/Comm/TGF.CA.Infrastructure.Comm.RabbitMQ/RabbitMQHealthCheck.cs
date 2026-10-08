@@ -18,10 +18,16 @@ internal class CustomRabbitMQHealthCheck(IRabbitMQConnectionFactory aRabbitMQCon
     public async Task<HealthCheckResult> CheckHealthAsync(HealthCheckContext aContext, CancellationToken aCancellationToken = default) {
         try {
             var healthCheck = await _rabbitMQHealthCheck.Value;
-            return await healthCheck.CheckHealthAsync(aContext, aCancellationToken);
+            var result = await healthCheck.CheckHealthAsync(aContext, aCancellationToken);
+
+            // The third-party check attaches the broker exception to non-healthy results; only the status is kept because
+            // health infrastructure logs attached exceptions and descriptions and broker messages can carry connection details.
+            return result.Status == HealthStatus.Healthy
+                ? HealthCheckResult.Healthy()
+                : new HealthCheckResult(result.Status, "RabbitMQ is unavailable.");
         }
-        catch (Exception ex) {
-            return HealthCheckResult.Unhealthy("Failed to initialize RabbitMQ health check.", ex);
+        catch (Exception) {
+            return HealthCheckResult.Unhealthy("Failed to initialize RabbitMQ health check.");
         }
     }
 

@@ -41,7 +41,8 @@ namespace TGF.Common.Extensions {
                     }
                 }
                 catch (Exception ex) when (attempt < maxRetries && !ct.IsCancellationRequested) {
-                    logger.LogWarning(ex, "[RETRY] Exception on attempt {Attempt}", attempt);
+                    // Only the exception type is logged: operation exceptions can carry credentials, connection strings or provider text.
+                    logger.LogWarning("[RETRY] Exception on attempt {Attempt} of {MaxRetries}. Exception type: {ExceptionType}", attempt, maxRetries, ex.GetType().Name);
                 }
 
                 // Calculate Delay: (initialDelay * 2^(attempt-1)) + Jitter

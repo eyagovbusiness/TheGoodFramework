@@ -30,7 +30,8 @@ namespace TGF.CA.Infrastructure.Licensing {
         /// Paths that must remain accessible (e.g., /healthz/ready, /healthz/live, /internal/licensing/close).
         /// </param>
         public static IApplicationBuilder UseLicensingGate(this WebApplication webApplication, params string[] allowedPaths)
-            => webApplication.UseMiddleware<LicensingGateMiddleware>(allowedPaths ?? []);
+            // Passed as one IEnumerable<string> argument: a bare string[] would be spread by UseMiddleware's params object[] and match no constructor.
+            => webApplication.UseMiddleware<LicensingGateMiddleware>((IEnumerable<string>)(allowedPaths ?? []));
 
         #region Private Methods
         /// <summary>
