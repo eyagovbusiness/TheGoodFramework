@@ -16,8 +16,9 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
                 await dbContext.Database.ExecuteSqlRawAsync(HEALTH_QUERY, cancellationToken);
                 return HealthCheckResult.Healthy("PostgreSQL is healthy");
             }
-            catch (Exception ex) {
-                return HealthCheckResult.Unhealthy("PostgreSQL is unhealthy", ex);
+            catch (Exception) {
+                // The exception is deliberately not attached: health infrastructure logs it and driver messages can carry connection details.
+                return HealthCheckResult.Unhealthy("PostgreSQL is unhealthy");
             }
         }
     }

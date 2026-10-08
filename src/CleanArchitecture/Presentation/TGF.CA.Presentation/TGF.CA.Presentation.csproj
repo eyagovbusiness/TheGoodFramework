@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>SF.Manager.Tests.Unit</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
 	<!--It seems that this specific version of IdentityModel is required but was missing for AspNetCore.HealthChecks.UI-->
 	<PackageReference Include="IdentityModel" Version="5.2.0" />
     <PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.2" />

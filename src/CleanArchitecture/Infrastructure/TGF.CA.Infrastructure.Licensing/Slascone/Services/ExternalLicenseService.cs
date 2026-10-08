@@ -31,7 +31,7 @@ internal sealed class ExternalLicenseService(
             logger.LogInformation("[LICENSE] Managed external session closed successfully {SessionId} for client {ClientId}", sessionId, clientId);
         }
         catch (Exception ex) when (ex is not InvalidOperationException and not OperationCanceledException) {
-            logger.LogError(ex, "[LICENSE] Closing managed external session {SessionId} for client {ClientId} failed.", sessionId, clientId);
+            logger.LogError("[LICENSE] Closing managed external session {SessionId} for client {ClientId} failed. Exception type: {ExceptionType}", sessionId, clientId, ex.GetType().Name);
             throw;
         }
     }
@@ -65,7 +65,7 @@ internal sealed class ExternalLicenseService(
             logger.LogInformation("[LICENSE] External session closed successfully {SessionId} for client {ClientId}", sessionId, clientId);
         }
         catch (Exception ex) {
-            logger.LogError(ex, "[LICENSE] Closing external session failed for client {ClientId} and session {SessionId}.", clientId, sessionId);
+            logger.LogError("[LICENSE] Closing external session failed for client {ClientId} and session {SessionId}. Exception type: {ExceptionType}", clientId, sessionId, ex.GetType().Name);
             throw;
         }
     }
@@ -88,13 +88,14 @@ internal sealed class ExternalLicenseService(
 
             var parsedLicenseKey = licenseKeyElement.GetString();
             if (!Guid.TryParse(parsedLicenseKey, out var jsonLicenseId))
-                throw new InvalidOperationException($"[LICENSE] License secret '{licenseKeyConfigurationKey}' contains an invalid license key '{parsedLicenseKey}'.");
+                throw new InvalidOperationException($"[LICENSE] License secret '{licenseKeyConfigurationKey}' contains an invalid license key.");
 
             return jsonLicenseId;
         }
-        catch (JsonException ex) {
-            logger.LogError(ex, "[LICENSE] Failed to parse secret {LicenseKeyConfigurationKey} as JSON.", licenseKeyConfigurationKey);
-            throw new InvalidOperationException($"[LICENSE] License secret '{licenseKeyConfigurationKey}' is neither a GUID nor valid JSON.", ex);
+        catch (JsonException) {
+            // The parser's message can echo characters of the secret, so neither it nor the exception is logged or attached.
+            logger.LogError("[LICENSE] Failed to parse secret {LicenseKeyConfigurationKey} as JSON.", licenseKeyConfigurationKey);
+            throw new InvalidOperationException($"[LICENSE] License secret '{licenseKeyConfigurationKey}' is neither a GUID nor valid JSON.");
         }
     }
 
@@ -127,13 +128,10 @@ internal sealed class ExternalLicenseService(
     private void ReportError<T>((T data, SlasconeErrorHandlingHelper.ErrorType errorType, ErrorResultObjects error, string message) result, string operationName) {
         logger.LogError("[LICENSE] Error during external operation {OperationName}.", operationName);
 
-        if (result.error is not null) {
+        // Provider/SDK error text and exception messages are untrusted and can carry keys or credentials: only the numeric error id and local category are logged.
+        if (result.error is not null)
             logger.LogError("[LICENSE] Error code: {ErrorId}", result.error.Id);
-            logger.LogError("[LICENSE] Error description: {ErrorMessage}", result.error.Message);
-            return;
-        }
 
         logger.LogError("[LICENSE] Error type: {ErrorType}", result.errorType.ToString());
-        logger.LogError("[LICENSE] Error message: {ErrorMessage}", result.message);
     }
 }

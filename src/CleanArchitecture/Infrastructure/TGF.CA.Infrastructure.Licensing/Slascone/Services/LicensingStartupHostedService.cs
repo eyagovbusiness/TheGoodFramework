@@ -32,7 +32,20 @@ internal sealed class LicensingStartupHostedService(
     /// Cleans up the license session on application shutdown by attempting to close the session gracefully.
     /// </summary>
     public override async Task StopAsync(CancellationToken cancellationToken) {
-        await licensingService.CloseSessionAsync();
+        try {
+            await licensingService.CloseSessionAsync();
+        }
+        catch (OperationCanceledException ex) {
+            // Cancellation stays cancellation, but the original message/inner/Data never leave this boundary.
+            throw new OperationCanceledException("Closing the license session was cancelled.", ex.CancellationToken.IsCancellationRequested ? ex.CancellationToken : cancellationToken);
+        }
+        catch (Exception ex) {
+            // Secret-read, client-creation, parse and SDK failures escape CloseSessionAsync with raw provider text. The failed stop must stay
+            // visible to the generic host, but only as a fixed exception carrying no original inner exception or Data.
+            logger.LogError("[LICENSE] Closing the license session failed during shutdown. Exception type: {ExceptionType}", ex.GetType().Name);
+            throw new InvalidOperationException("The license session could not be closed during shutdown.");
+        }
+
         if(licensingService.LastOpenSessionAttemptStatus is LicenseSessionStatus.Closed) {
             logger.LogInformation("[LICENSE] Session closed successfully during shutdown.");
             return;
@@ -64,7 +77,7 @@ internal sealed class LicensingStartupHostedService(
                 logger.LogWarning("[LICENSE] Activation attempt {Attempt} failed. Retrying...", attempt + 1);
             }
             catch (Exception ex) {
-                logger.LogWarning(ex, "[LICENSE] Activation attempt {Attempt} failed; retrying...", attempt + 1);
+                logger.LogWarning("[LICENSE] Activation attempt {Attempt} failed; retrying... Exception type: {ExceptionType}", attempt + 1, ex.GetType().Name);
             }
 
             await BackoffDelayAsync(attempt++, cancellationToken);
@@ -102,7 +115,7 @@ internal sealed class LicensingStartupHostedService(
                 break; // shutting down gracefully
             }
             catch (Exception ex) {
-                logger.LogWarning(ex, "[LICENSE] Error in session loop; retrying after backoff.");
+                logger.LogWarning("[LICENSE] Error in session loop; retrying after backoff. Exception type: {ExceptionType}", ex.GetType().Name);
                 await BackoffDelayAsync(attempt++, cancellationToken);
             }
         }

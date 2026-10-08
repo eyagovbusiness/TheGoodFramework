@@ -93,7 +93,7 @@ namespace TGF.CA.Infrastructure.Secrets.Vault {
                     return new VaultClient(new VaultClientSettings(lVaultAddress, new TokenAuthMethodInfo(lVaultToken)));
                 }
                 catch (Exception ex) {
-                    _logger.LogWarning(ex, "Error initializing Vault client.");
+                    _logger.LogWarning("Error initializing Vault client. Exception type: {ExceptionType}", ex.GetType().Name);
                     throw; // Rethrow to ensure RetryUtility handles it.
                 }
             },

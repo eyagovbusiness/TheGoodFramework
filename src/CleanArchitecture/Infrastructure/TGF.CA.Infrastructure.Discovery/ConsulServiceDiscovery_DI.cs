@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using TGF.CA.Infrastructure.Health;
 using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.Common.Extensions;
 
@@ -51,7 +52,9 @@ namespace TGF.CA.Infrastructure.Discovery {
             setup.RequireHttps = false;
             setup.Port = port;
         }, name: healthCheckName)
-        .Services;
+        .Services
+        // The third-party check attaches exceptions to failed results; sanitize them where the check is registered.
+        .AddSafeHealthCheckRegistration(healthCheckName);
     }
 
 }
