@@ -16,8 +16,45 @@ and is never silently replaced. The reference must match
 `host[:port]/base-images/alpine[:descriptive-tag]@sha256:<64-lowercase-hex>`;
 tag-only references and `latest`, including `latest@sha256`, fail. The registry
 host stays configurable through the reference itself. The non-BGS `Dockerfile`
-and Jenkins pipelines are unchanged.
+and Jenkins pipelines, and non-BGS local builds including those pushed to
+external registries, are unchanged.
 
-This draft deliberately retains legacy output routing. Before publishing, the
-canonical main-only publication path and scanned TGF publisher migration must
-be completed, and the change must be reviewed and merged.
+## Canonical image delivery
+
+`main` is the single writer of the canonical image
+`<registry>/base-images/the_good_framework`. `scripts/bgs_image_ci.sh` is the CI
+entry point and runs only in GitHub Actions with registry credentials in a
+job-scoped Docker config that is removed on exit.
+
+- **Pull requests to `dev` or `main`, and `dev` pushes** (`L1_dev_pr.yml`, `L1_dev_merge.yml`):
+  `scan` builds the image, scans that exact image, and never pushes or notifies
+  anyone. A fork pull request has no secrets and cannot pull the private base
+  image, so its build and scan stay pending until a trusted run.
+- **`main`** (`L1_main.yml`): `publish` accepts only a push or dispatch on
+  `refs/heads/main` in this repository, checks out exactly `github.sha`, and
+  refuses to run unless that commit is still the tip of `main`. This can skip an
+  older, unrelated commit when a newer one lands; the newest run publishes. It
+  then pushes `tgf-<run>.<attempt>`, writes `publication.json`, and only then
+  moves `latest` to the same digest. If `latest` fails, the version tag and its
+  record remain. An existing version tag fails the run, and only a definite
+  "no such manifest" answer counts as free.
+- **Scan policy** (`scripts/bgs_scan_policy.py`, public Trivy pinned by digest):
+  any fixable vulnerability, of any severity, blocks publication; unfixed ones
+  are reported. A report that does not prove the Alpine package inventory, or
+  that lists a Go binary without versions, is rejected.
+- **No automatic downstream adoption.** The former repository dispatch was
+  removed. Consumers such as OF.Common adopt the digest from the
+  `tgf-publication-<run>.<attempt>` artifact (`image_ref`, source commit and
+  run) in a reviewed pull request.
+- Local `--bgs` builds are tagged `base-images/the_good_framework:<tag>` and
+  cannot be pushed: `local_deploy.sh --bgs --registry-push` and
+  `make push local-bgs` are rejected.
+
+## Remaining gates
+
+Review and merge the change to `main` first. Publication then happens from the
+first `main` push after that, and the resulting digest should be recorded in a
+reviewed consumer pin. The CI registry credentials must be allowed to create and
+push `base-images/the_good_framework`. The previous per-environment image path
+(`base-images/<environment>/the_good_framework`) is no longer written for the
+BGS image.

@@ -1,58 +1,47 @@
-name: L1 - Build and Publish (push -> main)
+name: L1 - Scan and Publish canonical image (push -> main)
 
+# The only writer of the canonical TheGoodFramework image. It runs for pushes to
+# main or a dispatch on main, scans the exact built image, then publishes
+# tgf-<run>.<attempt> and latest. It does not notify downstream repositories;
+# consumers adopt the digest from the publication artifact through a reviewed PR.
 on:
   push:
     branches:
       - main
-      
+
   workflow_dispatch:
-    inputs:
-      tag:
-        description: "Docker image tag"
-        required: false
-        default: "latest"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tgf-canonical-publication
+  cancel-in-progress: false
 
 jobs:
-  build-and-push:
+  publish:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout TheGoodFramework repository
-        uses: actions/checkout@v4
+      - name: Checkout the triggering commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          ref: main
+          ref: ${{ github.sha }}
+          persist-credentials: false
 
-      - name: Log in to Azure Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ secrets.REG_ADDRESS }}
-          username: ${{ secrets.REG_USERNAME }}
-          password: ${{ secrets.REG_PASSWORD }}
-
-      - name: Build and push with local_deploy.sh
-        run: |
-          chmod +x ./local_deploy.sh
-
-          TAG="${{ github.event.inputs.tag || 'latest' }}"
-
-          echo "Building and pushing with tag: $TAG"
-          ./local_deploy.sh $TAG --no-cache --bgs --registry-push
+      - name: Build, scan and publish
+        run: bash ./scripts/bgs_image_ci.sh publish
         env:
           IMAGE_REGISTRY: ${{ secrets.REG_ADDRESS }}
-          OMICSFLOW_ENVIRONMENT: production
+          REG_USERNAME: ${{ secrets.REG_USERNAME }}
+          REG_PASSWORD: ${{ secrets.REG_PASSWORD }}
+          GH_TOKEN: ${{ github.token }}
+          REPORT_DIR: ${{ runner.temp }}/tgf-publication
 
-  dispatch:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger main workflow in L2.Common
-        uses: peter-evans/repository-dispatch@v3
+      - name: Upload scan report and publication record
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          token: ${{ secrets.PAT_TOKEN }} 
-          repository: Biognosys/OF.Common
-          event-type: L1-dependency-update
-          client-payload: |
-            {
-              "source_repo": "${{ github.repository }}",
-              "source_tag": "${{ github.event.inputs.tag || 'latest' }}",
-              "source_commit": "${{ github.sha }}"
-            }
+          name: tgf-publication-${{ github.run_number }}.${{ github.run_attempt }}
+          path: ${{ runner.temp }}/tgf-publication
+          if-no-files-found: ignore
