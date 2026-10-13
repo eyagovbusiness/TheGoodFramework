@@ -28,7 +28,7 @@ build:
 	set -e; \
 	if [ "$(DOCKERFILE)" = "Dockerfile_bgs" ]; then \
 		base_image="$$(./scripts/validate_bgs_alpine_base_image.sh)"; \
-		set -- --build-arg ALPINE_BASE_IMAGE="$$base_image"; \
+		set -- --build-arg ALPINE_BASE_IMAGE="$$base_image" --provenance=false --sbom=false; \
 		image_tag="$(IMAGE_REGISTRY)/base-images/the_good_framework:latest"; \
 	else \
 		set --; \

@@ -7,7 +7,7 @@ ENVIRONMENT="${OMICSFLOW_ENVIRONMENT:-development}"
 NO_CACHE=false
 REGISTRY_PUSH=false
 DOCKERFILE=()
-BASE_IMAGE_ARG=()
+BGS_BUILD_ARGS=()
 TAG="latest"
 
 if [[ "$#" -gt 0 && "$1" != --* ]]; then
@@ -38,7 +38,8 @@ if [[ "${DOCKERFILE[*]}" == "-f Dockerfile_bgs" ]]; then
     fi
     # Validate first (a failing assignment aborts under set -e), then pass the resolved ref.
     base_image="$(./scripts/validate_bgs_alpine_base_image.sh)"
-    BASE_IMAGE_ARG=(--build-arg ALPINE_BASE_IMAGE="$base_image")
+    # Attestations would turn the image into an index; the published reference must be one verifiable manifest.
+    BGS_BUILD_ARGS=(--build-arg ALPINE_BASE_IMAGE="$base_image" --provenance=false --sbom=false)
 fi
 
 trap 'rm -f projectfiles.tar' EXIT
@@ -50,9 +51,9 @@ if [[ ${#DOCKERFILE[@]} -gt 0 ]]; then
     IMAGE_TAG="${IMAGE_REGISTRY}/base-images/the_good_framework:${TAG}"
 fi
 if [ "$NO_CACHE" = true ]; then
-    docker build "${DOCKERFILE[@]}" . --no-cache "${BASE_IMAGE_ARG[@]}" --build-arg IMAGE_REGISTRY="${IMAGE_REGISTRY}" --build-arg ENVIRONMENT="${ENVIRONMENT}" -t "${IMAGE_TAG}"
+    docker build "${DOCKERFILE[@]}" . --no-cache "${BGS_BUILD_ARGS[@]}" --build-arg IMAGE_REGISTRY="${IMAGE_REGISTRY}" --build-arg ENVIRONMENT="${ENVIRONMENT}" -t "${IMAGE_TAG}"
 else
-    docker build "${DOCKERFILE[@]}" . "${BASE_IMAGE_ARG[@]}" --build-arg IMAGE_REGISTRY="${IMAGE_REGISTRY}" --build-arg ENVIRONMENT="${ENVIRONMENT}" -t "${IMAGE_TAG}"
+    docker build "${DOCKERFILE[@]}" . "${BGS_BUILD_ARGS[@]}" --build-arg IMAGE_REGISTRY="${IMAGE_REGISTRY}" --build-arg ENVIRONMENT="${ENVIRONMENT}" -t "${IMAGE_TAG}"
 fi
 
 if [ "$REGISTRY_PUSH" = true ]; then
