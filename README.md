@@ -23,29 +23,57 @@ external registries, are unchanged.
 
 `main` is the single writer of the canonical image
 `<registry>/base-images/the_good_framework`. `scripts/bgs_image_ci.sh` is the CI
-entry point and runs only in GitHub Actions with registry credentials in a
-job-scoped Docker config that is removed on exit.
+entry point. It builds with `--provenance=false --sbom=false` so the published
+reference is one verifiable image manifest rather than an index.
 
-- **Pull requests to `dev` or `main`, and `dev` pushes** (`L1_dev_pr.yml`, `L1_dev_merge.yml`):
-  `scan` builds the image, scans that exact image, and never pushes or notifies
-  anyone. A fork pull request has no secrets and cannot pull the private base
-  image, so its build and scan stay pending until a trusted run.
+- **Pull requests to `dev` or `main`, and `dev` pushes** (`L1_dev_pr.yml`,
+  `L1_dev_merge.yml`): `scan` builds the image, scans that exact image, and never
+  pushes or notifies anyone. Workflows use `pull_request`, never
+  `pull_request_target`, so a fork pull request receives no secrets. Without
+  registry credentials nothing is built or scanned, so the job fails with a
+  `BLOCKED` error annotation and job summary instead of passing. The
+  credential-free `validate` job still runs the static checks and unit tests.
 - **`main`** (`L1_main.yml`): `publish` accepts only a push or dispatch on
   `refs/heads/main` in this repository, checks out exactly `github.sha`, and
-  refuses to run unless that commit is still the tip of `main`. This can skip an
-  older, unrelated commit when a newer one lands; the newest run publishes. It
-  then pushes `tgf-<run>.<attempt>`, writes `publication.json`, and only then
-  moves `latest` to the same digest. If `latest` fails, the version tag and its
-  record remain. An existing version tag fails the run, and only a definite
-  "no such manifest" answer counts as free.
+  requires that commit to be the current tip of `main`. That is checked at the
+  start, again immediately before the version push, and again before `latest`
+  moves; a lookup error counts as "moved". The version tag must also still be
+  absent immediately before its push, where only a definite "no such manifest"
+  answer counts as free. A registry cannot create a tag atomically, so a tag
+  created between that last check and the push is a residual race that the run
+  will detect afterwards, not prevent. A newer unrelated commit can therefore
+  make an older run stop; the newest run publishes. Runs are serialized.
+- **Identity binding.** The image is saved by its local id, and
+  `scripts/bgs_image_identity.py` reads only `manifest.json`, `index.json` and
+  the config blob from the archive, hashes the real config bytes, and requires
+  exactly one image. The Trivy report must name that config digest in
+  `Metadata.ImageID`; the Docker image id is not used because under containerd it
+  is a manifest digest. After the push, the registry manifest is fetched by
+  digest, its bytes must hash to that digest, be a single image manifest, and name
+  the same config. The version tag and, after it moves, `latest` must both resolve
+  to that verified manifest.
+- **Records.** `publication.json` is written after the version tag is verified and
+  before `latest` moves. It carries `image_ref`, `manifest_digest`,
+  `config_digest`, `local_image_id`, the source commit and the run, as separate
+  identities. `latest-status.txt` says `promoted`, `not-promoted` or
+  `pushed-unverified`. If `latest` fails, the version tag and both files remain.
 - **Scan policy** (`scripts/bgs_scan_policy.py`, public Trivy pinned by digest):
-  any fixable vulnerability, of any severity, blocks publication; unfixed ones
-  are reported. A report that does not prove the Alpine package inventory, or
-  that lists a Go binary without versions, is rejected.
+  any fixable vulnerability, of any severity including UNKNOWN, blocks; unfixed
+  ones are reported. A report is rejected when it is for another image, carries
+  scanner `Error`/`Errors`, has blank required text, lacks exactly one Alpine OS
+  inventory with versions, includes another OS or class, or lists a Go binary
+  without versions. There is no exception for versionless Go entries because this
+  image ships no Go binaries.
+- **Credentials.** The registry login and Docker config are job-scoped and
+  removed on exit; the password is passed on stdin and unset after login, and
+  GitHub masks the secret values in logs. Docker warns that the temporary config
+  is unencrypted, which is why it is deleted. The GitHub token lives in an
+  unexported shell variable and is handed only to the one `gh api` call, so the
+  build, Docker and the scanner never receive it. The token is not persisted by
+  checkout.
 - **No automatic downstream adoption.** The former repository dispatch was
   removed. Consumers such as OF.Common adopt the digest from the
-  `tgf-publication-<run>.<attempt>` artifact (`image_ref`, source commit and
-  run) in a reviewed pull request.
+  `tgf-publication-<run>.<attempt>` artifact in a reviewed pull request.
 - Local `--bgs` builds are tagged `base-images/the_good_framework:<tag>` and
   cannot be pushed: `local_deploy.sh --bgs --registry-push` and
   `make push local-bgs` are rejected.
@@ -57,4 +85,4 @@ first `main` push after that, and the resulting digest should be recorded in a
 reviewed consumer pin. The CI registry credentials must be allowed to create and
 push `base-images/the_good_framework`. The previous per-environment image path
 (`base-images/<environment>/the_good_framework`) is no longer written for the
-BGS image.
+BGS image. The publication path has not yet run against the real registry.
