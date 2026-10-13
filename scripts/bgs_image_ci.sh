@@ -61,7 +61,7 @@ if [[ "$mode" == "publish" ]]; then
     [[ "$existing" == "no such manifest: $repository:$tag" ]] || die "Tag preflight failed closed: ${existing%%$'\n'*}"
 fi
 
-(cd "$repo_root" && IMAGE_REGISTRY="$IMAGE_REGISTRY" ./local_deploy.sh "$tag" --no-cache --bgs)
+(cd "$repo_root" && IMAGE_REGISTRY="$IMAGE_REGISTRY" bash ./local_deploy.sh "$tag" --no-cache --bgs)
 image_id="$(docker image inspect --format '{{.Id}}' "$repository:$tag")"
 [[ "$image_id" =~ ^sha256:[a-f0-9]{64}$ ]] || die "Unexpected image id."
 
