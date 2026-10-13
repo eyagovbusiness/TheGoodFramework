@@ -7,6 +7,7 @@ ENVIRONMENT="${OMICSFLOW_ENVIRONMENT:-development}"
 NO_CACHE=false
 REGISTRY_PUSH=false
 DOCKERFILE=()
+BASE_IMAGE_ARG=()
 TAG="latest"
 
 if [[ "$#" -gt 0 && "$1" != --* ]]; then
@@ -31,7 +32,9 @@ if [[ -z "${IMAGE_REGISTRY:-}" ]]; then
 fi
 
 if [[ "${DOCKERFILE[*]}" == "-f Dockerfile_bgs" ]]; then
-    ./scripts/validate_bgs_alpine_base_image.sh
+    # Validate first (a failing assignment aborts under set -e), then pass the resolved ref.
+    base_image="$(./scripts/validate_bgs_alpine_base_image.sh)"
+    BASE_IMAGE_ARG=(--build-arg ALPINE_BASE_IMAGE="$base_image")
 fi
 
 trap 'rm -f projectfiles.tar' EXIT
@@ -39,9 +42,9 @@ find . \( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.docker.config" \) -p
 
 IMAGE_TAG="${IMAGE_REGISTRY}/base-images/${ENVIRONMENT}/the_good_framework:${TAG}"
 if [ "$NO_CACHE" = true ]; then
-    docker build "${DOCKERFILE[@]}" . --no-cache --build-arg ALPINE_BASE_IMAGE="${ALPINE_BASE_IMAGE:-}" --build-arg IMAGE_REGISTRY="${IMAGE_REGISTRY}" --build-arg ENVIRONMENT="${ENVIRONMENT}" -t "${IMAGE_TAG}"
+    docker build "${DOCKERFILE[@]}" . --no-cache "${BASE_IMAGE_ARG[@]}" --build-arg IMAGE_REGISTRY="${IMAGE_REGISTRY}" --build-arg ENVIRONMENT="${ENVIRONMENT}" -t "${IMAGE_TAG}"
 else
-    docker build "${DOCKERFILE[@]}" . --build-arg ALPINE_BASE_IMAGE="${ALPINE_BASE_IMAGE:-}" --build-arg IMAGE_REGISTRY="${IMAGE_REGISTRY}" --build-arg ENVIRONMENT="${ENVIRONMENT}" -t "${IMAGE_TAG}"
+    docker build "${DOCKERFILE[@]}" . "${BASE_IMAGE_ARG[@]}" --build-arg IMAGE_REGISTRY="${IMAGE_REGISTRY}" --build-arg ENVIRONMENT="${ENVIRONMENT}" -t "${IMAGE_TAG}"
 fi
 
 if [ "$REGISTRY_PUSH" = true ]; then

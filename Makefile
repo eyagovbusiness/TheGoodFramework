@@ -25,9 +25,15 @@ tarball:
 .PHONY: build
 build:
 	$(call parse_arguments)
-	@if [ "$(DOCKERFILE)" = "Dockerfile_bgs" ]; then ./scripts/validate_bgs_alpine_base_image.sh; fi
-	$(MAKE) tarball
-	docker build -f $(DOCKERFILE) . $(NO_CACHE) --build-arg ALPINE_BASE_IMAGE --build-arg IMAGE_REGISTRY=$(IMAGE_REGISTRY) --build-arg ENVIRONMENT=$(ENVIRONMENT) -t $(IMAGE_REGISTRY)/base-images/$(ENVIRONMENT)/the_good_framework:latest
+	set -e; \
+	if [ "$(DOCKERFILE)" = "Dockerfile_bgs" ]; then \
+		base_image="$$(./scripts/validate_bgs_alpine_base_image.sh)"; \
+		set -- --build-arg ALPINE_BASE_IMAGE="$$base_image"; \
+	else \
+		set --; \
+	fi; \
+	$(MAKE) tarball; \
+	docker build -f $(DOCKERFILE) . $(NO_CACHE) "$$@" --build-arg IMAGE_REGISTRY=$(IMAGE_REGISTRY) --build-arg ENVIRONMENT=$(ENVIRONMENT) -t $(IMAGE_REGISTRY)/base-images/$(ENVIRONMENT)/the_good_framework:latest
 
 # Target to push Docker image to registry
 .PHONY: push
