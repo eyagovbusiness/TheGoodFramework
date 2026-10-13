@@ -77,7 +77,7 @@ deploy() {
     local ref="$1"
     shift
     : >"$mock_bin/docker.log"
-    with_ref "$ref" env DOCKER_LOG="$mock_bin/docker.log" PATH="$mock_bin:$PATH" IMAGE_REGISTRY="destination.example" \
+    with_ref "$ref" env DOCKER_LOG="$mock_bin/docker.log" PATH="$mock_bin:$PATH" IMAGE_REGISTRY="${DEPLOY_REGISTRY:-destination.example}" \
         bash "$repo_root/local_deploy.sh" "$@" >/dev/null 2>&1
 }
 
@@ -98,9 +98,23 @@ for invalid in "" "registry.example/base-images/wrong@sha256:$digest" "registry.
     [[ ! -s "$mock_bin/docker.log" ]] || fail "docker ran despite invalid ref"
 done
 
+# BGS images are built locally under the canonical name and can never be pushed by hand.
+deploy "@unset" --bgs
+grep -qF -- "-t destination.example/base-images/the_good_framework:latest" "$mock_bin/docker.log" || fail "BGS build must use the canonical local tag"
+deploy "@unset" --bgs
+if deploy "@unset" --bgs --registry-push; then fail "--bgs --registry-push must be rejected"; fi
+[[ ! -s "$mock_bin/docker.log" ]] || fail "docker ran for a rejected BGS push"
+if deploy "@unset" tgf-1.1 --registry-push --bgs; then fail "--bgs --registry-push with a tag must be rejected"; fi
+
 # Non-BGS builds do not use or require the base image variable.
 deploy "invalid"
 if grep -q 'ALPINE_BASE_IMAGE' "$mock_bin/docker.log"; then fail "non-BGS build must not pass the base image"; fi
+grep -qF -- "-t destination.example/base-images/development/the_good_framework:latest" "$mock_bin/docker.log" || fail "non-BGS tag must stay unchanged"
+# Non-BGS pushes, including to an external registry, behave as before.
+deploy "@unset" --registry-push
+grep -qF -- "push destination.example/base-images/development/the_good_framework:latest" "$mock_bin/docker.log" || fail "non-BGS push must still work"
+DEPLOY_REGISTRY="external.example:5000" deploy "@unset" v1 --registry-push
+grep -qF -- "push external.example:5000/base-images/development/the_good_framework:v1" "$mock_bin/docker.log" || fail "external registry push must still work"
 
 # Make path: same validation, default and override behavior.
 if command -v make >/dev/null 2>&1; then
@@ -113,7 +127,13 @@ if command -v make >/dev/null 2>&1; then
     grep -qF -- "--build-arg ALPINE_BASE_IMAGE=$committed_default" "$mock_bin/docker.log" || fail "make default ref was not passed"
     make_build "$valid"
     grep -qF -- "--build-arg ALPINE_BASE_IMAGE=$valid" "$mock_bin/docker.log" || fail "make override ref was not passed"
+    grep -qF -- "-t destination.example/base-images/the_good_framework:latest" "$mock_bin/docker.log" || fail "make BGS tag must be canonical"
     if make_build ""; then fail "make must reject empty ref"; fi
     [[ ! -s "$mock_bin/docker.log" ]] || fail "docker ran from make despite invalid ref"
+    : >"$mock_bin/docker.log"
+    if (cd "$repo_root" && env -u ALPINE_BASE_IMAGE DOCKER_LOG="$mock_bin/docker.log" PATH="$mock_bin:$PATH" IMAGE_REGISTRY="destination.example" make -s push local-bgs >/dev/null 2>&1); then fail "make push must reject the BGS image"; fi
+    [[ ! -s "$mock_bin/docker.log" ]] || fail "docker ran for a rejected make push"
+    (cd "$repo_root" && env -u ALPINE_BASE_IMAGE DOCKER_LOG="$mock_bin/docker.log" PATH="$mock_bin:$PATH" IMAGE_REGISTRY="destination.example" make -s local >/dev/null 2>&1)
+    grep -qF -- "-t destination.example/base-images/development/the_good_framework:latest" "$mock_bin/docker.log" || fail "make non-BGS tag must stay unchanged"
     rm -f "$repo_root/projectfiles.tar"
 fi
