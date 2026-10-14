@@ -31,7 +31,7 @@ public static class VaultSecretsManager_DI {
     public static IServiceCollection AddConsulHealthChecks(this IServiceCollection aServiceCollection, string aHealthCheckName)
         => aServiceCollection
             .AddHealthChecks()
-            .AddCheck<Vault_HealthCheck>(aHealthCheckName)
+            .AddCheck<Vault_HealthCheck>(aHealthCheckName, tags: [InfrastrcutureConstants.HealthCheckTags.Ready])
             .Services;
 
 }

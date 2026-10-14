@@ -30,7 +30,9 @@ public static class ObjectStorage_DI {
             _ => throw new NotSupportedException("[ERROR]: Unsupported cloud provider.")
         };
 
-        webApplicationBuilder.Services.AddHealthChecks().AddCheck<ObjectStorageHealthCheck>(InfrastrcutureConstants.HealthCheckNames.ObjectStorage);
+        webApplicationBuilder.Services.AddHealthChecks().AddCheck<ObjectStorageHealthCheck>(
+            InfrastrcutureConstants.HealthCheckNames.ObjectStorage,
+            tags: [InfrastrcutureConstants.HealthCheckTags.Ready]);
     }
 
     private static IServiceCollection AddS3RequiredServices(this WebApplicationBuilder webApplicationBuilder) {
@@ -49,4 +51,3 @@ public static class ObjectStorage_DI {
     }
 
 }
-

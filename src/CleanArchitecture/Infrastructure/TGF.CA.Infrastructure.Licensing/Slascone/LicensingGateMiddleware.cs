@@ -15,7 +15,7 @@ internal sealed class LicensingGateMiddleware {
 
     public LicensingGateMiddleware(RequestDelegate next, IEnumerable<string> allowedPaths) {
         _next = next;
-        _allow = [TGFEndpointRoutes.health, TGFEndpointRoutes.healthUi];
+        _allow = [TGFEndpointRoutes.health, TGFEndpointRoutes.healthLive, TGFEndpointRoutes.healthReady, TGFEndpointRoutes.healthUi];
         foreach (var p in allowedPaths)
             _allow.Add(new PathString(p));
     }
@@ -47,4 +47,3 @@ internal sealed class LicensingGateMiddleware {
     }
 
 }
-

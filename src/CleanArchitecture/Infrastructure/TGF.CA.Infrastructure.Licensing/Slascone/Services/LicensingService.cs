@@ -11,25 +11,6 @@ using TGF.CA.Infrastructure.Secrets.SecretsFiles;
 
 namespace TGF.CA.Infrastructure.Licensing.Slascone.Services;
 
-/// <summary>
-/// SLASCONE API error codes
-/// </summary>
-/// <remarks>
-/// https://support.slascone.com/hc/en-us/articles/360016160398-ERROR-CODES
-/// </remarks>
-internal enum SlasconeAPIErrors {
-    NONE = 0,
-    INVALID_KEY = 1000,
-    EXPIRED_KEY = 1001,
-    NOT_ACTIVATED = 1002,
-    NON_COMPLIANT_VERSION = 1003,
-    EXCEEDED_ALLOWED_CONNECTIONS = 1007,
-    TOKEN_ALREADY_ASSINGED = 2001,
-    UNKNOWN_CLIENT = 2006,
-    API_CRASH = 9998,
-    UNKNOWN = 9999
-}
-
 internal sealed class LicensingService(
     ISlasconeClientFactory slasconeClientFactory,
     ISecretFilesService secretFilesService,
@@ -46,7 +27,9 @@ internal sealed class LicensingService(
     public LicenseSessionStatus LastOpenSessionAttemptStatus { get; private set; } = LicenseSessionStatus.None;
     public LicenseHeartbeatStatus HeartbeatStatus { get; private set; } = LicenseHeartbeatStatus.None;
     public LicenseActivationStatus ActivationStatus { get; private set; } = LicenseActivationStatus.Unassigned;
-    public Lazy<Task<ISlasconeClientV2>> SlasconeClient => new(GetNewSlasconeClient(slasconeClientFactory));
+    public Lazy<Task<ISlasconeClientV2>> SlasconeClient { get; } = new(GetNewSlasconeClient(slasconeClientFactory));
+    public string ClientId => deviceInfoService.GetUniqueDeviceId();
+    public LicensingOperationError? LastError { get; private set; }
     public IDictionary<Guid, string> LimitationMap { get; private set; } = new Dictionary<Guid, string>();
 
     private Guid? _tokenId;
@@ -59,7 +42,7 @@ internal sealed class LicensingService(
             var activateClientDto = new ActivateClientDto {
                 Product_id = slasconeOptions.Value.ProductId,
                 License_key = await GetLicenseKeyFromSecretFile(),
-                Client_id = deviceInfoService.GetUniqueDeviceId(),
+                Client_id = ClientId,
                 Client_description = "",
                 Client_name = configuration[ConfigurationKeys.AppMetadata.ServiceName],
                 Software_version = _softwareVersion,
@@ -69,7 +52,7 @@ internal sealed class LicensingService(
 
             if (null == result.data) {
                 ReportError(result);
-                if (result.error is not { Id: (int)SlasconeAPIErrors.TOKEN_ALREADY_ASSINGED })
+                if (result.error is not { Id: (int)SlasconeApiErrorCode.TOKEN_ALREADY_ASSINGED })
                     ActivationStatus = LicenseActivationStatus.ActivationFailed;
                 return;
 
@@ -79,30 +62,32 @@ internal sealed class LicensingService(
             _tokenId = licenseInfoDto.Token_key;
             LimitationMap = licensePrinter.PrintLicenseDetails(licenseInfoDto);
             ActivationStatus = LicenseActivationStatus.Activated;
+            ClearLastError();
 
         }
         catch (Exception ex) {
             ActivationStatus = LicenseActivationStatus.ActivationFailed;
+            ReportException(ex);
             logger.LogError(ex, "[LICENSE] License activation failed.");
         }
     }
 
     public async Task AddHeartbeatAsync() {
-        var heartbeatDto = new AddHeartbeatDto {
-            Product_id = slasconeOptions.Value.ProductId,
-            Client_id = deviceInfoService.GetUniqueDeviceId(),
-            Software_version = _softwareVersion,
-            Operating_system = deviceInfoService.GetOperatingSystem()
-        };
-
         try {
+            var heartbeatDto = new AddHeartbeatDto {
+                Product_id = slasconeOptions.Value.ProductId,
+                Client_id = ClientId,
+                Software_version = _softwareVersion,
+                Operating_system = deviceInfoService.GetOperatingSystem()
+            };
+
             var slasconeClient = await SlasconeClient.Value;
             var result= await SlasconeErrorHandlingHelper.Execute(slasconeClient.Provisioning.AddHeartbeatAsync, heartbeatDto);
 
             if (null == result.data) {
                 ReportError(result);
 
-                if (result.error is not { Id: (int)SlasconeAPIErrors.UNKNOWN_CLIENT }) {
+                if (result.error is not { Id: (int)SlasconeApiErrorCode.UNKNOWN_CLIENT }) {
                     // A common error when the license is not activated yet for the current device.
                     // A typical handling could be to ask the user for a license key and call ActivateLicenseAsync.
                     logger.LogWarning("[LICENSE] The license has to be activated first.");
@@ -115,7 +100,7 @@ internal sealed class LicensingService(
             _tokenId = licenseInfoDto.Token_key;
             LicenseInfo = licenseInfoDto;
 
-            if(await GetLicenseKeyFromSecretFile() != licenseInfoDto.License_key) { // This is a safety check to make sure that the license key used for heartbeat (the one used for activation) is the same as the one in the secret file. They should never be different so treat the heartbeat as failed, and log a warning, because this will almost guarantee 2006 unknow device error on open floating session.
+            if(await GetLicenseKeyFromSecretFile() != licenseInfoDto.License_key) { // This is a safety check to make sure that the license key used for heartbeat (the one used for activation) is the same as the one in the secret file. They should never be different so treat the heartbeat as failed, and log a warning, because this will almost guarantee 2006 unknown device error on open floating session.
                 logger.LogWarning("[LICENSE] The license key used for heartbeat is different from the one in the secret file. This could indicate an issue with license activation or heartbeat.");
                 HeartbeatStatus = LicenseHeartbeatStatus.Failed;
                 return; 
@@ -125,9 +110,11 @@ internal sealed class LicensingService(
             if (ActivationStatus != LicenseActivationStatus.Activated) // If heartbeat is successful, set activation status to activated. Only activeated devices add heartbeats successfully.
                 ActivationStatus = LicenseActivationStatus.Activated;
             LimitationMap = licensePrinter.PrintLicenseDetails(licenseInfoDto);
+            ClearLastError();
         }
         catch (Exception ex) {
             HeartbeatStatus = LicenseHeartbeatStatus.Failed;
+            ReportException(ex);
             logger.LogError(ex, "[LICENSE] Adding heartbeat failed.");
         }
     }
@@ -155,8 +142,10 @@ internal sealed class LicensingService(
             // Clear the token id, and limitation map after unassigning
             _tokenId = null;
             LimitationMap = null!;
+            ClearLastError();
         }
         catch (Exception ex) {
+            ReportException(ex);
             logger.LogError(ex, "[LICENSE] Unassigning license failed.");
         }
     }
@@ -164,7 +153,7 @@ internal sealed class LicensingService(
     public async Task AddAnalyticalHeartbeatAsync(Guid analyticaFieldId, string value) {
         var analyticalHeartbeatDto = new AnalyticalHeartbeatDto {
             Analytical_heartbeat = [],
-            Client_id = deviceInfoService.GetUniqueDeviceId()
+            Client_id = ClientId
         };
 
         var analyticalField = new AnalyticalFieldValueDto {
@@ -183,8 +172,10 @@ internal sealed class LicensingService(
             }
 
             logger.LogInformation("[LICENSE] Analytical heartbeat received: {Data}", result.data);
+            ClearLastError();
         }
         catch (Exception ex) {
+            ReportException(ex);
             logger.LogError(ex, "[LICENSE] Adding analytical heartbeat failed.");
         }
     }
@@ -192,7 +183,7 @@ internal sealed class LicensingService(
     public async Task AddUsageHeartbeatAsync(IEnumerable<(Guid usageFieldId, double value)> usages) {
         var usageHeartbeat = new FullUsageHeartbeatDto {
             Usage_heartbeat = [],
-            Client_id = deviceInfoService.GetUniqueDeviceId()
+            Client_id = ClientId
         };
 
         foreach (var (usageFieldId, value) in usages) {
@@ -212,8 +203,10 @@ internal sealed class LicensingService(
                 return;
             }
             logger.LogInformation("[LICENSE] Usage heartbeat received: {Data}", result.data);
+            ClearLastError();
         }
         catch (Exception ex) {
+            ReportException(ex);
             logger.LogError(ex, "[LICENSE] Adding usage heartbeat failed.");
         }
 
@@ -221,7 +214,7 @@ internal sealed class LicensingService(
 
     public async Task AddConsumptionHeartbeatAsync(IEnumerable<(Guid, decimal)> consumptions) {
         var consumptionHeartbeat = new FullConsumptionHeartbeatDto {
-            Client_id = deviceInfoService.GetUniqueDeviceId(),
+            Client_id = ClientId,
             Consumption_heartbeat = []
         };
 
@@ -253,8 +246,10 @@ internal sealed class LicensingService(
                 else
                     logger.LogError("[LICENSE] Consumption for {Limitation} was not recorded: Limit reached!", limitation);
             }
+            ClearLastError();
         }
         catch (Exception ex) {
+            ReportException(ex);
             logger.LogError(ex, "[LICENSE] Adding consumption heartbeat failed.");
         }
     }
@@ -268,7 +263,7 @@ internal sealed class LicensingService(
         }
         try {
             var sessionDto = new SessionRequestDto {
-                Client_id = deviceInfoService.GetUniqueDeviceId(),
+                Client_id = ClientId,
                 License_id = Guid.Parse(licensekey),
                 Session_id = _sessionId
             };
@@ -279,7 +274,7 @@ internal sealed class LicensingService(
             if (null == result.data) {
                 ReportError(result);
 
-                if (result.error is { Id: (int)SlasconeAPIErrors.EXCEEDED_ALLOWED_CONNECTIONS }) {
+                if (result.error is { Id: (int)SlasconeApiErrorCode.EXCEEDED_ALLOWED_CONNECTIONS }) {
                     // This error indicates that the maximum number of allowed parallel sessions has been reached.
                     // Normally you would inform the user about this and prevent the usage of the software.
                     logger.LogWarning("[LICENSE] Maximum of allowed parallel opened sessions exceeded!");
@@ -294,9 +289,11 @@ internal sealed class LicensingService(
             logger.LogInformation("[LICENSE] Max number of concurrent sessions: {MaxOpenSessionCount}", sessionStatus.Max_open_session_count);
             logger.LogInformation("[LICENSE] Session valid until {SessionValidUntil}", sessionStatus.Session_valid_until);
             LastOpenSessionAttemptStatus = LicenseSessionStatus.Opened;
+            ClearLastError();
         }
         catch (Exception ex) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
+            ReportException(ex);
             logger.LogError(ex, "[LICENSE] Opening session failed.");
         }
     }
@@ -311,7 +308,7 @@ internal sealed class LicensingService(
 
         try {
             var sessionDto = new SessionRequestDto {
-                Client_id = deviceInfoService.GetUniqueDeviceId(),
+                Client_id = ClientId,
                 License_id = Guid.Parse(licensekey),
                 Session_id = _sessionId
             };
@@ -326,10 +323,12 @@ internal sealed class LicensingService(
             }
 
             LastOpenSessionAttemptStatus = LicenseSessionStatus.Closed;
+            ClearLastError();
             logger.LogInformation("[LICENSE] Session closed successfully {SessionId}", _sessionId);
         }
         catch (Exception ex) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
+            ReportException(ex);
             logger.LogError(ex, "[LICENSE] Closing session failed.");
             throw;
         }
@@ -357,8 +356,10 @@ internal sealed class LicensingService(
             foreach (var licenseDto in licenseDtos) {
                 licensePrinter.PrintLicenseDetails(licenseDto);
             }
+            ClearLastError();
         }
         catch (Exception exception) {
+            ReportException(exception);
             logger.LogError(exception, "[LICENSE] Looking up licenses failed.");
         }
     }
@@ -385,6 +386,15 @@ internal sealed class LicensingService(
     /// <param name="caller">The name of the calling method (automatically provided by compiler).</param>
     private void ReportError<T>((T data, SlasconeErrorHandlingHelper.ErrorType errorType, ErrorResultObjects error, string message) result, [CallerMemberName] string caller = "") {
         logger.LogError("[LICENSE] Error during {Caller}:", caller);
+        var errorCode = MapErrorCode(result.error?.Id, result.errorType);
+        var errorMessage = result.error?.Message ?? result.message;
+
+        LastError = new LicensingOperationError(
+            caller,
+            result.error?.Id ?? (int)errorCode,
+            errorCode,
+            string.IsNullOrWhiteSpace(errorMessage) ? "The licensing operation failed without a detailed error message." : errorMessage,
+            DateTimeOffset.UtcNow);
 
         if (null != result.error) {
             logger.LogError("[LICENSE] Error code: {ErrorId}", result.error.Id);
@@ -393,6 +403,27 @@ internal sealed class LicensingService(
             logger.LogError("[LICENSE] Error type: {ErrorType}", result.errorType.ToString());
             logger.LogError("[LICENSE] Error message: {ErrorMessage}", result.message);
         }
+    }
+
+    private void ReportException(Exception exception, [CallerMemberName] string caller = "")
+        => LastError = new LicensingOperationError(
+            caller,
+            (int)SlasconeApiErrorCode.API_CRASH,
+            SlasconeApiErrorCode.API_CRASH,
+            exception.Message,
+            DateTimeOffset.UtcNow);
+
+    private void ClearLastError()
+        => LastError = null;
+
+    private static SlasconeApiErrorCode MapErrorCode(int? errorId, SlasconeErrorHandlingHelper.ErrorType errorType) {
+        if (errorId.HasValue && Enum.IsDefined(typeof(SlasconeApiErrorCode), errorId.Value))
+            return (SlasconeApiErrorCode)errorId.Value;
+
+        if (errorType is SlasconeErrorHandlingHelper.ErrorType.Network)
+            return SlasconeApiErrorCode.API_CRASH;
+
+        return SlasconeApiErrorCode.UNKNOWN;
     }
 
     /// <summary>

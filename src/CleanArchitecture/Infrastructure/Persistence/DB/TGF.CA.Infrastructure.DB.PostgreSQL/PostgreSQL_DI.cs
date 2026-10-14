@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using TGF.CA.Infrastructure.InvariantConstants;
 
 namespace TGF.CA.Infrastructure.DB.PostgreSQL {
 
@@ -37,7 +38,9 @@ namespace TGF.CA.Infrastructure.DB.PostgreSQL {
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         => serviceCollection
         .AddHealthChecks()
-        .AddCheck<PostgreSQLHealthCheck<TDbContext>>(healthCheckNameOverride ?? PostgreSQLHelpers.GetDatabaseCQRSName<TDbContext>(configuration) + "Database")
+        .AddCheck<PostgreSQLHealthCheck<TDbContext>>(
+            healthCheckNameOverride ?? PostgreSQLHelpers.GetDatabaseCQRSName<TDbContext>(configuration) + "Database",
+            tags: [InfrastrcutureConstants.HealthCheckTags.Ready])
         .Services;
     }
 }
