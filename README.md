@@ -71,9 +71,35 @@ reference is one verifiable image manifest rather than an index.
   unexported shell variable and is handed only to the one `gh api` call, so the
   build, Docker and the scanner never receive it. The token is not persisted by
   checkout.
-- **No automatic downstream adoption.** The former repository dispatch was
-  removed. Consumers such as OF.Common adopt the digest from the
-  `tgf-publication-<run>.<attempt>` artifact in a reviewed pull request.
+- **OF.Common notification.** The former automatic dispatch is restored, now
+  carrying the verified digest instead of a floating tag. It is the last step of
+  the `main` publish job, after the publisher returned successfully and the
+  records were uploaded; it is not `always()`, and scan, `dev` and pull request
+  workflows never notify. `scripts/bgs_notify_common.sh` runs
+  `scripts/bgs_common_notification.py`, which builds the request body only if
+  `publication.json` has exactly the recorded fields, `latest-status.txt` is
+  `latest: promoted`, and every identity agrees with this run's trusted GitHub
+  environment: the allowlisted source repository, `refs/heads/main`, a push or
+  dispatch event, the commit, the run id, number and attempt, the `tgf-<run>.<attempt>`
+  tag, and the canonical reference `<IMAGE_REGISTRY>/base-images/the_good_framework@<manifest digest>`
+  rebuilt from the configured registry. Anything else sends nothing and fails the
+  step; the published image stays. The request is
+  `gh api --method POST repos/Biognosys/OF.Common/dispatches --input -` with event
+  type `L1-dependency-update` and this `client_payload`, all strings:
+
+  | Field | Value |
+  | --- | --- |
+  | `source_repo`, `source_tag`, `source_commit` | as before: repository, now the immutable `tgf-<run>.<attempt>` tag, and the commit |
+  | `source_image` | full canonical reference `<registry>/base-images/the_good_framework@sha256:...` |
+  | `source_digest` | manifest digest, `sha256:<64 hex>` |
+  | `source_config_digest` | config digest, `sha256:<64 hex>` |
+  | `source_run_id`, `source_run_attempt` | the run that published, to find its `tgf-publication-<run>.<attempt>` artifact |
+
+  The dispatch credential `secrets.PAT_TOKEN` is set only on that one step, as
+  `GH_TOKEN`; it never reaches the build, scanner or any third-party action, is held in an
+  unexported variable and handed only to `gh`, and is never placed in an argument, log or
+  payload. OF.Common still adopts the digest through a reviewed pull request; this
+  notification triggers that work, it does not change a pin by itself.
 - Local `--bgs` builds are tagged `base-images/the_good_framework:<tag>` and
   cannot be pushed: `local_deploy.sh --bgs --registry-push` and
   `make push local-bgs` are rejected.
@@ -85,4 +111,9 @@ first `main` push after that, and the resulting digest should be recorded in a
 reviewed consumer pin. The CI registry credentials must be allowed to create and
 push `base-images/the_good_framework`. The previous per-environment image path
 (`base-images/<environment>/the_good_framework`) is no longer written for the
-BGS image. The publication path has not yet run against the real registry.
+BGS image. The publication path has not yet run against the real registry, and
+the notification has not yet been sent: it has only been exercised against a
+mocked `gh`, so whether `PAT_TOKEN` may dispatch to `Biognosys/OF.Common` is not
+yet confirmed and will first be shown by the first real publication. The OF.Common
+side that receives `L1-dependency-update` with these fields is a separate change and
+must be reviewed and merged before this notification is relied on.

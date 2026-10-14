@@ -19,4 +19,5 @@ jobs:
       - run: shellcheck local_deploy.sh scripts/*.sh tests/*.sh
       - run: bash tests/validate_bgs_alpine_base_image_test.sh
       - run: bash tests/bgs_image_ci_test.sh
+      - run: bash tests/bgs_notify_common_test.sh
       - run: python3 -B -m unittest discover -s tests -p '*_test.py'

@@ -2,8 +2,10 @@ name: L1 - Scan and Publish canonical image (push -> main)
 
 # The only writer of the canonical TheGoodFramework image. It runs for pushes to
 # main or a dispatch on main, scans the exact built image, then publishes
-# tgf-<run>.<attempt> and latest. It does not notify downstream repositories;
-# consumers adopt the digest from the publication artifact through a reviewed PR.
+# tgf-<run>.<attempt> and latest. Only after the publisher returned successfully
+# and the records were uploaded does the final step notify OF.Common of the
+# verified digest; that step alone holds the dispatch credential. OF.Common still
+# adopts the digest through a reviewed PR.
 on:
   push:
     branches:
@@ -30,6 +32,7 @@ jobs:
           persist-credentials: false
 
       - name: Build, scan and publish
+        id: publish
         run: bash ./scripts/bgs_image_ci.sh publish
         env:
           IMAGE_REGISTRY: ${{ secrets.REG_ADDRESS }}
@@ -45,3 +48,16 @@ jobs:
           name: tgf-publication-${{ github.run_number }}.${{ github.run_attempt }}
           path: ${{ runner.temp }}/tgf-publication
           if-no-files-found: ignore
+
+      # Not always(): a failed, partial or unverified publication announces nothing. The
+      # script re-validates the publisher's records and sends nothing unless latest was
+      # promoted. This is the only step that sees the dispatch token; no build,
+      # scanner or third-party action does.
+      - name: Notify OF.Common of the verified digest
+        if: ${{ success() && steps.publish.outcome == 'success' && github.ref == 'refs/heads/main' && github.repository == 'eyagovbusiness/TheGoodFramework' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+        run: bash ./scripts/bgs_notify_common.sh
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          IMAGE_REGISTRY: ${{ secrets.REG_ADDRESS }}
+          REPORT_DIR: ${{ runner.temp }}/tgf-publication

@@ -160,6 +160,25 @@ version_only() {
     not_logged " docker push $repo_ref:latest"
 }
 
+# The notifier consumes what the publisher actually wrote. Its gh only records the request body.
+mkdir -p "$tmp/notify-bin"
+cat >"$tmp/notify-bin/gh" <<'EOF'
+#!/bin/bash
+cat >"$MOCK_DISPATCH"
+EOF
+chmod +x "$tmp/notify-bin/gh"
+notify_out() {
+    rm -f "$tmp/dispatch.json"
+    env -i PATH="$tmp/notify-bin:/usr/local/bin:/usr/bin:/bin" MOCK_DISPATCH="$tmp/dispatch.json" REPORT_DIR="$out" \
+        IMAGE_REGISTRY=omicsflowinternal.azurecr.io GITHUB_ACTIONS=true GITHUB_REPOSITORY=eyagovbusiness/TheGoodFramework \
+        GITHUB_EVENT_NAME=push GITHUB_REF=refs/heads/main GITHUB_SHA="$head_sha" GITHUB_RUN_ID=999 GITHUB_RUN_NUMBER=42 \
+        GITHUB_RUN_ATTEMPT=2 GH_TOKEN=notify-token-value "$bash_bin" "$src/scripts/bgs_notify_common.sh" >"$state/notify.log" 2>&1
+}
+# A partial or failed publication must never be announced to OF.Common.
+nothing_announced() {
+    if notify_out; then fail "a partial publication was announced"; fi
+    [[ ! -e "$tmp/dispatch.json" ]] || fail "a dispatch body was produced for a partial publication"
+}
 # --- scan mode: build and scan only, never push ---
 for blocked in REG_PASSWORD= REG_USERNAME= IMAGE_REGISTRY=; do
     bad scan GITHUB_EVENT_NAME=pull_request "$blocked"
@@ -242,8 +261,10 @@ no_push
 # main moves, or cannot be read, after the version push: evidence stays, latest never moves.
 bad publish MOCK_MAIN_SEQ="head head other"
 version_only
+nothing_announced
 bad publish MOCK_MAIN_SEQ="head head ERROR"
 version_only
+nothing_announced
 
 # --- the published version must be the scanned image, proven from the registry's own bytes ---
 for failure in "MOCK_RAW=$art/remote-wrong-config.json MOCK_DIGEST=$wrong_config_digest" \
@@ -257,15 +278,18 @@ for failure in "MOCK_RAW=$art/remote-wrong-config.json MOCK_DIGEST=$wrong_config
     logged " docker push $repo_ref:tgf-42.2"
     not_logged " docker push $repo_ref:latest"
     [[ ! -e "$out/publication.json" ]] || fail "no record for an unverified version: $failure"
+    nothing_announced
 done
 
 # --- latest must resolve to the verified manifest; a failed latest keeps the version record ---
 bad publish MOCK_LATEST_FAIL=1
 evidence_kept
+nothing_announced
 logged " docker tag $local_image_id $repo_ref:latest"
 bad publish MOCK_LATEST_DIGEST="sha256:$(printf 'f%.0s' {1..64})"
 logged " docker push $repo_ref:latest"
 [[ "$(cat "$out/latest-status.txt")" == "latest: pushed-unverified" ]] || fail "an unverified latest must not be reported as promoted"
+nothing_announced
 
 # --- the complete publication ---
 ok publish
@@ -289,6 +313,22 @@ if grep -rq "s3cret-value\|token-value" "$state/out.log" "$state/docker.log" "$o
 [[ -z "$(ls -A "$tmp/home")" ]] || fail "the global Docker config was touched"
 config_removed
 
+# --- the notifier accepts exactly what a complete publication wrote, and nothing else ---
+notify_out || { cat "$state/notify.log" >&2; fail "the notifier rejected a complete publication"; }
+python3 - "$tmp/dispatch.json" "$repo_ref" "$manifest_digest" "$config_digest" "$head_sha" <<'PY' || fail "the dispatch body does not carry the verified publication"
+import json, sys
+path, repo, manifest, config, sha = sys.argv[1:6]
+body = json.load(open(path))
+assert body == {"event_type": "L1-dependency-update", "client_payload": {
+    "source_repo": "eyagovbusiness/TheGoodFramework", "source_tag": "tgf-42.2", "source_commit": sha,
+    "source_image": f"{repo}@{manifest}", "source_digest": manifest, "source_config_digest": config,
+    "source_run_id": "999", "source_run_attempt": "2"}}, body
+PY
+! grep -q 'notify-token-value' "$tmp/dispatch.json" "$state/notify.log" || fail "the dispatch credential leaked"
+mv "$out/latest-status.txt" "$out/latest-status.keep"
+nothing_announced
+mv "$out/latest-status.keep" "$out/latest-status.txt"
+[[ "$(wc -l <"$state/gh.log")" == 3 ]] || fail "the notifier must not touch the publisher's gh"
 # --- workflow contract ---
 workflows="$repo_root/.github/workflows"
 if grep -rq 'pull_request_target' "$workflows"; then fail "pull_request_target would expose secrets to forks"; fi
@@ -305,3 +345,30 @@ for file in L1_dev_pr.yml L1_dev_merge.yml; do
     grep -q 'bgs_image_ci.sh scan' "$workflows/$file" || fail "$file must only scan"
     if grep -q 'publish' "$workflows/$file"; then fail "$file must not publish"; fi
 done
+
+# --- the OF.Common notification: after a successful publication only, one step, one credential ---
+main_workflow="$workflows/L1_main.yml"
+notify_step="$(sed -n '/- name: Notify OF.Common/,$p' "$main_workflow")"
+[[ -n "$notify_step" ]] || fail "main must have a notify step"
+[[ "$(grep -c '^      - name:' <<<"$notify_step")" == 1 ]] || fail "the notify step must be the last step"
+[[ "$(grep -rho 'PAT_TOKEN' "$repo_root/.github" | wc -l)" == 1 ]] || fail "PAT_TOKEN must be referenced exactly once"
+# shellcheck disable=SC2016 # a literal workflow expression
+grep -qF 'GH_TOKEN: ${{ secrets.PAT_TOKEN }}' <<<"$notify_step" || fail "only the notify step may receive PAT_TOKEN, as GH_TOKEN"
+# shellcheck disable=SC2016 # a literal workflow expression
+[[ "$(grep -c 'secrets\.' <<<"$notify_step")" == 2 ]] || fail "the notify step may receive only PAT_TOKEN and the registry name"
+grep -qF 'run: bash ./scripts/bgs_notify_common.sh' <<<"$notify_step" || fail "the notify step must run the guarded script"
+# shellcheck disable=SC2016 # a literal workflow expression
+if grep -q 'run: .*\${{' <<<"$notify_step"; then fail "no expression may be interpolated into a run string"; fi
+if grep -Eq '^\s+uses:|always\(\)|failure\(\)|cancelled\(\)|pull_request|continue-on-error' <<<"$notify_step"; then fail "the notify step must run only after success, with no third-party action"; fi
+for guard in 'success()' "steps.publish.outcome == 'success'" "github.ref == 'refs/heads/main'" \
+    "github.repository == 'eyagovbusiness/TheGoodFramework'" "github.event_name == 'push'" "github.event_name == 'workflow_dispatch'"; do
+    grep -qF -- "$guard" <<<"$notify_step" || fail "the notify step lacks the guard $guard"
+done
+grep -qE '^        id: publish$' "$main_workflow" || fail "the publish step must have an id for the notify guard"
+[[ "$(grep -n 'upload-artifact' "$main_workflow" | cut -d: -f1)" -lt "$(grep -n 'Notify OF.Common' "$main_workflow" | head -1 | cut -d: -f1)" ]] || fail "the notification must follow the artifact upload"
+before_notify="$(sed '/- name: Notify OF.Common/,$d' "$main_workflow")"
+if grep -q 'PAT_TOKEN\|bgs_notify_common' <<<"$before_notify"; then fail "the build, scan and publish steps must not see the dispatch credential"; fi
+if grep -Eq 'pull_request|schedule' "$main_workflow"; then fail "main may run only on push or dispatch, never on pull requests"; fi
+if grep -rlq 'PAT_TOKEN\|bgs_notify_common\.sh' "$workflows/L1_dev_pr.yml" "$workflows/L1_dev_merge.yml" "$workflows/validate-bgs-base-image.yml"; then fail "scan and validate workflows must never notify"; fi
+if grep -Eq 'Authorization|--token|eval ' "$repo_root/scripts/bgs_notify_common.sh"; then fail "the token must not be passed on a command line"; fi
+grep -qF 'bash tests/bgs_notify_common_test.sh' "$workflows/validate-bgs-base-image.yml" || fail "validate must run the notification tests"
