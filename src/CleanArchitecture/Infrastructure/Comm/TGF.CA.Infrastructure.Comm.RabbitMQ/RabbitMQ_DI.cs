@@ -53,6 +53,12 @@ public static class RabbitMQ_DI {
         aServiceCollection.AddSingleton<IMessageConsumer<TMessage>, RabbitMQMessageConsumer<TMessage>>();
     }
 
+    internal static void AddRabbitMqConsumer<TMessage>(this IServiceCollection aServiceCollection, Func<IServiceProvider, CancellationToken, Task<bool>> aActivationGate)
+        where TMessage : IMessage {
+        aServiceCollection.AddConsumer<TMessage>(aActivationGate);
+        aServiceCollection.AddSingleton<IMessageConsumer<TMessage>, RabbitMQMessageConsumer<TMessage>>();
+    }
+
     internal static void AddRabbitMQPublisher<TMessage>(this IServiceCollection aServiceCollection)
         where TMessage : IMessage {
         aServiceCollection.AddPublisher<TMessage>();
