@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using TGF.CA.Infrastructure.Licensing.Slascone.Contracts;
@@ -8,10 +8,15 @@ namespace TGF.CA.Infrastructure.Licensing.Slascone.Services;
 /// <summary>
 /// Hosted service that manages the licensing startup process, including license activation, seat acquisition, and maintaining the license session through periodic heartbeats.
 /// </summary>
+/// <remarks>
+/// <paramref name="activationGate"/> is an opt-in delayed activation: when supplied, no licensing work (device detection, activation, heartbeats)
+/// starts before it completes. Default registrations pass no gate and keep the previous immediate activation.
+/// </remarks>
 internal sealed class LicensingStartupHostedService(
     ILicensingService licensingService,
     IOptions<SlasconeOptions> slasconeOptions,
-    ILogger<LicensingStartupHostedService> logger
+    ILogger<LicensingStartupHostedService> logger,
+    Func<CancellationToken, Task>? activationGate = null
 ) : BackgroundService {
 
     private const double RenewalThreshold = 0.8; // 80% of session duration
@@ -22,6 +27,20 @@ internal sealed class LicensingStartupHostedService(
     /// </summary>
     /// <remarks>The <see cref="SlasconeLicensingHealthCheck"/> with the <seealso cref="LicensingGateMiddleware"/> ensure that only if <seealso cref="ILicensingService.ComplianceStatus"/> is compliant the api can be used. </remarks>
     protected override async Task ExecuteAsync(CancellationToken cancellationToken) {
+        if (activationGate is not null) {
+            try {
+                await activationGate(cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+                return; // shutting down before activation was ever allowed
+            }
+
+            // A gate that ignored the token and opened late must not activate anything after shutdown began.
+            if (cancellationToken.IsCancellationRequested) {
+                return;
+            }
+        }
+
         logger.LogInformation("[LICENSE] Licensing startup service started. Beginning preflight seat acquisition...");
         await EnsureActivationAsync(cancellationToken);
         await EnsureFloatingLicenseSeatAsync(cancellationToken);
@@ -31,7 +50,26 @@ internal sealed class LicensingStartupHostedService(
     /// <summary>
     /// Cleans up the license session on application shutdown by attempting to close the session gracefully.
     /// </summary>
+    /// <remarks>
+    /// Default registrations (no activation gate) keep the previous stop policy exactly: only the session close runs. With an activation gate the owned
+    /// execution is first cancelled and awaited within the shutdown budget (so a late-opening gate can never activate after stop returned), and the
+    /// sanitized close policy below runs even if that wait or the close itself fails.
+    /// </remarks>
     public override async Task StopAsync(CancellationToken cancellationToken) {
+        if (activationGate is null) {
+            await CloseSessionOnShutdownAsync(cancellationToken);
+            return;
+        }
+
+        try {
+            await base.StopAsync(cancellationToken);
+        }
+        finally {
+            await CloseSessionOnShutdownAsync(cancellationToken);
+        }
+    }
+
+    private async Task CloseSessionOnShutdownAsync(CancellationToken cancellationToken) {
         try {
             await licensingService.CloseSessionAsync();
         }
