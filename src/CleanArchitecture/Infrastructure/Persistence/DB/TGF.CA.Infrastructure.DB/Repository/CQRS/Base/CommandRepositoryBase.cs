@@ -90,8 +90,8 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
                 return Result.SuccessHttp(Unit.Value);
             }
             catch (Exception lEx) {
-                logger.LogError(lEx, "An error occurred while rolling back the DB transaction: {ErrorMessage}", lEx.Message);
-                return Result.Failure<Unit>(CommonErrors.UnhandledException.New(lEx.Message));
+                logger.LogError("An error occurred while rolling back the DB transaction. Exception type: {ExceptionType}", lEx.GetType().Name);
+                return Result.Failure<Unit>(CommonErrors.UnhandledException.New("An error occurred while rolling back the DB transaction."));
             }
         }
 
@@ -110,8 +110,8 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
                     , aResult);
             }
             catch (Exception lEx) {
-                logger.LogError(lEx, "An error occurred while saving DB changes in {TRepository} for entity {EntityName}: {ErrorMessage}", nameof(TRepository), nameof(TResult), lEx.Message);
-                return Result.Failure<TResult>(CommonErrors.UnhandledException.New(lEx.Message));
+                logger.LogError("An error occurred while saving DB changes in {TRepository} for entity {EntityName}. Exception type: {ExceptionType}", nameof(TRepository), nameof(TResult), lEx.GetType().Name);
+                return Result.Failure<TResult>(CommonErrors.UnhandledException.New($"An error occurred while saving DB changes in {nameof(TRepository)} for entity {nameof(TResult)}."));
             }
         }
         public virtual IHttpResult<TResult> DefaultSaveResultFunc<TResult>(int aChangeCount, TResult aCommandResult)
@@ -123,17 +123,18 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
 
         #region Private
         private IHttpResult<TResult> GetCommandExceptionResult<TResult>(Exception exception) {
-            const string errorMessageTemplate = "An error occurred trying to execute a DB command in {TRepository} for entity {EntityName}: {ExceptionMessage}";
-            logger.LogError(exception, errorMessageTemplate, nameof(TRepository), nameof(TResult), exception.Message);
+            // Driver/EF messages can carry connection strings and values: log the type only and return fixed text.
+            const string errorMessageTemplate = "An error occurred trying to execute a DB command in {TRepository} for entity {EntityName}. Exception type: {ExceptionType}";
+            logger.LogError(errorMessageTemplate, nameof(TRepository), nameof(TResult), exception.GetType().Name);
 
-            var errorMessage = $"An error occurred trying to execute a DB command in {nameof(TRepository)} for entity {nameof(TResult)}: {exception.Message}";
+            var errorMessage = $"An error occurred trying to execute a DB command in {nameof(TRepository)} for entity {nameof(TResult)}.";
             return Result.Failure<TResult>(CommonErrors.UnhandledException.New(errorMessage));
         }
         private IHttpResult<IDbContextTransaction> GetTransactionExceptionResult<IDbContextTransaction>(Exception exception) {
-            const string errorMessageTemplate = "An error occurred while commiting the DB transaction in {TRepository}: {ErrorMessage}";
-            logger.LogError(exception, errorMessageTemplate, nameof(TRepository), exception.Message);
+            const string errorMessageTemplate = "An error occurred while commiting the DB transaction in {TRepository}. Exception type: {ExceptionType}";
+            logger.LogError(errorMessageTemplate, nameof(TRepository), exception.GetType().Name);
 
-            var errorMessage = $"An error occurred while commiting the DB transaction in {nameof(TRepository)}: {exception.Message}";
+            var errorMessage = $"An error occurred while commiting the DB transaction in {nameof(TRepository)}.";
             return Result.Failure<IDbContextTransaction>(CommonErrors.UnhandledException.New(errorMessage));
         }
         #endregion

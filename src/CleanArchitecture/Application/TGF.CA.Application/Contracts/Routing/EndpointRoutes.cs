@@ -4,6 +4,7 @@
     {
         public const string health = "/health";
         public const string healthUi = "/health-ui";
+        public const string healthLive = "/health/live";
         public const string error = "/error";
         public const string auth_OAuthCallback = "/auth/OAuthCallback";
         public const string auth_OAuthFailed = "/auth/OAuthFailed";

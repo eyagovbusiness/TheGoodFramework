@@ -83,7 +83,7 @@ internal sealed class LicensingService(
         }
         catch (Exception ex) {
             ActivationStatus = LicenseActivationStatus.ActivationFailed;
-            logger.LogError(ex, "[LICENSE] License activation failed.");
+            logger.LogError("[LICENSE] License activation failed. Exception type: {ExceptionType}", ex.GetType().Name);
         }
     }
 
@@ -128,7 +128,7 @@ internal sealed class LicensingService(
         }
         catch (Exception ex) {
             HeartbeatStatus = LicenseHeartbeatStatus.Failed;
-            logger.LogError(ex, "[LICENSE] Adding heartbeat failed.");
+            logger.LogError("[LICENSE] Adding heartbeat failed. Exception type: {ExceptionType}", ex.GetType().Name);
         }
     }
 
@@ -157,7 +157,7 @@ internal sealed class LicensingService(
             LimitationMap = null!;
         }
         catch (Exception ex) {
-            logger.LogError(ex, "[LICENSE] Unassigning license failed.");
+            logger.LogError("[LICENSE] Unassigning license failed. Exception type: {ExceptionType}", ex.GetType().Name);
         }
     }
 
@@ -185,7 +185,7 @@ internal sealed class LicensingService(
             logger.LogInformation("[LICENSE] Analytical heartbeat received: {Data}", result.data);
         }
         catch (Exception ex) {
-            logger.LogError(ex, "[LICENSE] Adding analytical heartbeat failed.");
+            logger.LogError("[LICENSE] Adding analytical heartbeat failed. Exception type: {ExceptionType}", ex.GetType().Name);
         }
     }
 
@@ -214,7 +214,7 @@ internal sealed class LicensingService(
             logger.LogInformation("[LICENSE] Usage heartbeat received: {Data}", result.data);
         }
         catch (Exception ex) {
-            logger.LogError(ex, "[LICENSE] Adding usage heartbeat failed.");
+            logger.LogError("[LICENSE] Adding usage heartbeat failed. Exception type: {ExceptionType}", ex.GetType().Name);
         }
 
     }
@@ -255,7 +255,7 @@ internal sealed class LicensingService(
             }
         }
         catch (Exception ex) {
-            logger.LogError(ex, "[LICENSE] Adding consumption heartbeat failed.");
+            logger.LogError("[LICENSE] Adding consumption heartbeat failed. Exception type: {ExceptionType}", ex.GetType().Name);
         }
     }
 
@@ -297,7 +297,7 @@ internal sealed class LicensingService(
         }
         catch (Exception ex) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
-            logger.LogError(ex, "[LICENSE] Opening session failed.");
+            logger.LogError("[LICENSE] Opening session failed. Exception type: {ExceptionType}", ex.GetType().Name);
         }
     }
 
@@ -330,7 +330,7 @@ internal sealed class LicensingService(
         }
         catch (Exception ex) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
-            logger.LogError(ex, "[LICENSE] Closing session failed.");
+            logger.LogError("[LICENSE] Closing session failed. Exception type: {ExceptionType}", ex.GetType().Name);
             throw;
         }
     }
@@ -352,14 +352,14 @@ internal sealed class LicensingService(
             }
 
             var licenseDtos = result.data;
-            logger.LogInformation("[LICENSE] Found {LicenseCount} license(s) for key '{LicenseKey}'", licenseDtos.Count, licensekey);
+            logger.LogInformation("[LICENSE] Found {LicenseCount} license(s)", licenseDtos.Count);
 
             foreach (var licenseDto in licenseDtos) {
                 licensePrinter.PrintLicenseDetails(licenseDto);
             }
         }
         catch (Exception exception) {
-            logger.LogError(exception, "[LICENSE] Looking up licenses failed.");
+            logger.LogError("[LICENSE] Looking up licenses failed. Exception type: {ExceptionType}", exception.GetType().Name);
         }
     }
 
@@ -386,13 +386,11 @@ internal sealed class LicensingService(
     private void ReportError<T>((T data, SlasconeErrorHandlingHelper.ErrorType errorType, ErrorResultObjects error, string message) result, [CallerMemberName] string caller = "") {
         logger.LogError("[LICENSE] Error during {Caller}:", caller);
 
-        if (null != result.error) {
+        // Provider/SDK error text and exception messages are untrusted and can carry keys or credentials: only the numeric error id and local category are logged.
+        if (null != result.error)
             logger.LogError("[LICENSE] Error code: {ErrorId}", result.error.Id);
-            logger.LogError("[LICENSE] Error description: {ErrorMessage}", result.error.Message);
-        } else {
-            logger.LogError("[LICENSE] Error type: {ErrorType}", result.errorType.ToString());
-            logger.LogError("[LICENSE] Error message: {ErrorMessage}", result.message);
-        }
+
+        logger.LogError("[LICENSE] Error type: {ErrorType}", result.errorType.ToString());
     }
 
     /// <summary>
