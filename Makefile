@@ -23,13 +23,26 @@ tarball:
 
 # Target to build Docker image with or without cache
 .PHONY: build
-build: tarball
+build:
 	$(call parse_arguments)
-	docker build -f $(DOCKERFILE) . $(NO_CACHE) --build-arg IMAGE_REGISTRY=$(IMAGE_REGISTRY) --build-arg ENVIRONMENT=$(ENVIRONMENT) -t $(IMAGE_REGISTRY)/base-images/$(ENVIRONMENT)/the_good_framework:latest
+	set -e; \
+	if [ "$(DOCKERFILE)" = "Dockerfile_bgs" ]; then \
+		base_image="$$(./scripts/validate_bgs_alpine_base_image.sh)"; \
+		set -- --build-arg ALPINE_BASE_IMAGE="$$base_image" --provenance=false --sbom=false; \
+		image_tag="$(IMAGE_REGISTRY)/base-images/the_good_framework:latest"; \
+	else \
+		set --; \
+		image_tag="$(IMAGE_REGISTRY)/base-images/$(ENVIRONMENT)/the_good_framework:latest"; \
+	fi; \
+	$(MAKE) tarball; \
+	docker build -f $(DOCKERFILE) . $(NO_CACHE) "$$@" --build-arg IMAGE_REGISTRY=$(IMAGE_REGISTRY) --build-arg ENVIRONMENT=$(ENVIRONMENT) -t "$$image_tag"
 
 # Target to push Docker image to registry
-.PHONY: push
-push: build
+.PHONY: push guard-push
+# The canonical BGS image is published only by the approved main CI publisher.
+guard-push:
+	@if echo "$(MAKECMDGOALS)" | grep -qw local-bgs; then echo "Pushing the BGS image is not supported; canonical publication is done only by CI." >&2; exit 1; fi
+push: guard-push build
 	docker push $(IMAGE_REGISTRY)/base-images/$(ENVIRONMENT)/the_good_framework:latest
 
 # Convenience targets
