@@ -36,7 +36,7 @@ internal class DeviceInfoService : IDeviceInfoService {
         var configuredClientId = Environment.GetEnvironmentVariable(EnvironmentVariableNames.LICENSE_CLIENT_ID);
         if (!string.IsNullOrWhiteSpace(configuredClientId)) {
             UniqueDeviceId = configuredClientId.Trim();
-            _logger.LogInformation("[LICENSE] Client id resolved from configured environment variable {EnvironmentVariableName}: {ClientId}", EnvironmentVariableNames.LICENSE_CLIENT_ID, UniqueDeviceId);
+            _logger.LogInformation("[LICENSE] Client id resolved from configured environment variable {EnvironmentVariableName}.", EnvironmentVariableNames.LICENSE_CLIENT_ID);
             return UniqueDeviceId;
         }
 
@@ -59,12 +59,12 @@ internal class DeviceInfoService : IDeviceInfoService {
 
             if (awsDetected) {
                 UniqueDeviceId = awsEc2Infos.InstanceId;
-                _logger.LogInformation("[LICENSE] Client id resolved from AWS IMDS instance id: {ClientId}", UniqueDeviceId);
+                _logger.LogInformation("[LICENSE] Client id resolved from AWS IMDS instance id.");
                 return UniqueDeviceId;
             }
             if (azureDetected) {
                 UniqueDeviceId = azureVmInfos.VmId;
-                _logger.LogInformation("[LICENSE] Client id resolved from Azure IMDS VM id: {ClientId}", UniqueDeviceId);
+                _logger.LogInformation("[LICENSE] Client id resolved from Azure IMDS VM id.");
                 return UniqueDeviceId;
             }
         }
@@ -80,7 +80,7 @@ internal class DeviceInfoService : IDeviceInfoService {
                 UniqueDeviceId = $"{Guid.NewGuid()}-fallback";
             }
 
-            _logger.LogInformation("[LICENSE] Client id resolved from Windows device information fallback: {ClientId}", UniqueDeviceId);
+            _logger.LogInformation("[LICENSE] Client id resolved from Windows device information fallback.");
             return UniqueDeviceId;
         }
 
@@ -90,7 +90,7 @@ internal class DeviceInfoService : IDeviceInfoService {
                                : string.Concat(LinuxDeviceInfos.MachineId, LinuxDeviceInfos.RootDeviceSerial);
 
             UniqueDeviceId = BitConverter.ToString(MD5.HashData(UTF8Encoding.UTF8.GetBytes(deviceId)));
-            _logger.LogInformation("[LICENSE] Client id resolved from Linux device information fallback: {ClientId}", UniqueDeviceId);
+            _logger.LogInformation("[LICENSE] Client id resolved from Linux device information fallback.");
             return UniqueDeviceId;
         }
 

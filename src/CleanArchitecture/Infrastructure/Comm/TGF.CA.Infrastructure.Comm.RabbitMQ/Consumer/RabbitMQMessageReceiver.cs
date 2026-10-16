@@ -44,18 +44,20 @@ internal class RabbitMQMessageReceiver(IModel channel, ISerializer serializer, I
                         return;
                     }
                     catch (Exception ex) when (attempt < attempts) {
-                        logger.LogWarning(ex,
-                            "Error processing message {MessageIdentifier}. Attempt {Attempt}/{MaxAttempts}. Retrying.",
+                        // Handler exceptions (repository/driver/broker) can carry connection details and values: only the type is logged.
+                        logger.LogWarning(
+                            "Error processing message {MessageIdentifier}. Attempt {Attempt}/{MaxAttempts}. Retrying. Exception type: {ExceptionType}",
                             message.MessageIdentifier,
                             attempt,
-                            attempts);
+                            attempts,
+                            ex.GetType().Name);
                     }
                 }
 
                 throw new InvalidOperationException($"Message {message.MessageIdentifier} failed after {attempts} attempts.");
             }
             catch (Exception ex) {
-                logger.LogError(ex, "Error processing message. DeliveryTag: {DeliveryTag}. Dead-lettering after {MaxRetries} failed attempts.", deliveryTag, Math.Max(1, maxHandlerRetries));
+                logger.LogError("Error processing message. DeliveryTag: {DeliveryTag}. Dead-lettering after {MaxRetries} failed attempts. Exception type: {ExceptionType}", deliveryTag, Math.Max(1, maxHandlerRetries), ex.GetType().Name);
                 channel.BasicNack(deliveryTag, false, false);
             }
         });

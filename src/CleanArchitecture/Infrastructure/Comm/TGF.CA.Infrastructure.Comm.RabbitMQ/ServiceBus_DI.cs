@@ -22,6 +22,16 @@ public static class ServiceBus_DI {
         aServiceCollection.AddRabbitMQInfrastructureServices(configuration, InfrastrcutureConstants.HealthCheckNames.IntegrationConsumer);
         aServiceCollection.AddRabbitMqConsumer<IntegrationMessage>();
     }
+
+    /// <summary>
+    /// Opt-in variant of <see cref="AddServiceBusIntegrationConsumer(IServiceCollection, IConfiguration)"/>: the consumer resolves its underlying RabbitMQ consumer,
+    /// connects and subscribes only after <paramref name="activationGate"/> returns <c>true</c>. The default overload keeps immediate consumption.
+    /// </summary>
+    public static void AddServiceBusIntegrationConsumer(this IServiceCollection aServiceCollection, IConfiguration configuration, Func<IServiceProvider, CancellationToken, Task<bool>> activationGate) {
+        ArgumentNullException.ThrowIfNull(activationGate);
+        aServiceCollection.AddRabbitMQInfrastructureServices(configuration, InfrastrcutureConstants.HealthCheckNames.IntegrationConsumer);
+        aServiceCollection.AddRabbitMqConsumer<IntegrationMessage>(activationGate);
+    }
     
     /// <summary>
     /// Adds a domain message publisher. It also ensures the required services for RabbitMQ infrastructure are added.

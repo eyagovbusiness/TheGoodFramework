@@ -8,10 +8,15 @@ namespace TGF.CA.Infrastructure.Licensing.Slascone.Services;
 /// <summary>
 /// Hosted service that manages the licensing startup process, including license activation, seat acquisition, and maintaining the license session through periodic heartbeats.
 /// </summary>
+/// <remarks>
+/// <paramref name="activationGate"/> is an opt-in delayed activation: when supplied, no licensing work (device detection, activation, heartbeats)
+/// starts before it completes. Default registrations pass no gate and keep the previous immediate activation.
+/// </remarks>
 internal sealed class LicensingStartupHostedService(
     ILicensingService licensingService,
     IOptions<SlasconeOptions> slasconeOptions,
-    ILogger<LicensingStartupHostedService> logger
+    ILogger<LicensingStartupHostedService> logger,
+    Func<CancellationToken, Task>? activationGate = null
 ) : BackgroundService {
 
     private const double RenewalThreshold = 0.8; // 80% of session duration
@@ -22,6 +27,20 @@ internal sealed class LicensingStartupHostedService(
     /// </summary>
     /// <remarks>The <see cref="SlasconeLicensingHealthCheck"/> with the <seealso cref="LicensingGateMiddleware"/> ensure that only if <seealso cref="ILicensingService.ComplianceStatus"/> is compliant the api can be used. </remarks>
     protected override async Task ExecuteAsync(CancellationToken cancellationToken) {
+        if (activationGate is not null) {
+            try {
+                await activationGate(cancellationToken);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+                return; // shutting down before activation was ever allowed
+            }
+
+            // A gate that ignored the token and opened late must not activate anything after shutdown began.
+            if (cancellationToken.IsCancellationRequested) {
+                return;
+            }
+        }
+
         logger.LogInformation("[LICENSE] Licensing startup service started. Beginning preflight seat acquisition...");
         await EnsureActivationAsync(cancellationToken);
         await EnsureFloatingLicenseSeatAsync(cancellationToken);
@@ -31,8 +50,40 @@ internal sealed class LicensingStartupHostedService(
     /// <summary>
     /// Cleans up the license session on application shutdown by attempting to close the session gracefully.
     /// </summary>
+    /// <remarks>
+    /// Default registrations (no activation gate) keep the previous stop policy exactly: only the session close runs. With an activation gate the owned
+    /// execution is first cancelled and awaited within the shutdown budget (so a late-opening gate can never activate after stop returned), and the
+    /// sanitized close policy below runs even if that wait or the close itself fails.
+    /// </remarks>
     public override async Task StopAsync(CancellationToken cancellationToken) {
-        await licensingService.CloseSessionAsync();
+        if (activationGate is null) {
+            await CloseSessionOnShutdownAsync(cancellationToken);
+            return;
+        }
+
+        try {
+            await base.StopAsync(cancellationToken);
+        }
+        finally {
+            await CloseSessionOnShutdownAsync(cancellationToken);
+        }
+    }
+
+    private async Task CloseSessionOnShutdownAsync(CancellationToken cancellationToken) {
+        try {
+            await licensingService.CloseSessionAsync();
+        }
+        catch (OperationCanceledException ex) {
+            // Cancellation stays cancellation, but the original message/inner/Data never leave this boundary.
+            throw new OperationCanceledException("Closing the license session was cancelled.", ex.CancellationToken.IsCancellationRequested ? ex.CancellationToken : cancellationToken);
+        }
+        catch (Exception ex) {
+            // Secret-read, client-creation, parse and SDK failures escape CloseSessionAsync with raw provider text. The failed stop must stay
+            // visible to the generic host, but only as a fixed exception carrying no original inner exception or Data.
+            logger.LogError("[LICENSE] Closing the license session failed during shutdown. Exception type: {ExceptionType}", ex.GetType().Name);
+            throw new InvalidOperationException("The license session could not be closed during shutdown.");
+        }
+
         if(licensingService.LastOpenSessionAttemptStatus is LicenseSessionStatus.Closed) {
             logger.LogInformation("[LICENSE] Session closed successfully during shutdown.");
             return;
@@ -64,7 +115,7 @@ internal sealed class LicensingStartupHostedService(
                 logger.LogWarning("[LICENSE] Activation attempt {Attempt} failed. Retrying...", attempt + 1);
             }
             catch (Exception ex) {
-                logger.LogWarning(ex, "[LICENSE] Activation attempt {Attempt} failed; retrying...", attempt + 1);
+                logger.LogWarning("[LICENSE] Activation attempt {Attempt} failed; retrying... Exception type: {ExceptionType}", attempt + 1, ex.GetType().Name);
             }
 
             await BackoffDelayAsync(attempt++, cancellationToken);
@@ -102,7 +153,7 @@ internal sealed class LicensingStartupHostedService(
                 break; // shutting down gracefully
             }
             catch (Exception ex) {
-                logger.LogWarning(ex, "[LICENSE] Error in session loop; retrying after backoff.");
+                logger.LogWarning("[LICENSE] Error in session loop; retrying after backoff. Exception type: {ExceptionType}", ex.GetType().Name);
                 await BackoffDelayAsync(attempt++, cancellationToken);
             }
         }
