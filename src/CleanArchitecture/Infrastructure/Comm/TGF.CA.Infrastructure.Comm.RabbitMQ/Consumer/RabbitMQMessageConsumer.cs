@@ -24,7 +24,11 @@ internal class RabbitMQMessageConsumer<TMessage>(RabbitMQSettings rabbitMQSettin
 
     #region private
     private async Task Consume(CancellationToken aCancellationToken) {
-        using var lConnection = await rabbitMQConnectionFactory.GetConnectionAsync();
+        // NOTE: the connection is owned by the factory and shared with the publishers and the health checks.
+        // It must NOT be disposed here. Disposing it used to kill the shared connection for the whole process:
+        // every later caller then got an ObjectDisposedException, retries could never recover, and the service
+        // stayed unready until it was restarted. Only the channel below is ours to dispose.
+        var lConnection = await rabbitMQConnectionFactory.GetConnectionAsync();
 
         using var lChannel = lConnection.CreateModel();
         lChannel.BasicQos(0, 1, false); // Each consumer will take only 1 message at a time and the next after ACK.

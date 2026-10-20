@@ -18,7 +18,6 @@ namespace TGF.CA.Infrastructure.Comm.Consumer.Host;
 public sealed class GatedConsumerHostedService<TMessage> : IHostedService, IDisposable {
     private readonly IConsumerManager<TMessage> _consumerManager;
     private readonly IServiceProvider _serviceProvider;
-    private readonly IRetryUtility _retryUtility;
     private readonly Func<IServiceProvider, CancellationToken, Task<bool>> _activationGate;
     private readonly ILogger<GatedConsumerHostedService<TMessage>> _logger;
     private readonly CancellationTokenSource _stoppingCancellationTokenSource = new();
@@ -32,7 +31,6 @@ public sealed class GatedConsumerHostedService<TMessage> : IHostedService, IDisp
         ILogger<GatedConsumerHostedService<TMessage>> logger) {
         _consumerManager = consumerManager;
         _serviceProvider = serviceProvider;
-        _retryUtility = retryUtility;
         _activationGate = activationGate;
         _logger = logger;
     }
@@ -61,15 +59,7 @@ public sealed class GatedConsumerHostedService<TMessage> : IHostedService, IDisp
             }
 
             var messageConsumer = _serviceProvider.GetRequiredService<IMessageConsumer<TMessage>>();
-            await _retryUtility.ExecuteWithRetryAsync(
-                async () => {
-                    await ConsumeMessages(messageConsumer, stoppingToken);
-                    return true;
-                },
-                _ => false,
-                aMaxRetries: 10,
-                aDelayMilliseconds: 2000,
-                stoppingToken);
+            await ConsumeWithRestart(messageConsumer, stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) {
             // the host is stopping
@@ -77,6 +67,36 @@ public sealed class GatedConsumerHostedService<TMessage> : IHostedService, IDisp
         catch (Exception) {
             // Fixed text only: provider/handler graph failures can carry connection details.
             _logger.LogError("The gated message consumer stopped after a failure and will not consume messages.");
+        }
+    }
+
+    /// <summary>
+    /// Restarts consumption indefinitely with a capped exponential backoff. A bounded retry budget used to make
+    /// a routine broker restart terminal for the rest of the process lifetime.
+    /// </summary>
+    private async Task ConsumeWithRestart(IMessageConsumer messageConsumer, CancellationToken stoppingToken) {
+        var delay = ConsumerHostedService<TMessage>.DefaultInitialRetryDelay;
+        while (!stoppingToken.IsCancellationRequested) {
+            try {
+                await ConsumeMessages(messageConsumer, stoppingToken);
+                return; // Cancelled or asked to stop: nothing left to do.
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested) {
+                return; // The host is stopping.
+            }
+            catch (Exception) {
+                // Fixed text only: broker failures can carry connection details.
+                _logger.LogWarning("The gated message consumer stopped after a failure and will be restarted.");
+            }
+
+            try {
+                await Task.Delay(delay, stoppingToken);
+            }
+            catch (OperationCanceledException) {
+                return; // The host is stopping.
+            }
+
+            delay = ConsumerHostedService<TMessage>.NextDelay(delay, ConsumerHostedService<TMessage>.DefaultMaxRetryDelay);
         }
     }
 
