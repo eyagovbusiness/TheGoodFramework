@@ -51,7 +51,7 @@ namespace TGF.CA.Infrastructure.Discovery {
             setup.HostName = hostName;
             setup.RequireHttps = false;
             setup.Port = port;
-        }, name: healthCheckName)
+        }, name: healthCheckName, tags: [InfrastrcutureConstants.HealthCheckTags.Ready])
         .Services
         // The third-party check attaches exceptions to failed results; sanitize them where the check is registered.
         .AddSafeHealthCheckRegistration(healthCheckName);

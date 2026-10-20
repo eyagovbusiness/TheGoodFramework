@@ -7,6 +7,7 @@ using TGF.CA.Infrastructure.Comm.RabbitMQ.Connection;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Consumer;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Publisher;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Settings;
+using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.Secrets;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ;
@@ -26,7 +27,7 @@ public static class RabbitMQ_DI {
 
         serviceCollection
         .AddHealthChecks()
-        .AddCheck<CustomRabbitMQHealthCheck>(healthCheckName);
+        .AddCheck<CustomRabbitMQHealthCheck>(healthCheckName, tags: [InfrastrcutureConstants.HealthCheckTags.Ready]);
     }
 
     /// <summary>

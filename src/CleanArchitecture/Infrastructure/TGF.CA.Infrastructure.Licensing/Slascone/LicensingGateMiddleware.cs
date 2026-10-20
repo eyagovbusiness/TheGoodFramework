@@ -58,4 +58,3 @@ internal sealed class LicensingGateMiddleware {
     }
 
 }
-
