@@ -12,6 +12,24 @@ public class RabbitMQConnectionFactoryTests {
     private const string ConnectionString = "amqp://user:password@rabbit-host:5672/";
 
     [Fact]
+    public async Task GetConnectionAsync_RecoversAfterInitialConnectionAttemptsFail() {
+        var alive = CreateConnection(isOpen: true);
+        var attempts = 0;
+        await using var sut = CreateSut(_ => {
+            if (++attempts <= 12)
+                throw new InvalidOperationException("broker unavailable");
+            return alive.Object;
+        });
+
+        for (var attempt = 0; attempt < 12; attempt++)
+            await Assert.ThrowsAsync<InvalidOperationException>(() => sut.GetConnectionAsync());
+
+        Assert.Same(alive.Object, await sut.GetConnectionAsync());
+        Assert.Same(alive.Object, await sut.GetConnectionAsync());
+        Assert.Equal(13, attempts);
+    }
+
+    [Fact]
     public async Task GetConnectionAsync_ReturnsTheSameConnection_WhileItStaysOpen() {
         var connection = CreateConnection(isOpen: true);
         var created = 0;

@@ -20,6 +20,8 @@ public sealed class GatedConsumerHostedService<TMessage> : IHostedService, IDisp
     private readonly IServiceProvider _serviceProvider;
     private readonly Func<IServiceProvider, CancellationToken, Task<bool>> _activationGate;
     private readonly ILogger<GatedConsumerHostedService<TMessage>> _logger;
+    private readonly TimeSpan _initialRetryDelay;
+    private readonly TimeSpan _maxRetryDelay;
     private readonly CancellationTokenSource _stoppingCancellationTokenSource = new();
     private Task? _executingTask;
 
@@ -28,11 +30,24 @@ public sealed class GatedConsumerHostedService<TMessage> : IHostedService, IDisp
         IServiceProvider serviceProvider,
         IRetryUtility retryUtility,
         Func<IServiceProvider, CancellationToken, Task<bool>> activationGate,
-        ILogger<GatedConsumerHostedService<TMessage>> logger) {
+        ILogger<GatedConsumerHostedService<TMessage>> logger)
+        : this(consumerManager, serviceProvider, retryUtility, activationGate, logger,
+            ConsumerHostedService<TMessage>.DefaultInitialRetryDelay, ConsumerHostedService<TMessage>.DefaultMaxRetryDelay) { }
+
+    internal GatedConsumerHostedService(
+        IConsumerManager<TMessage> consumerManager,
+        IServiceProvider serviceProvider,
+        IRetryUtility retryUtility,
+        Func<IServiceProvider, CancellationToken, Task<bool>> activationGate,
+        ILogger<GatedConsumerHostedService<TMessage>> logger,
+        TimeSpan initialRetryDelay,
+        TimeSpan maxRetryDelay) {
         _consumerManager = consumerManager;
         _serviceProvider = serviceProvider;
         _activationGate = activationGate;
         _logger = logger;
+        _initialRetryDelay = initialRetryDelay;
+        _maxRetryDelay = maxRetryDelay;
     }
 
     public Task StartAsync(CancellationToken cancellationToken) {
@@ -75,7 +90,7 @@ public sealed class GatedConsumerHostedService<TMessage> : IHostedService, IDisp
     /// a routine broker restart terminal for the rest of the process lifetime.
     /// </summary>
     private async Task ConsumeWithRestart(IMessageConsumer messageConsumer, CancellationToken stoppingToken) {
-        var delay = ConsumerHostedService<TMessage>.DefaultInitialRetryDelay;
+        var delay = _initialRetryDelay;
         while (!stoppingToken.IsCancellationRequested) {
             try {
                 await ConsumeMessages(messageConsumer, stoppingToken);
@@ -96,7 +111,7 @@ public sealed class GatedConsumerHostedService<TMessage> : IHostedService, IDisp
                 return; // The host is stopping.
             }
 
-            delay = ConsumerHostedService<TMessage>.NextDelay(delay, ConsumerHostedService<TMessage>.DefaultMaxRetryDelay);
+            delay = ConsumerHostedService<TMessage>.NextDelay(delay, _maxRetryDelay);
         }
     }
 

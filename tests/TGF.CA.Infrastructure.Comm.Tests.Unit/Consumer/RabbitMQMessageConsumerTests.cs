@@ -18,6 +18,24 @@ namespace TGF.CA.Infrastructure.Comm.Tests.Unit.Consumer;
 public class RabbitMQMessageConsumerTests {
 
     [Fact]
+    public async Task Consume_ExitsWhenTheChannelCloses_SoTheHostCanResubscribe() {
+        var channel = new Mock<IModel>();
+        var connection = CreateConnection(channel);
+        var sut = CreateSut(connection);
+        using var cancellation = new CancellationTokenSource();
+        var consuming = sut.StartAsync(cancellation.Token);
+
+        channel.Raise(value => value.ModelShutdown += null,
+            new ShutdownEventArgs(ShutdownInitiator.Peer, 320, "broker restart"));
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => consuming.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.Equal("The RabbitMQ consumer channel closed.", exception.Message);
+        channel.Verify(value => value.Dispose(), Times.Once);
+        connection.Verify(value => value.Dispose(), Times.Never);
+    }
+
+    [Fact]
     public async Task Consume_DoesNotDisposeTheSharedConnection_WhenConsumptionIsCancelled() {
         var channel = new Mock<IModel>();
         var connection = CreateConnection(channel);

@@ -31,22 +31,24 @@ internal class RabbitMQMessageConsumer<TMessage>(RabbitMQSettings rabbitMQSettin
         var lConnection = await rabbitMQConnectionFactory.GetConnectionAsync();
 
         using var lChannel = lConnection.CreateModel();
-        lChannel.BasicQos(0, 1, false); // Each consumer will take only 1 message at a time and the next after ACK.
-        var lReceiver = new RabbitMQMessageReceiver(lChannel, serializer, handleMessage, logger, rabbitMQSettings.Consumer?.MaxHandlerRetries ?? 3);
-        var lQueue = GetCorrectQueue();
+        var lCompletion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        // A replacement connection cannot recover this channel. Unwind so the host subscribes on the current connection.
+        void OnChannelShutdown(object? sender, ShutdownEventArgs args)
+            => lCompletion.TrySetException(new InvalidOperationException("The RabbitMQ consumer channel closed."));
 
-        lChannel.BasicConsume(lQueue, false, lReceiver);
+        lChannel.ModelShutdown += OnChannelShutdown;
+        try {
+            lChannel.BasicQos(0, 1, false); // Each consumer will take only 1 message at a time and the next after ACK.
+            var lReceiver = new RabbitMQMessageReceiver(lChannel, serializer, handleMessage, logger, rabbitMQSettings.Consumer?.MaxHandlerRetries ?? 3);
+            var lQueue = GetCorrectQueue();
 
-        await WaitUntilCancelled(aCancellationToken);
-    }
+            lChannel.BasicConsume(lQueue, false, lReceiver);
 
-    private static async Task WaitUntilCancelled(CancellationToken aCancellationToken) {
-        var lTaskCompletionSource = new TaskCompletionSource<bool>();
-        using (aCancellationToken.Register(x => {
-            if (x is TaskCompletionSource<bool> lTaskCompletionSource)
-                lTaskCompletionSource.SetResult(true);
-        }, lTaskCompletionSource)) {
-            await lTaskCompletionSource.Task;
+            using var lCancellationRegistration = aCancellationToken.Register(() => lCompletion.TrySetResult(true));
+            await lCompletion.Task;
+        }
+        finally {
+            lChannel.ModelShutdown -= OnChannelShutdown;
         }
     }
 
