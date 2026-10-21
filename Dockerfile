@@ -2,7 +2,7 @@ ARG BUILD_CONFIGURATION=Release ENVIRONMENT=testportal
 FROM registry.guildswarm.org/baseimages/alpine_base:latest as base
 
 # BUILD IMAGE
-FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 WORKDIR /src
 # Copy and extract project files and restore dependencies in a docker cache friendly way
 COPY projectfiles.tar .
