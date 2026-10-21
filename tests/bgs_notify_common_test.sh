@@ -72,7 +72,7 @@ PY
 good_record
 ok
 [[ "$(wc -l <"$state/gh.calls")" == 1 ]] || fail "gh must be called exactly once"
-[[ "$(cat "$state/gh.args")" == "api --method POST -H Accept: application/vnd.github+json repos/Biognosys/OF.Common/dispatches --input -" ]] || fail "unexpected gh arguments: $(cat "$state/gh.args")"
+[[ "$(cat "$state/gh.args")" == "api --method POST -H Accept: application/vnd.github+json repos/Biognosys/of.common/dispatches --input -" ]] || fail "unexpected gh arguments: $(cat "$state/gh.args")"
 [[ "$(cat "$state/gh.token")" == "token=pat-token-value" ]] || fail "gh must receive the dispatch token through GH_TOKEN"
 python3 - "$state/gh.stdin" "$canonical" "$manifest" "$sha" <<'PY' || fail "unexpected dispatch payload"
 import json, sys

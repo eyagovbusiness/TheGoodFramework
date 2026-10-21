@@ -84,7 +84,7 @@ reference is one verifiable image manifest rather than an index.
   tag, and the canonical reference `<IMAGE_REGISTRY>/base-images/the_good_framework@<manifest digest>`
   rebuilt from the configured registry. Anything else sends nothing and fails the
   step; the published image stays. The request is
-  `gh api --method POST repos/Biognosys/OF.Common/dispatches --input -` with event
+  `gh api --method POST repos/Biognosys/of.common/dispatches --input -` with event
   type `L1-dependency-update` and this `client_payload`, all strings:
 
   | Field | Value |
@@ -113,7 +113,7 @@ push `base-images/the_good_framework`. The previous per-environment image path
 (`base-images/<environment>/the_good_framework`) is no longer written for the
 BGS image. The publication path has not yet run against the real registry, and
 the notification has not yet been sent: it has only been exercised against a
-mocked `gh`, so whether `PAT_TOKEN` may dispatch to `Biognosys/OF.Common` is not
+mocked `gh`, so whether `PAT_TOKEN` may dispatch to `Biognosys/of.common` is not
 yet confirmed and will first be shown by the first real publication. The OF.Common
 side that receives `L1-dependency-update` with these fields is a separate change and
 must be reviewed and merged before this notification is relied on.

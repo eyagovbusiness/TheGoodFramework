@@ -7,7 +7,7 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-target_repository="Biognosys/OF.Common"
+target_repository="Biognosys/of.common"
 die() { echo "$*" >&2; exit 1; }
 
 [[ "${GITHUB_ACTIONS:-}" == "true" ]] || die "Notification runs only in GitHub Actions."
