@@ -2,8 +2,9 @@ name: Validate BGS image delivery
 
 on:
   pull_request:
+    branches: [main]
   push:
-    branches: [main, dev]
+    branches: [main]
 
 permissions:
   contents: read

@@ -2,9 +2,8 @@ name: L1 - Build and scan (PR)
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review, edited]
     branches:
-      - dev
       - main
 
   workflow_dispatch:

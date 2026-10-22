@@ -3,7 +3,7 @@ name: L1 - Scan and Publish canonical image (push -> main)
 # The only writer of the canonical TheGoodFramework image. It runs for pushes to
 # main or a dispatch on main, scans the exact built image, then publishes
 # tgf-<run>.<attempt> and latest. Only after the publisher returned successfully
-# and the records were uploaded does the final step notify OF.Common of the
+# and the records were uploaded does a separate release job tag and notify OF.Common of the
 # verified digest; that step alone holds the dispatch credential. OF.Common still
 # adopts the digest through a reviewed PR.
 on:
@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: tgf-canonical-publication
@@ -22,7 +23,7 @@ concurrency:
 
 jobs:
   publish:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && github.repository == 'eyagovbusiness/TheGoodFramework'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the triggering commit
@@ -30,6 +31,11 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
+
+      - name: Verify reviewed protected-main authorization
+        run: python3 -B ./scripts/bgs_image_release.py --authorize-source
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Build, scan and publish
         id: publish
@@ -49,15 +55,62 @@ jobs:
           path: ${{ runner.temp }}/tgf-publication
           if-no-files-found: ignore
 
-      # Not always(): a failed, partial or unverified publication announces nothing. The
-      # script re-validates the publisher's records and sends nothing unless latest was
-      # promoted. This is the only step that sees the dispatch token; no build,
-      # scanner or third-party action does.
+  release:
+    needs: publish
+    if: github.ref == 'refs/heads/main' && github.repository == 'eyagovbusiness/TheGoodFramework'
+    runs-on: ubuntu-latest
+    # A dedicated GitHub App token may create tags only; it cannot bypass immutable rules.
+    environment: bgs-image-release
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout the triggering commit
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Download verified publication evidence
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093a # v4.3.0
+        with:
+          name: tgf-publication-${{ github.run_number }}.${{ github.run_attempt }}
+          path: ${{ runner.temp }}/tgf-publication
+
+      - name: Mint short-lived image release App token
+        id: release-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ secrets.DEP_BOT_APP_ID }}
+          private-key: ${{ secrets.DEP_BOT_PRIVATE_KEY }}
+          owner: eyagovbusiness
+          repositories: TheGoodFramework
+          permission-contents: write
+          permission-pull-requests: read
+
+      - name: Create immutable image Git release tag
+        id: release
+        run: python3 -B ./scripts/bgs_image_release.py
+        env:
+          GH_TOKEN: ${{ steps.release-token.outputs.token }}
+          IMAGE_RELEASE_APP_ID: ${{ secrets.DEP_BOT_APP_ID }}
+          IMAGE_REGISTRY: ${{ secrets.REG_ADDRESS }}
+          REPORT_DIR: ${{ runner.temp }}/tgf-publication
+
+      - name: Upload Git release mapping
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: tgf-release-${{ github.run_number }}.${{ github.run_attempt }}
+          path: ${{ runner.temp }}/tgf-publication
+          if-no-files-found: error
+
+      # Failed publication, tag creation/readback or evidence upload announces nothing.
       - name: Notify OF.Common of the verified digest
-        if: ${{ success() && steps.publish.outcome == 'success' && github.ref == 'refs/heads/main' && github.repository == 'eyagovbusiness/TheGoodFramework' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
+        if: ${{ success() && steps.release.outcome == 'success' && github.ref == 'refs/heads/main' && github.repository == 'eyagovbusiness/TheGoodFramework' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') }}
         run: bash ./scripts/bgs_notify_common.sh
         timeout-minutes: 5
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REQUIRE_IMAGE_RELEASE: 'true'
           IMAGE_REGISTRY: ${{ secrets.REG_ADDRESS }}
           REPORT_DIR: ${{ runner.temp }}/tgf-publication

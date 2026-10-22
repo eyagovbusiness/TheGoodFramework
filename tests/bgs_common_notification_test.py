@@ -4,6 +4,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HELPER = os.path.join(HERE, "..", "scripts", "bgs_common_notification.py")
@@ -89,6 +90,27 @@ class NotificationTest(unittest.TestCase):
             "source_run_attempt": "2",
         })
         self.assertLessEqual(len(payload["client_payload"]), 10, "repository_dispatch allows at most 10 properties")
+
+    def test_release_required_notification_rejects_missing_or_mismatched_tag_mapping(self):
+        self.write(record())
+        payload = notification.build_payload(self.dir.name)["client_payload"]
+        import hashlib
+        scan = b'{"scan": "evidence"}'
+        mapping = {"schema_version": 1, "git_tag": "bgs-image/tgf-42.2", **payload,
+                   "scan_report_sha256": hashlib.sha256(scan).hexdigest()}
+        with open(os.path.join(self.dir.name, "trivy-report.json"), "wb") as handle:
+            handle.write(scan)
+        path = os.path.join(self.dir.name, "release.json")
+        with patch.dict(os.environ, {"REQUIRE_IMAGE_RELEASE": "true"}):
+            self.rejects("release.json")
+            with open(path, "w", encoding="utf-8") as handle:
+                json.dump(mapping, handle)
+            self.assertEqual(notification.build_payload(self.dir.name)["client_payload"], payload)
+            for field in ("git_tag", "source_commit", "source_digest", "source_config_digest", "source_run_id", "scan_report_sha256"):
+                with self.subTest(field=field):
+                    with open(path, "w", encoding="utf-8") as handle:
+                        json.dump({**mapping, field: "wrong"}, handle)
+                    self.rejects()
 
     def test_only_a_promoted_latest_is_announced(self):
         for status in ("latest: not-promoted\n", "latest: pushed-unverified\n", "latest: promoted", "latest: promoted\nextra\n",

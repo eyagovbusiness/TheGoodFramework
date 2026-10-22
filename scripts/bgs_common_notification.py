@@ -115,6 +115,27 @@ def build_payload(report_dir):
     if record["image_ref"] != f"{canonical}@{record['manifest_digest']}":
         raise NotificationError("the recorded image reference is not the canonical reference for its digest")
 
+    if os.environ.get("REQUIRE_IMAGE_RELEASE") == "true":
+        try:
+            release = json.loads(_read(os.path.join(report_dir, "release.json"), "release.json"), object_pairs_hook=_unique)
+        except ValueError:
+            raise NotificationError("release.json is not valid JSON") from None
+        expected = {"git_tag": f"bgs-image/{tag}", "source_commit": sha,
+                    "source_tag": tag, "source_repo": repository,
+                    "source_image": record["image_ref"], "source_digest": record["manifest_digest"],
+                    "source_config_digest": record["config_digest"], "source_run_id": run_id,
+                    "source_run_attempt": run_attempt, "schema_version": 1}
+        if not isinstance(release, dict) or any(release.get(key) != value for key, value in expected.items()):
+            raise NotificationError("Git release mapping differs from the verified publication")
+        import hashlib
+        scan_path = os.path.join(report_dir, "trivy-report.json")
+        if os.path.islink(scan_path) or not os.path.isfile(scan_path):
+            raise NotificationError("scan evidence is missing or not a regular file")
+        with open(scan_path, "rb") as handle:
+            scan_digest = hashlib.file_digest(handle, "sha256").hexdigest()
+        if release.get("scan_report_sha256") != scan_digest:
+            raise NotificationError("Git release scan hash differs from the publication evidence")
+
     return {
         "event_type": EVENT_TYPE,
         "client_payload": {
