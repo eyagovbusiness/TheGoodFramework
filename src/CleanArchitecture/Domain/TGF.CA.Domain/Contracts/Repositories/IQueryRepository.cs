@@ -2,16 +2,14 @@
 using TGF.CA.Domain.Contracts.Repositories.Base;
 using TGF.Common.ROP.HttpResult;
 
-namespace TGF.CA.Domain.Contracts.Repositories
-{
+namespace TGF.CA.Domain.Contracts.Repositories {
     /// <summary>
     /// Interface for query repositorties working with any class as entities/>.
     /// Provides a set of methods for executing queries and retrieving entities in a read only repository(CQRS friendly).
     /// </summary>
     public interface IQueryRepository<T>
         : IQueryRepositoryBase<T>
-        where T : class
-    {
+        where T : class {
 
         #region Read
 

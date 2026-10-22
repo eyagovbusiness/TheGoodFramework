@@ -1,11 +1,9 @@
 ﻿
-namespace TGF.CA.Application
-{
+namespace TGF.CA.Application {
     /// <summary>
     /// Provides methods for encrypting and decrypting strings using AES encryption.
     /// </summary>
-    public interface IEncryptionService
-    {
+    public interface IEncryptionService {
         /// <summary>
         /// Encrypts the specified plain text using AES encryption.
         /// </summary>

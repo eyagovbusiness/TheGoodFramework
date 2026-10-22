@@ -1,8 +1,6 @@
 ﻿
-namespace TGF.CA.Application.DTOs
-{
-    public enum AuthenticationForwardingType
-    {
+namespace TGF.CA.Application.DTOs {
+    public enum AuthenticationForwardingType {
         JWT,
         Cookie
     }

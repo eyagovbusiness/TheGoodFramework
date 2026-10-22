@@ -46,7 +46,8 @@ public static class SafeHealthRegistrations {
             IHealthCheck inner;
             try {
                 inner = original(serviceProvider);
-            } catch (Exception) {
+            }
+            catch (Exception) {
                 // Fixed boundary exception without inner/Data: the framework does not catch construction failures, so this stays an unexpected 500.
                 throw new InvalidOperationException($"Health check '{name}' could not be constructed.");
             }
@@ -60,10 +61,12 @@ public static class SafeHealthRegistrations {
             HealthCheckResult result;
             try {
                 result = await inner.CheckHealthAsync(context, cancellationToken);
-            } catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
                 // Caller cancellation or the registration timeout (both cancel this token): keep cancellation semantics, drop message/inner/Data.
                 throw new OperationCanceledException("The health check was cancelled.", cancellationToken);
-            } catch (Exception) {
+            }
+            catch (Exception) {
                 return new HealthCheckResult(context.Registration.FailureStatus, $"{name} check failed unexpectedly.");
             }
 

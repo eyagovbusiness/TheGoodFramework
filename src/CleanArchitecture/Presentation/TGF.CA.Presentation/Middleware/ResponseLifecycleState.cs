@@ -1,7 +1,5 @@
-﻿namespace TGF.CA.Presentation.Middleware
-{
-    internal enum ResponsePhase
-    {
+﻿namespace TGF.CA.Presentation.Middleware {
+    internal enum ResponsePhase {
         Normal = 0,
         PreparingSafeError = 1,
         Aborted = 2,
@@ -16,8 +14,7 @@
     /// owned OnStarting callbacks may run. State is isolated to one request and records only operations observed through
     /// these decorators. It is not a global response tracker or proof about bytes/callbacks outside their ownership.
     /// </remarks>
-    internal sealed class ResponseLifecycleState
-    {
+    internal sealed class ResponseLifecycleState {
         private int _phase;
         private long _pendingBytes;
         private int _uncertain;
@@ -50,11 +47,9 @@
 
     /// <summary>Replaces response-writer and callback exceptions before they can carry request, secret or provider text to server logging.</summary>
     /// <remarks>Preserves cancellation signalling and its token, but intentionally omits original messages, inner exceptions and Data.</remarks>
-    internal static class SafeFailures
-    {
+    internal static class SafeFailures {
         public static Exception? Sanitize(Exception? aException)
-            => aException switch
-            {
+            => aException switch {
                 null => null,
                 OperationCanceledException lCancelled => Cancelled(lCancelled.CancellationToken),
                 _ => Failure(),

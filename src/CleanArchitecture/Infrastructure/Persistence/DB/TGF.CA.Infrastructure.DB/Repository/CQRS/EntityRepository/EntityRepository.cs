@@ -8,8 +8,7 @@ using TGF.CA.Infrastructure.DB.Repository.CQRS.Internal;
 using TGF.Common.ROP;
 using TGF.Common.ROP.HttpResult;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
-{
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository {
     /// <summary>
     /// A base class for any read/write repository with native error handling logic using ROP.
     /// </summary>
@@ -20,11 +19,9 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
         where TRepository : class
         where T : class, Domain.Contracts.IEntity<TKey>
-        where TKey : IEquatable<TKey>
-    {
+        where TKey : IEquatable<TKey> {
         public EntityRepository(TDbContext aContext, ILogger<TRepository> aLogger)
-            : this(aContext, aLogger, SpecificationEvaluator.Default)
-        {
+            : this(aContext, aLogger, SpecificationEvaluator.Default) {
             _context = aContext;
             _logger = aLogger;
         }
@@ -114,16 +111,12 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.EntityRepository
         #endregion
 
         #region Private helper classes
-        private class InternalEntityCommandRepository : EntityCommandRepository<TRepository, TDbContext, T, TKey>
-        {
-            internal InternalEntityCommandRepository(TDbContext aContext, ILogger<TRepository> aLogger) : base(aContext, aLogger)
-            {
+        private class InternalEntityCommandRepository : EntityCommandRepository<TRepository, TDbContext, T, TKey> {
+            internal InternalEntityCommandRepository(TDbContext aContext, ILogger<TRepository> aLogger) : base(aContext, aLogger) {
             }
         }
-        private class InternalEntityQueryRepository : EntityQueryRepositoryInternal<TRepository, TDbContext, T, TKey>
-        {
-            internal InternalEntityQueryRepository(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : base(aContext, aLogger, specificationEvaluator)
-            {
+        private class InternalEntityQueryRepository : EntityQueryRepositoryInternal<TRepository, TDbContext, T, TKey> {
+            internal InternalEntityQueryRepository(TDbContext aContext, ILogger<TRepository> aLogger, ISpecificationEvaluator specificationEvaluator) : base(aContext, aLogger, specificationEvaluator) {
             }
         }
         #endregion

@@ -16,4 +16,4 @@ public class ObjectStorageHealthCheck(IObjectStorageProvider objectStorageProvid
     private string GetObjectStorageType()
         => objectStorageProvider is S3StorageProvider ? "AWS S3" : "Azure Blob Storage";
 
-}   
+}

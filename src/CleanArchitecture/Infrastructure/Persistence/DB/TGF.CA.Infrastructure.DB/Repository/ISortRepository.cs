@@ -1,10 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using System.Linq.Expressions;
 
-namespace TGF.CA.Infrastructure.DB.Repository
-{
-    public interface ISortRepository
-    {
+namespace TGF.CA.Infrastructure.DB.Repository {
+    public interface ISortRepository {
         protected static readonly ConcurrentDictionary<string, LambdaExpression> _sortExpressions = new ConcurrentDictionary<string, LambdaExpression>();
 
         /// <summary>
@@ -22,14 +20,12 @@ namespace TGF.CA.Infrastructure.DB.Repository
         /// is not found, or if it is null or whitespace, the original <see cref="IQueryable"/> is returned
         /// unmodified. This method only supports ascending order sorting.
         /// </remarks>
-        protected static IQueryable<T> ApplySorting<T>(IQueryable<T> aQuery, string aSortBy, SortDirection aSortDirection = SortDirection.Ascending)
-        {
+        protected static IQueryable<T> ApplySorting<T>(IQueryable<T> aQuery, string aSortBy, SortDirection aSortDirection = SortDirection.Ascending) {
             if (string.IsNullOrWhiteSpace(aSortBy))
                 return aQuery;
 
             var lCacheKey = $"{typeof(T).FullName}.{aSortBy}.{aSortDirection}";
-            var lLambda = _sortExpressions.GetOrAdd(lCacheKey, _ =>
-            {
+            var lLambda = _sortExpressions.GetOrAdd(lCacheKey, _ => {
                 var lPropertyInfo = typeof(T).GetProperty(aSortBy);
                 if (lPropertyInfo == null)
                     return null!;
@@ -52,8 +48,7 @@ namespace TGF.CA.Infrastructure.DB.Repository
 
             return aQuery.Provider.CreateQuery<T>(lOrderByCallExpression);
         }
-        protected enum SortDirection
-        {
+        protected enum SortDirection {
             Ascending,
             Descending
         }
