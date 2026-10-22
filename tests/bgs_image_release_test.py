@@ -33,7 +33,7 @@ class ReleaseTests(unittest.TestCase):
         self.tag_rules = {
             1: {"conditions": refs, "rules": [{"type": "update"}, {"type": "deletion"}], "bypass_actors": []},
             2: {"conditions": refs, "rules": [{"type": "creation"}], "bypass_actors": [
-                {"actor_type": "Integration", "actor_id": 123, "bypass_mode": "always"}]}}
+                {"actor_type": "RepositoryRole", "actor_id": 5, "bypass_mode": "always"}]}}
         self.pull = {"merged_at": "2026-10-22T12:00:00Z", "merge_commit_sha": self.sha,
                      "number": 99, "head": {"sha": "d" * 40}, "user": {"login": "author"},
                      "base": {"ref": "main", "repo": {"full_name": release.SOURCE_REPOSITORY}}}
@@ -45,7 +45,7 @@ class ReleaseTests(unittest.TestCase):
         self.bad_readback = False
         self.annotation = None
         (self.report / "trivy-report.json").write_text('{}', encoding="utf-8")
-        self.env = patch.dict(os.environ, {"GITHUB_ACTIONS": "true", "GH_TOKEN": "test-only", "IMAGE_RELEASE_APP_ID": "123"})
+        self.env = patch.dict(os.environ, {"GITHUB_ACTIONS": "true", "GH_TOKEN": "test-only"})
         self.env.start()
         self.addCleanup(self.env.stop)
         self.payload_patch = patch.object(release, "build_payload", return_value={"client_payload": self.payload})
@@ -138,12 +138,12 @@ class ReleaseTests(unittest.TestCase):
         self.tag_rules[1]["bypass_actors"] = [{"actor_type": "Integration", "bypass_mode": "always"}]
         self.rejected()
 
-    def test_human_creation_bypass_rejected(self):
-        self.tag_rules[2]["bypass_actors"][0]["actor_type"] = "RepositoryRole"
+    def test_app_creation_bypass_rejected(self):
+        self.tag_rules[2]["bypass_actors"][0]["actor_type"] = "Integration"
         self.rejected()
 
-    def test_different_app_creation_bypass_rejected(self):
-        self.tag_rules[2]["bypass_actors"][0]["actor_id"] = 456
+    def test_non_admin_creation_bypass_rejected(self):
+        self.tag_rules[2]["bypass_actors"][0]["actor_id"] = 4
         self.rejected()
 
     def test_existing_tag_is_never_updated_even_for_same_source(self):

@@ -97,15 +97,16 @@ rules below can be read and verified.
    CODEOWNER review. Required workflows have no path filters.
 2. Active **tag immutability** ruleset: include exactly
    `refs/tags/bgs-image/**/*`, no exclusions, restrict updates and deletions,
-   **no bypass actors**, including the release app.
+   **no bypass actors**, including administrators and the PAT owner.
 3. Separate active **tag creation** ruleset: same exact include, no exclusions,
-   restrict creation; only the existing DEP_BOT GitHub App installation
-   may bypass creation. No human/role bypass. Its token must have repository
-   contents write and PR read. Configure `DEP_BOT_APP_ID`
-   and `DEP_BOT_PRIVATE_KEY` (secrets) in the `bgs-image-release`
-   environment, restricted to protected `main` with owner approval. The pinned
-   token action mints and revokes a short-lived installation token scoped to TGF;
-   only the tag step receives it. The build and scanner never receive it.
+   restrict creation; only repository administrators (RepositoryRole ID 5) may
+   bypass creation. Reuse the existing `PAT_TOKEN` secret from TGF's successful
+   Common-notification workflow; no new App, App secrets or environment is required.
+   Its identity must be a TGF administrator allowed to create these tags, with
+   contents write and PR read access. The workflow supplies it only to tag creation
+   and notification, never the build/scanner. Dispatch success establishes existing
+   Common access, not proof of TGF tag-write authorization; the first release must
+   demonstrate that operation. Failed authorization never triggers adoption.
 
 These rules require actual administrator setup before the new pipeline can finish.
 Do not add update/deletion bypass to work around a failure. Record settings readback,

@@ -89,17 +89,17 @@ def authorize_tags(call):
         bypass = rule.get("bypass_actors", [])
         immutable |= {"update", "deletion"} <= kinds and not bypass
         controlled_creation |= "creation" in kinds and bool(bypass) and all(
-            actor["actor_type"] == "Integration" and actor["bypass_mode"] == "always"
-            and str(actor["actor_id"]) == os.environ.get("IMAGE_RELEASE_APP_ID") for actor in bypass)
+            actor["actor_type"] == "RepositoryRole" and actor["bypass_mode"] == "always"
+            and actor["actor_id"] == 5 for actor in bypass)  # GitHub's repository admin role
     if not immutable or not controlled_creation:
-        raise ReleaseError("image tags require active no-bypass immutability and app-only creation rulesets")
+        raise ReleaseError("image tags require active no-bypass immutability and admin-only creation rulesets")
 
 
 def release(report_dir, call=api):
     if os.environ.get("GITHUB_ACTIONS") != "true":
         raise ReleaseError("image releases run only in GitHub Actions")
     if not os.environ.get("GH_TOKEN"):
-        raise ReleaseError("the dedicated image release App token is missing")
+        raise ReleaseError("the existing PAT_TOKEN release credential is missing")
     payload = build_payload(str(report_dir))["client_payload"]
     sha = payload["source_commit"]
     authorize_source(call, sha)

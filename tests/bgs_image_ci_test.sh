@@ -349,9 +349,9 @@ main_workflow="$workflows/L1_main.yml"
 notify_step="$(sed -n '/- name: Notify OF.Common/,$p' "$main_workflow")"
 [[ -n "$notify_step" ]] || fail "main must have a notify step"
 [[ "$(grep -c '^      - name:' <<<"$notify_step")" == 1 ]] || fail "the notify step must be the last step"
-[[ "$(grep -rho 'PAT_TOKEN' "$repo_root/.github" | wc -l)" == 1 ]] || fail "PAT_TOKEN must be referenced exactly once"
+[[ "$(grep -rho 'secrets.PAT_TOKEN' "$repo_root/.github" | wc -l)" == 2 ]] || fail "PAT_TOKEN is scoped to tag creation and notification"
 # shellcheck disable=SC2016 # a literal workflow expression
-grep -qF 'GH_TOKEN: ${{ secrets.PAT_TOKEN }}' <<<"$notify_step" || fail "only the notify step may receive PAT_TOKEN, as GH_TOKEN"
+grep -qF 'GH_TOKEN: ${{ secrets.PAT_TOKEN }}' <<<"$notify_step" || fail "notification must reuse PAT_TOKEN as GH_TOKEN"
 # shellcheck disable=SC2016 # a literal workflow expression
 [[ "$(grep -c 'secrets\.' <<<"$notify_step")" == 2 ]] || fail "the notify step may receive only PAT_TOKEN and the registry name"
 grep -qF 'run: bash ./scripts/bgs_notify_common.sh' <<<"$notify_step" || fail "the notify step must run the guarded script"
@@ -364,8 +364,8 @@ for guard in 'success()' "steps.release.outcome == 'success'" "github.ref == 're
 done
 grep -qE '^        id: publish$' "$main_workflow" || fail "the publish step must have an id for the notify guard"
 [[ "$(grep -n 'upload-artifact' "$main_workflow" | tail -1 | cut -d: -f1)" -lt "$(grep -n 'Notify OF.Common' "$main_workflow" | head -1 | cut -d: -f1)" ]] || fail "the notification must follow the artifact upload"
-before_notify="$(sed '/- name: Notify OF.Common/,$d' "$main_workflow")"
-if grep -q 'PAT_TOKEN\|bgs_notify_common' <<<"$before_notify"; then fail "the build, scan and publish steps must not see the dispatch credential"; fi
+before_release="$(sed '/^  release:/,$d' "$main_workflow")"
+if grep -q 'PAT_TOKEN\|bgs_notify_common' <<<"$before_release"; then fail "the build, scan and publish steps must not see the release credential"; fi
 if grep -Eq 'pull_request|schedule' "$main_workflow"; then fail "main may run only on push or dispatch, never on pull requests"; fi
 if grep -rlq 'PAT_TOKEN\|bgs_notify_common\.sh' "$workflows/L1_pr.yml" "$workflows/validate-bgs-base-image.yml"; then fail "scan and validate workflows must never notify"; fi
 if grep -Eq 'Authorization|--token|eval ' "$repo_root/scripts/bgs_notify_common.sh"; then fail "the token must not be passed on a command line"; fi
