@@ -1,20 +1,17 @@
 ﻿using Microsoft.Extensions.Configuration;
 
-namespace TGF.CA.Presentation
-{
+namespace TGF.CA.Presentation {
     /// <summary>
     /// Class to help building HealthChecksUI configuration.
     /// </summary>
-    public static class HealthCheckHelper
-    {
+    public static class HealthCheckHelper {
         /// <summary>
         /// Builds a new <see cref="IConfiguration"/> from in-memory stored HealthChecksUI configuration.
         /// </summary>
         /// <param name="aAditionalHealtCheckConfig">Aditional JSON configuration to add in Dictionary format.</param>
         /// <returns><see cref="IConfiguration"/> with added HealthChecksUI configuration from memory.</returns>
-        public static IConfiguration BuildBasicHealthCheck(IConfiguration? aConfiguration = default, Dictionary<string, string?>? aAditionalHealtCheckConfig = null)
-        {
-            var lHealthEndpoint = aConfiguration?.GetValue<string>("HealthEndpoint") 
+        public static IConfiguration BuildBasicHealthCheck(IConfiguration? aConfiguration = default, Dictionary<string, string?>? aAditionalHealtCheckConfig = null) {
+            var lHealthEndpoint = aConfiguration?.GetValue<string>("HealthEndpoint")
                 ?? throw new Exception("HealthEndpoint is not set in appsettings!! Please add this configuration.");
 
             var lNewConfigurationBuilder =

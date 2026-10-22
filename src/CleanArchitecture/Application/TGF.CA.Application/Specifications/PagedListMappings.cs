@@ -2,18 +2,14 @@
 using TGF.CA.Application.Contracts.Services;
 using TGF.CA.Application.DTOs;
 
-namespace TGF.CA.Application.Specifications
-{
+namespace TGF.CA.Application.Specifications {
     /// <summary>
     /// Provides extension methods for mapping items to PagedListDTO.
     /// </summary>
-    public class PagedListMapperService : IPagedListMapperService
-    {
+    public class PagedListMapperService : IPagedListMapperService {
         public PagedListDTO<TDTO> ToPagedListDTO<TEntity, TDTO>(IEnumerable<TDTO> items, ISpecification<TEntity> specification, int totalItems)
-            where TEntity : class
-        {
-            return specification switch
-            {
+            where TEntity : class {
+            return specification switch {
                 SortedAndPagedSpecification<TEntity> sortedAndPagedSpec => ToPagedListDTO(items, sortedAndPagedSpec, totalItems),
                 PagedSpecification<TEntity> pagedSpec => ToPagedListDTO(items, pagedSpec, totalItems),
                 _ => new PagedListDTO<TDTO>(1, 1, totalItems, totalItems, items.ToArray())
@@ -30,8 +26,7 @@ namespace TGF.CA.Application.Specifications
         /// <param name="totalItems">The total number of items.</param>
         /// <returns>A PagedListDTO containing the paged items.</returns>
         public static PagedListDTO<TDTO> ToPagedListDTO<TEntity, TDTO>(IEnumerable<TDTO> items, PagedSpecification<TEntity> pagedSpecification, int totalItems)
-            where TEntity : class
-        {
+            where TEntity : class {
             return CreatePagedListDTO(items, pagedSpecification.Page ?? 1, pagedSpecification.PageSize ?? totalItems, totalItems);
         }
 
@@ -46,8 +41,7 @@ namespace TGF.CA.Application.Specifications
         /// <returns>A PagedListDTO containing the paged items.</returns>
 
         public static PagedListDTO<TDTO> ToPagedListDTO<TEntity, TDTO>(IEnumerable<TDTO> items, SortedAndPagedSpecification<TEntity> sortedAndPagedSpecification, int totalItems)
-            where TEntity : class
-        {
+            where TEntity : class {
             return CreatePagedListDTO(items, sortedAndPagedSpecification.Page ?? 1, sortedAndPagedSpecification.PageSize ?? totalItems, totalItems);
         }
 
@@ -60,8 +54,7 @@ namespace TGF.CA.Application.Specifications
         /// <param name="pageSize">The size of the page.</param>
         /// <param name="totalItems">The total number of items.</param>
         /// <returns>A PagedListDTO containing the paged items.</returns>
-        public static PagedListDTO<T> CreatePagedListDTO<T>(IEnumerable<T> items, int page, int pageSize, int totalItems)
-        {
+        public static PagedListDTO<T> CreatePagedListDTO<T>(IEnumerable<T> items, int page, int pageSize, int totalItems) {
             return new PagedListDTO<T>(
                 page,
                 (int)Math.Ceiling((double)totalItems / pageSize),

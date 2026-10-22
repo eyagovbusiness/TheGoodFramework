@@ -1,12 +1,10 @@
 ﻿using TGF.Common.ROP.Errors;
 
-namespace TGF.Common.ROP.Result
-{
+namespace TGF.Common.ROP.Result {
     /// <summary>
     /// Static class to register operations between Results like binding Results, mapping different Results or executing certain actions after the Result is generated.
     /// </summary>
-    public static partial class RailwaySwitchExtensions
-    {
+    public static partial class RailwaySwitchExtensions {
 
         /// <summary>
         /// Bunds a second Result after this one (concats railways and the respective not happy paths).
@@ -16,8 +14,7 @@ namespace TGF.Common.ROP.Result
         /// <param name="aThisResult">This Result.</param>
         /// <param name="aNextResult">Next Result to be bound after this Result.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
-        public static async Task<IResult<T2>> Bind<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<IResult<T2>>> aNextResult)
-        {
+        public static async Task<IResult<T2>> Bind<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<IResult<T2>>> aNextResult) {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
                 ? await aNextResult(lThisResult.Value)
@@ -32,8 +29,7 @@ namespace TGF.Common.ROP.Result
         /// <param name="aThisResult">This Result.</param>
         /// <param name="aDeadEndAction">Action to perform after the Result is calculated sucessfully.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
-        public static async Task<IResult<T>> Tap<T>(this Task<IResult<T>> aThisResult, Action<T> aDeadEndAction)
-        {
+        public static async Task<IResult<T>> Tap<T>(this Task<IResult<T>> aThisResult, Action<T> aDeadEndAction) {
             var lThisResult = await aThisResult;
             if (lThisResult.IsSuccess)
                 aDeadEndAction(lThisResult.Value);
@@ -49,8 +45,7 @@ namespace TGF.Common.ROP.Result
         /// <param name="aThisResult">This Result.</param>
         /// <param name="aDeadEndAsyncFunc">Action to perform after the Result is calculated sucessfully.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
-        public static async Task<IResult<T>> Tap<T>(this Task<IResult<T>> aThisResult, Func<T, Task> aDeadEndAsyncFunc)
-        {
+        public static async Task<IResult<T>> Tap<T>(this Task<IResult<T>> aThisResult, Func<T, Task> aDeadEndAsyncFunc) {
             var lThisResult = await aThisResult;
             if (lThisResult.IsSuccess)
                 await aDeadEndAsyncFunc(lThisResult.Value);
@@ -67,8 +62,7 @@ namespace TGF.Common.ROP.Result
         /// <param name="aVerifyFunction">Function that will verify if this result will continue in the happy path or not.</param>
         /// <param name="aError">Error that will be sate in case the verification fails.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
-        public static async Task<IResult<T>> Verify<T>(this Task<IResult<T>> aThisResult, Func<T, bool> aVerifyFunction, IError aError)
-        {
+        public static async Task<IResult<T>> Verify<T>(this Task<IResult<T>> aThisResult, Func<T, bool> aVerifyFunction, IError aError) {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess && aVerifyFunction(lThisResult.Value)
                 ? lThisResult
@@ -84,8 +78,7 @@ namespace TGF.Common.ROP.Result
         /// <param name="aThisResult">This Result.</param>
         /// <param name="aMapSuccessFunction">The mapping function to map from this Result Type to the desired Result Type.</param>
         /// <returns>Asynchronous Task that returns a Result.</returns>
-        public static async Task<IResult<T2>> Map<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, T2> aMapSuccessFunction)
-        {
+        public static async Task<IResult<T2>> Map<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, T2> aMapSuccessFunction) {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
                 ? Result.Success(aMapSuccessFunction(lThisResult.Value))
@@ -101,8 +94,7 @@ namespace TGF.Common.ROP.Result
         /// <param name="aThisResult"></param>
         /// <param name="aMapSuccessFunction">Function that maps the path continuation fo the Sucess railway.</param>
         /// <returns>Next <see cref="IResult{T}"/>.</returns>
-        public static async Task<IResult<T2>> Map<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction)
-        {
+        public static async Task<IResult<T2>> Map<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction) {
             var lThisResult = await aThisResult;
             return lThisResult.IsSuccess
                 ? Result.Success(await aMapSuccessFunction(lThisResult.Value))
@@ -119,8 +111,7 @@ namespace TGF.Common.ROP.Result
         /// <param name="aMapSuccessFunction">Function that maps the path continuation fo the Sucess railway.</param>
         /// <param name="aMapFailureFunction">Function that maps the path continuation fo the Failure railway.</param>
         /// <returns>Next <see cref="IResult{T}"/>.</returns>
-        public static async Task<IResult<T2>> DoubleMap<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, Task<T2>> aMapFailureFunction)
-        {
+        public static async Task<IResult<T2>> DoubleMap<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, Task<T2>> aMapFailureFunction) {
             var lThisResult = await aThisResult;
             if (lThisResult.IsSuccess)
                 return Result.Success(await aMapSuccessFunction(lThisResult.Value));
@@ -139,8 +130,7 @@ namespace TGF.Common.ROP.Result
         /// <param name="aMapSuccessFunction">Function that maps the path continuation fo the Sucess railway.</param>
         /// <param name="aMapFailureFunction">Function that maps the path continuation fo the Failure railway.</param>
         /// <returns>Next <see cref="IResult{T}"/>.</returns>
-        public static async Task<IResult<T2>> DoubleMap<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, T2> aMapFailureFunction)
-        {
+        public static async Task<IResult<T2>> DoubleMap<T1, T2>(this Task<IResult<T1>> aThisResult, Func<T1, Task<T2>> aMapSuccessFunction, Func<T1, T2> aMapFailureFunction) {
             var lThisResult = await aThisResult;
             if (lThisResult.IsSuccess)
                 return Result.Success(await aMapSuccessFunction(lThisResult.Value));

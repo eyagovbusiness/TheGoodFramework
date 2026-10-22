@@ -1,11 +1,9 @@
 ﻿
-namespace TGF.CA.Domain.Aggregate
-{
-    public static class AggregateMappers
-    {
+namespace TGF.CA.Domain.Aggregate {
+    public static class AggregateMappers {
         public static AggregateChange<TKey> ToAggregateChange<TKey>(AggregateChangeEntity<TKey> aChange)
             where TKey : struct, IEquatable<TKey>
-        => new (
+        => new(
             aChange.Content,
             aChange.AggregateId,
             aChange.GetType(),

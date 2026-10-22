@@ -18,8 +18,7 @@ namespace TGF.CA.Application.Specifications {
         string? sortBy,
         ListSortDirection? sortDirection,
         SortingValidator<T> sortingValidationRules) : ValidatedSpecification<T, SortingValidator<T>>(sortingValidationRules)
-        where T : class
-    {
+        where T : class {
 
         private static readonly ConcurrentDictionary<string, PropertyInfo?> _propertyCache = new();
 
@@ -31,8 +30,7 @@ namespace TGF.CA.Application.Specifications {
         .Tap(_ => ApplySorting(Query, SortBy, SortDirection))
         .Map(_ => this as ISpecification<T>);
 
-        internal static void ApplySorting(ISpecificationBuilder<T> query, string? sortBy, ListSortDirection? sortDirection)
-        {
+        internal static void ApplySorting(ISpecificationBuilder<T> query, string? sortBy, ListSortDirection? sortDirection) {
             if (string.IsNullOrWhiteSpace(sortBy))
                 return; // No sorting is applied if SortBy is not specified.
 
@@ -48,23 +46,18 @@ namespace TGF.CA.Application.Specifications {
             );
 
             // Apply sorting to the Query object.
-            if (sortDirection != null && sortDirection.Value == ListSortDirection.Ascending)
-            {
+            if (sortDirection != null && sortDirection.Value == ListSortDirection.Ascending) {
                 query.OrderBy(lambdaExpression);
-            }
-            else
-            {
+            } else {
                 query.OrderByDescending(lambdaExpression);
             }
         }
 
-        private static PropertyInfo GetCachedPropertyInfo(string? sortBy)
-        {
+        private static PropertyInfo GetCachedPropertyInfo(string? sortBy) {
             var cacheKey = $"{typeof(T).FullName}.{sortBy}";
 
             // Use the cache to avoid reflection overhead for property lookup.
-            return _propertyCache.GetOrAdd(cacheKey, _ =>
-            {
+            return _propertyCache.GetOrAdd(cacheKey, _ => {
                 var propertyInfo = typeof(T).GetProperty(sortBy!, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
                 return propertyInfo ?? throw new ArgumentException($"Property '{sortBy}' does not exist on type '{typeof(T).Name}'.");
             })!;

@@ -4,14 +4,12 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using TGF.CA.Application.Contracts.Routing;
 using TGF.CA.Application.DTOs;
 
-namespace TGF.CA.Presentation.Swagger
-{
+namespace TGF.CA.Presentation.Swagger {
 
     /// <summary>
     /// Swagger options to configure swagger in order to:
     /// </summary>
-    public static class SwaggerGenOptionsExtensions
-    {
+    public static class SwaggerGenOptionsExtensions {
         /// <summary>
         /// <see cref="SwaggerGenOptions"/> extension method to perform several custom configurations for swagger:
         /// <list type="bullet">
@@ -46,10 +44,8 @@ namespace TGF.CA.Presentation.Swagger
         /// <summary>
         /// Configure swagger options to integrate authentication UI to test endpoints that require Authorization and/or Authentication.
         /// </summary>
-        private static SwaggerGenOptions ConfigureJWTBearerAuth(this SwaggerGenOptions aOptions)
-        {
-            aOptions.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-            {
+        private static SwaggerGenOptions ConfigureJWTBearerAuth(this SwaggerGenOptions aOptions) {
+            aOptions.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme {
                 In = ParameterLocation.Header,
                 Description = "Bearer Token",
                 Name = "Authorization",
@@ -79,8 +75,7 @@ namespace TGF.CA.Presentation.Swagger
         /// Configure swagger options to Add endpoint summaries.
         /// </summary>
         /// <param name="aXmlCommentFileList">List of <see cref="string"/> with the full paths of the documentation files containing the endpoint summaries.</param>
-        private static SwaggerGenOptions ConfigureEndpointDescriptions(this SwaggerGenOptions aOptions, IEnumerable<string>? aXmlCommentFileList)
-        {
+        private static SwaggerGenOptions ConfigureEndpointDescriptions(this SwaggerGenOptions aOptions, IEnumerable<string>? aXmlCommentFileList) {
             if (aXmlCommentFileList != null)
                 foreach (var lXmlDocFileFullPath in aXmlCommentFileList)
                     aOptions.IncludeXmlComments(lXmlDocFileFullPath);
@@ -94,8 +89,7 @@ namespace TGF.CA.Presentation.Swagger
         /// When it is not null or empty this <see cref="string"/> defines the base path used to modify the original swagger paths.
         /// When it is set with the right value it makes possible that swagger works behind a reverse proxy. 
         /// </param>
-        private static SwaggerGenOptions ConfigureBehindProxy(this SwaggerGenOptions aOptions, string? aBaseSwaggerPath)
-        {
+        private static SwaggerGenOptions ConfigureBehindProxy(this SwaggerGenOptions aOptions, string? aBaseSwaggerPath) {
             if (!string.IsNullOrEmpty(aBaseSwaggerPath))
                 aOptions.DocumentFilter<BasePathDocumentFilter>(aBaseSwaggerPath);
             return aOptions;
@@ -105,8 +99,7 @@ namespace TGF.CA.Presentation.Swagger
         /// Ensures all schema types end by Schema and removes DTO from the names.
         /// Also renames <see cref="PagedListDTO{T}"/> to Paged{nameof(T)}ListSchema
         /// </summary>
-        private static SwaggerGenOptions RenameSchemas(this SwaggerGenOptions aOptions)
-        {
+        private static SwaggerGenOptions RenameSchemas(this SwaggerGenOptions aOptions) {
             aOptions.CustomSchemaIds(CustomSchemaIdStrategy);
             return aOptions;
         }

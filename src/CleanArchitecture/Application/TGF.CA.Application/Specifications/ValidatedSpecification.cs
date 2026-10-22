@@ -1,12 +1,10 @@
 ﻿using Ardalis.Specification;
 using TGF.Common.ROP.HttpResult;
 
-namespace TGF.CA.Application.Specifications
-{
+namespace TGF.CA.Application.Specifications {
     public abstract class ValidatedSpecification<T, TSpecValidator>(TSpecValidator validationRules)
         : Specification<T>, IValidatedSpecification<T, TSpecValidator>
-        where TSpecValidator : FluentValidation.IValidator
-    {
+        where TSpecValidator : FluentValidation.IValidator {
 
         protected readonly TSpecValidator _validationRules = validationRules;
 

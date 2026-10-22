@@ -1,13 +1,11 @@
 ﻿using TGF.Common.ROP.HttpResult;
 
-namespace TGF.CA.Domain.Contracts.Repositories.Base
-{
+namespace TGF.CA.Domain.Contracts.Repositories.Base {
     /// <summary>
     /// Interface for query repositorties working with any class as entities which defines the TryQuery methods.
     /// </summary>
     public interface IQueryRepositoryBase<T>
-        where T : class
-    {
+        where T : class {
         #region Query
 
         /// <summary>

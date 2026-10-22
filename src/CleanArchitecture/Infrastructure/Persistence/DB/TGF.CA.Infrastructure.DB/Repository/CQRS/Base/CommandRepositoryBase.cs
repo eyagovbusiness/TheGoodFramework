@@ -6,15 +6,13 @@ using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.HttpResult.RailwaySwitches;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
-{
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base {
     /// <summary>
     /// Base class for command repositories with the TryCommand and TrySaveChanges result abstractions.
     /// </summary>
     public class CommandRepositoryBase<TRepository, TDbContext>(TDbContext context, ILogger<TRepository> logger)
         where TDbContext : Microsoft.EntityFrameworkCore.DbContext
-        where TRepository : class
-    {
+        where TRepository : class {
 
         #region Command
         public async Task<IHttpResult<TResult>> TryCommandAsync<TResult>(Func<CancellationToken, Task<IHttpResult<TResult>>> aCommandAsyncAction, Func<int, TResult, IHttpResult<TResult>>? aSaveResultOverride = default, CancellationToken aCancellationToken = default) {
