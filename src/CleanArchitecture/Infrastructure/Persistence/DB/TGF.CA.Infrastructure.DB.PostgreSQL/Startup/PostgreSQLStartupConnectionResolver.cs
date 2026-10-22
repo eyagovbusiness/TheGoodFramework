@@ -1,14 +1,14 @@
 using Azure.Core;
 using Azure.Identity;
+using Consul;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
 using System.Net.Sockets;
+using System.Security.Authentication;
 using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.Secrets;
 using TGF.CA.Infrastructure.Secrets.SecretsFiles;
-using Consul;
-using System.Security.Authentication;
 using VaultSharp.Core;
 
 namespace TGF.CA.Infrastructure.DB.PostgreSQL.Startup;

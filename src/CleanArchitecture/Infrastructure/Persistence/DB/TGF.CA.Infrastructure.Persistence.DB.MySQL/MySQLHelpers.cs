@@ -4,8 +4,7 @@ using TGF.CA.Domain.ExternalContracts;
 using TGF.CA.Infrastructure.Discovery;
 
 namespace TGF.CA.Infrastructure.DB.MySQL {
-    internal static class MySQLHelpers
-    {
+    internal static class MySQLHelpers {
 
         /// <summary>
         /// Adds a healthcheck in the target <see cref="IHealthChecksBuilder"/> for the MySql database resolved from the IConfiguration and the provided database name.
@@ -27,8 +26,7 @@ namespace TGF.CA.Infrastructure.DB.MySQL {
         /// <param name="aServiceProvider">Service provider.</param>
         /// <param name="aDatabaseName">Database name.</param>
         /// <returns>The MySql connection string.</returns>
-        internal static async Task<string> GetConnectionString(IServiceProvider aServiceProvider, string aDatabaseName)
-        {
+        internal static async Task<string> GetConnectionString(IServiceProvider aServiceProvider, string aDatabaseName) {
             var lMySqlSecrets = await GetMySQLSecrets(aServiceProvider);
             var lMySqlDiscoveryData = await GetMySQLDiscoveryData(aServiceProvider);
             return
@@ -49,8 +47,7 @@ namespace TGF.CA.Infrastructure.DB.MySQL {
                .Get<MySQLSecrets>("mysql")
                 ?? throw new Exception("Error loading retrieving the MySQL secrets!!");
 
-        private record MySQLSecrets : IBasicCredentials
-        {
+        private record MySQLSecrets : IBasicCredentials {
             public string Username { get; set; } = default!;
             public string Password { get; set; } = default!;
         }

@@ -1,8 +1,7 @@
 ﻿using TGF.CA.Domain.ExternalContracts;
 
 namespace TGF.CA.Application {
-    public interface ISecretsManager
-    {
+    public interface ISecretsManager {
         /// <summary>
         /// Retrieves a secret from a specified path in the secrets manager.
         /// </summary>

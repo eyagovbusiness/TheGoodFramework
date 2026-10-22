@@ -1,12 +1,10 @@
 ﻿using TGF.CA.Application;
 
-namespace TGF.CA.Infrastructure.Discovery
-{
+namespace TGF.CA.Infrastructure.Discovery {
     /// <summary>
     /// Provides methods to discover services and retrieve their associated data.
     /// </summary>
-    public interface IServiceDiscovery
-    {
+    public interface IServiceDiscovery {
         /// <summary>
         /// Gets the full address for the provided service key.
         /// </summary>

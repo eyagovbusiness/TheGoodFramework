@@ -11,8 +11,7 @@ namespace TGF.CA.Application.Specifications {
         string? sortBy, ListSortDirection? sortDirection,
         PaginationValidator paginationValidationRules, SortingValidator<T> sortingValidationRules)
     : ValidatedSpecification<T, PaginationValidator>(paginationValidationRules)
-        where T : class
-    {
+        where T : class {
 
         public int? Page { get; } = page;
         public int? PageSize { get; } = pageSize;

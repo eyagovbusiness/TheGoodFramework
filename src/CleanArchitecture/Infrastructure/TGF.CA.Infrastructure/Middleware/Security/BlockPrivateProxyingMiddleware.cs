@@ -1,18 +1,15 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Net;
 
-namespace TGF.CA.Infrastructure.Middleware.Security
-{
+namespace TGF.CA.Infrastructure.Middleware.Security {
     /// <summary>
     /// Middleware to block requests that contain "/private/" in the URL.
     /// </summary>
-    public abstract class BlockPrivateProxyingMiddlewareBase
-    {
+    public abstract class BlockPrivateProxyingMiddlewareBase {
         private readonly RequestDelegate _next;
         private readonly string _privatePathSegment;
 
-        public BlockPrivateProxyingMiddlewareBase(string aPrivateSegment, RequestDelegate aNext)
-        {
+        public BlockPrivateProxyingMiddlewareBase(string aPrivateSegment, RequestDelegate aNext) {
             _privatePathSegment = aPrivateSegment ?? throw new ArgumentNullException(nameof(aPrivateSegment));
             _next = aNext;
         }
@@ -24,10 +21,8 @@ namespace TGF.CA.Infrastructure.Middleware.Security
         /// </summary>
         /// <param name="context">The current HTTP context.</param>
         /// <returns>A Task representing the asynchronous operation.</returns>
-        public async Task InvokeAsync(HttpContext context)
-        {
-            if (context.Request.Path.Value == null || context.Request.Path.Value.Contains(_privatePathSegment, StringComparison.OrdinalIgnoreCase))
-            {
+        public async Task InvokeAsync(HttpContext context) {
+            if (context.Request.Path.Value == null || context.Request.Path.Value.Contains(_privatePathSegment, StringComparison.OrdinalIgnoreCase)) {
                 context.Response.StatusCode = (int)HttpStatusCode.NotFound;
                 return;
             }

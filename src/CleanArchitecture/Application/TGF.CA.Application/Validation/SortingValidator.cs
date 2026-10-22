@@ -1,16 +1,13 @@
 ﻿using FluentValidation;
-using System.Reflection;
 using System.ComponentModel;
+using System.Reflection;
 using TGF.CA.Application.Errors.Validation;
 using TGF.Common.ROP.Errors;
 
-namespace TGF.CA.Application.Validation
-{
+namespace TGF.CA.Application.Validation {
     public abstract class SortingValidator<T> : AbstractValidator<SortingValParams>
-        where T : class
-    {
-        public SortingValidator()
-        {
+        where T : class {
+        public SortingValidator() {
             RuleFor(x => x.SortBy)
                 .NotEmpty().WithErrorCode(TGFApplicationErrors.Validation.Sorting.SortByEmpty_Code)
                 .Must(BeAValidProperty).WithROPError(TGFApplicationErrors.Validation.Sorting.SortByInvalid)
@@ -23,8 +20,7 @@ namespace TGF.CA.Application.Validation
             .WithROPError(TGFApplicationErrors.Validation.Sorting.InconsistentParameters);
         }
 
-        private bool BeAValidProperty(string? aPropName)
-        {
+        private bool BeAValidProperty(string? aPropName) {
             if (string.IsNullOrEmpty(aPropName))
                 return false;
             var propertyNames = typeof(T).GetProperties(BindingFlags.Public | BindingFlags.Instance)

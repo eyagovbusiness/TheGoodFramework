@@ -3,20 +3,17 @@ using System.Net;
 using TGF.Common.ROP.Errors;
 using TGF.Common.ROP.HttpResult;
 
-namespace TGF.Common.ROP.Result
-{
+namespace TGF.Common.ROP.Result {
     /// <summary>
     /// Static class to support conversion of <see cref="IHttpResult{T}"/> into <see cref="IActionResult"/>.
     /// </summary>
-    public static class ActionResultExtensions
-    {
+    public static class ActionResultExtensions {
 
         /// <summary>
         /// Specialization of <see cref="ObjectResult"/> with the StatusCode set from the given status code from an <see cref="IHttpResult{T}"/> instance.
         /// </summary>
         /// <typeparam name="T">Type of the context, expected <see cref="IResult{T}"/>.</typeparam>
-        private class ResultWithStatusCode<T> : ObjectResult
-        {
+        private class ResultWithStatusCode<T> : ObjectResult {
             public ResultWithStatusCode(T aContext, HttpStatusCode aStatusCode)
                 : base(aContext)
                 => base.StatusCode = (int)aStatusCode;

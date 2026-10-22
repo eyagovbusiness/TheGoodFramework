@@ -1,7 +1,6 @@
 ﻿using TGF.CA.Domain.Primitives;
 
-namespace TGF.CA.Domain.Aggregate
-{
+namespace TGF.CA.Domain.Aggregate {
     /// <summary>
     /// Represents the aggregate root with event sourcing.
     /// </summary>
@@ -11,8 +10,7 @@ namespace TGF.CA.Domain.Aggregate
     /// Examples of valid types include int, long, Guid, etc.
     /// </typeparam>
     public class Aggregate<TKey>
-        where TKey : struct, IEquatable<TKey>
-    {
+        where TKey : struct, IEquatable<TKey> {
         private List<AggregateChange<TKey>> _changes = [];
 
         //public Entity<TKey> RootEntity { get; internal set; }
@@ -31,8 +29,7 @@ namespace TGF.CA.Domain.Aggregate
         protected Aggregate(TKey aId)
         => Id = aId;
 
-        internal void Initialize(TKey aId)
-        {
+        internal void Initialize(TKey aId) {
             Id = aId;
             _changes = [];
         }
@@ -43,8 +40,7 @@ namespace TGF.CA.Domain.Aggregate
         public void MarkChangesAsCommitted()
         => _changes.Clear();
 
-        protected void ApplyChange<T>(T aEventObject)
-        {
+        protected void ApplyChange<T>(T aEventObject) {
             if (aEventObject == null)
                 throw new ArgumentException("You cannot pass a null object into the aggregate");
 
@@ -63,8 +59,7 @@ namespace TGF.CA.Domain.Aggregate
         }
 
 
-        public void LoadFromHistory(IList<AggregateChange<TKey>> aHistory)
-        {
+        public void LoadFromHistory(IList<AggregateChange<TKey>> aHistory) {
             if (!aHistory.Any())
                 return;
 
