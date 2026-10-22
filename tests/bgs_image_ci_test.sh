@@ -332,7 +332,7 @@ mv "$out/latest-status.keep" "$out/latest-status.txt"
 # --- workflow contract ---
 workflows="$repo_root/.github/workflows"
 if grep -rq 'pull_request_target' "$workflows"; then fail "pull_request_target would expose secrets to forks"; fi
-for file in L1_main.yml L1_dev_pr.yml L1_dev_merge.yml; do
+for file in L1_main.yml L1_pr.yml; do
     if grep -Eq 'registry-push|repository-dispatch|peter-evans|eval |ref: main|docker/login-action' "$workflows/$file"; then fail "$file contains a forbidden pattern"; fi
     grep -q 'persist-credentials: false' "$workflows/$file" || fail "$file must not persist checkout credentials"
     # shellcheck disable=SC2016 # a literal workflow expression
@@ -341,34 +341,32 @@ done
 grep -q 'bgs_image_ci.sh publish' "$workflows/L1_main.yml" || fail "main must publish through the guarded script"
 grep -q "if: github.ref == 'refs/heads/main'" "$workflows/L1_main.yml" || fail "main publication must be gated on refs/heads/main"
 grep -q 'cancel-in-progress: false' "$workflows/L1_main.yml" || fail "publication must be serialized"
-for file in L1_dev_pr.yml L1_dev_merge.yml; do
-    grep -q 'bgs_image_ci.sh scan' "$workflows/$file" || fail "$file must only scan"
-    if grep -q 'publish' "$workflows/$file"; then fail "$file must not publish"; fi
-done
+grep -q 'bgs_image_ci.sh scan' "$workflows/L1_pr.yml" || fail "PRs must only scan"
+if grep -q 'publish' "$workflows/L1_pr.yml"; then fail "PRs must not publish"; fi
 
 # --- the OF.Common notification: after a successful publication only, one step, one credential ---
 main_workflow="$workflows/L1_main.yml"
 notify_step="$(sed -n '/- name: Notify OF.Common/,$p' "$main_workflow")"
 [[ -n "$notify_step" ]] || fail "main must have a notify step"
 [[ "$(grep -c '^      - name:' <<<"$notify_step")" == 1 ]] || fail "the notify step must be the last step"
-[[ "$(grep -rho 'PAT_TOKEN' "$repo_root/.github" | wc -l)" == 1 ]] || fail "PAT_TOKEN must be referenced exactly once"
+[[ "$(grep -rho 'secrets.PAT_TOKEN' "$repo_root/.github" | wc -l)" == 2 ]] || fail "PAT_TOKEN is scoped to tag creation and notification"
 # shellcheck disable=SC2016 # a literal workflow expression
-grep -qF 'GH_TOKEN: ${{ secrets.PAT_TOKEN }}' <<<"$notify_step" || fail "only the notify step may receive PAT_TOKEN, as GH_TOKEN"
+grep -qF 'GH_TOKEN: ${{ secrets.PAT_TOKEN }}' <<<"$notify_step" || fail "notification must reuse PAT_TOKEN as GH_TOKEN"
 # shellcheck disable=SC2016 # a literal workflow expression
 [[ "$(grep -c 'secrets\.' <<<"$notify_step")" == 2 ]] || fail "the notify step may receive only PAT_TOKEN and the registry name"
 grep -qF 'run: bash ./scripts/bgs_notify_common.sh' <<<"$notify_step" || fail "the notify step must run the guarded script"
 # shellcheck disable=SC2016 # a literal workflow expression
 if grep -q 'run: .*\${{' <<<"$notify_step"; then fail "no expression may be interpolated into a run string"; fi
 if grep -Eq '^\s+uses:|always\(\)|failure\(\)|cancelled\(\)|pull_request|continue-on-error' <<<"$notify_step"; then fail "the notify step must run only after success, with no third-party action"; fi
-for guard in 'success()' "steps.publish.outcome == 'success'" "github.ref == 'refs/heads/main'" \
+for guard in 'success()' "steps.release.outcome == 'success'" "github.ref == 'refs/heads/main'" \
     "github.repository == 'eyagovbusiness/TheGoodFramework'" "github.event_name == 'push'" "github.event_name == 'workflow_dispatch'"; do
     grep -qF -- "$guard" <<<"$notify_step" || fail "the notify step lacks the guard $guard"
 done
 grep -qE '^        id: publish$' "$main_workflow" || fail "the publish step must have an id for the notify guard"
-[[ "$(grep -n 'upload-artifact' "$main_workflow" | cut -d: -f1)" -lt "$(grep -n 'Notify OF.Common' "$main_workflow" | head -1 | cut -d: -f1)" ]] || fail "the notification must follow the artifact upload"
-before_notify="$(sed '/- name: Notify OF.Common/,$d' "$main_workflow")"
-if grep -q 'PAT_TOKEN\|bgs_notify_common' <<<"$before_notify"; then fail "the build, scan and publish steps must not see the dispatch credential"; fi
+[[ "$(grep -n 'upload-artifact' "$main_workflow" | tail -1 | cut -d: -f1)" -lt "$(grep -n 'Notify OF.Common' "$main_workflow" | head -1 | cut -d: -f1)" ]] || fail "the notification must follow the artifact upload"
+before_release="$(sed '/^  release:/,$d' "$main_workflow")"
+if grep -q 'PAT_TOKEN\|bgs_notify_common' <<<"$before_release"; then fail "the build, scan and publish steps must not see the release credential"; fi
 if grep -Eq 'pull_request|schedule' "$main_workflow"; then fail "main may run only on push or dispatch, never on pull requests"; fi
-if grep -rlq 'PAT_TOKEN\|bgs_notify_common\.sh' "$workflows/L1_dev_pr.yml" "$workflows/L1_dev_merge.yml" "$workflows/validate-bgs-base-image.yml"; then fail "scan and validate workflows must never notify"; fi
+if grep -rlq 'PAT_TOKEN\|bgs_notify_common\.sh' "$workflows/L1_pr.yml" "$workflows/validate-bgs-base-image.yml"; then fail "scan and validate workflows must never notify"; fi
 if grep -Eq 'Authorization|--token|eval ' "$repo_root/scripts/bgs_notify_common.sh"; then fail "the token must not be passed on a command line"; fi
 grep -qF 'bash tests/bgs_notify_common_test.sh' "$workflows/validate-bgs-base-image.yml" || fail "validate must run the notification tests"
