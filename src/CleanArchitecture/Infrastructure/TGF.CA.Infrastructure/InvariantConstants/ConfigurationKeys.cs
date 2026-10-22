@@ -75,6 +75,11 @@
                 }
             }
 
+            public readonly struct Aws {
+                public const string Key = $"{ObjectStorage.Key}:{nameof(Aws)}";
+                public const string SignedUrlExpiryMinutes = $"{Key}:SignedUrlExpiryMinutes";
+            }
+
             public readonly struct AWS {
                 public const string AccessKeyId = $"{Key}:AccessKeyId";
                 public const string SecretAccessKey = $"{Key}:SecretAccessKey";
