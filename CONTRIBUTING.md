@@ -11,8 +11,19 @@ environment branches. Runtime staging/production environments remain independent
 of source branches, including downstream repositories' own `main`/`dev` lines.
 
 Require at least one independent approval, CODEOWNER review, resolved discussions
-and successful **`tests`**, **`scan`**, **`validate`** checks on the current PR.
-Missing private-registry credentials visibly block `scan`; they are not a pass.
+and all four successful checks on the current PR:
+
+| Required check | Responsibility |
+| --- | --- |
+| `build` | Restore and compile the complete solution in Release configuration. |
+| `tests` | Run unit tests in Release and retain TRX results and coverage artifacts. |
+| `image-build-and-scan` | Build/package the Linux image and scan that exact image. |
+| `delivery-validation` | Lint and test dependency pins, publication, identity, release and notification contracts. |
+
+The four checks run independently so build, test, image and delivery failures are
+reported separately. The test runner builds its own dependencies; no cross-job
+binary transfer or skipped-test success gate is used. Missing private-registry
+credentials visibly block `image-build-and-scan`; they are not a pass.
 Use a normal merge commit for reviewed feature PRs; never push directly to trunk,
 force-push shared branches or bypass required checks. Delete merged short-lived
 branches after checking for new work. The one-time `dev` reconciliation preserves
@@ -92,7 +103,9 @@ rules below can be read and verified.
 
 1. Active branch ruleset for `refs/heads/main`: require PR, one independent
    approval, dismiss stale approvals, CODEOWNER review, resolved threads, current
-   `tests`, `scan`, `validate` checks; block deletion and non-fast-forward updates.
+   `build`, `tests`, `image-build-and-scan`, `delivery-validation` checks; block
+   deletion and non-fast-forward updates. Replace legacy `scan`/`validate` contexts
+   with these exact names after the new checks appear on the PR.
    No contributor/admin bypass of review or checks. Limit workflow changes by
    CODEOWNER review. Required workflows have no path filters.
 2. Active **tag immutability** ruleset: include exactly

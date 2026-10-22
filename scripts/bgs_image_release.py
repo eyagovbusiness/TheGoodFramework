@@ -49,8 +49,8 @@ def authorize_source(call, sha):
             or not review.get("dismiss_stale_reviews_on_push")
             or not review.get("required_review_thread_resolution")
             or not checks.get("strict_required_status_checks_policy")
-            or not {"tests", "scan", "validate"} <= contexts):
-        raise ReleaseError("main must require review and the tests, scan and validate checks")
+            or not {"build", "tests", "image-build-and-scan", "delivery-validation"} <= contexts):
+        raise ReleaseError("main must require review and build, tests, image-build-and-scan, delivery-validation checks")
     # A bypassed direct push is not a release source. Require a merged PR whose
     # actual merge commit is this SHA and whose base is main in this repository.
     pulls = call(f"commits/{sha}/pulls?per_page=100")

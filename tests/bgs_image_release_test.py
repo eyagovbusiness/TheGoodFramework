@@ -28,7 +28,8 @@ class ReleaseTests(unittest.TestCase):
                        "required_review_thread_resolution": True}},
                        {"type": "required_status_checks", "parameters": {
                            "strict_required_status_checks_policy": True,
-                           "required_status_checks": [{"context": name} for name in ("tests", "scan", "validate")]}}]
+                           "required_status_checks": [{"context": name} for name in (
+                               "build", "tests", "image-build-and-scan", "delivery-validation")]}}]
         refs = {"ref_name": {"include": ["refs/tags/bgs-image/**/*"], "exclude": []}}
         self.tag_rules = {
             1: {"conditions": refs, "rules": [{"type": "update"}, {"type": "deletion"}], "bypass_actors": []},
@@ -121,6 +122,15 @@ class ReleaseTests(unittest.TestCase):
                 self.pull.update(edit)
                 self.rejected()
                 self.pull = saved
+
+    def test_each_independent_validation_check_must_be_required(self):
+        checks = self.rules[-1]["parameters"]["required_status_checks"]
+        for missing in checks:
+            with self.subTest(missing=missing["context"]):
+                self.rules[-1]["parameters"]["required_status_checks"] = [item for item in checks if item != missing]
+                self.rejected()
+                self.assertFalse(any(body for _, body in self.calls))
+        self.rules[-1]["parameters"]["required_status_checks"] = checks
 
     def test_main_movement_stops_release(self):
         self.moved = True
