@@ -24,10 +24,13 @@ The four checks run independently so build, test, image and delivery failures ar
 reported separately. The test runner builds its own dependencies; no cross-job
 binary transfer or skipped-test success gate is used. Missing private-registry
 credentials visibly block `image-build-and-scan`; they are not a pass.
-Use a normal merge commit for reviewed feature PRs; never push directly to trunk,
+Squash merge reviewed feature PRs into `main`, using the governed PR title as the
+commit subject (for example, `[SF-2947] feat(ci): add reviewed trunk image releases`).
+Never push directly to trunk,
 force-push shared branches or bypass required checks. Delete merged short-lived
 branches after checking for new work. The one-time `dev` reconciliation preserves
-ancestry (#82 and #84); it is not a recurring integration branch workflow.
+ancestry (#82 and #84); those historical merge commits are the one-time exception
+to the normal squash-only policy, not a recurring integration branch workflow.
 
 For an existing `dev`-based contribution, coordinate with its author, retarget only
 after its baseline is on `main`, inspect the full diff and commits and rerun CI and
