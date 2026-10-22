@@ -32,9 +32,11 @@ class ReleaseTests(unittest.TestCase):
                                "build", "tests", "image-build-and-scan", "delivery-validation")]}}]
         refs = {"ref_name": {"include": ["refs/tags/bgs-image/**/*"], "exclude": []}}
         self.tag_rules = {
-            1: {"conditions": refs, "rules": [{"type": "update"}, {"type": "deletion"}], "bypass_actors": []},
-            2: {"conditions": refs, "rules": [{"type": "creation"}], "bypass_actors": [
-                {"actor_type": "RepositoryRole", "actor_id": 5, "bypass_mode": "always"}]}}
+            1: {"conditions": refs, "rules": [{"type": "update"}, {"type": "deletion"}],
+                "current_user_can_bypass": "never", "bypass_actors": []},
+            2: {"conditions": refs, "rules": [{"type": "creation"}],
+                "current_user_can_bypass": "always", "bypass_actors": [
+                    {"actor_type": "User", "actor_id": 123, "bypass_mode": "always"}]}}
         self.pull = {"merged_at": "2026-10-22T12:00:00Z", "merge_commit_sha": self.sha,
                      "number": 99, "head": {"sha": "d" * 40}, "user": {"login": "author"},
                      "base": {"ref": "main", "repo": {"full_name": release.SOURCE_REPOSITORY}}}
@@ -64,7 +66,8 @@ class ReleaseTests(unittest.TestCase):
         if path == "git/ref/heads/main":
             return {"object": {"sha": "b" * 40 if self.moved else self.sha}}
         if path == "rulesets?per_page=100":
-            return [{"id": key, "target": "tag", "enforcement": "active"} for key in self.tag_rules]
+            return [{"id": key, "target": "tag", "enforcement": rule.get("enforcement", "active")}
+                    for key, rule in self.tag_rules.items()]
         if path.startswith("rulesets/"):
             return self.tag_rules[int(path.split("/")[1])]
         if path.startswith("git/matching-refs/"):
@@ -148,13 +151,50 @@ class ReleaseTests(unittest.TestCase):
         self.tag_rules[1]["bypass_actors"] = [{"actor_type": "Integration", "bypass_mode": "always"}]
         self.rejected()
 
-    def test_app_creation_bypass_rejected(self):
-        self.tag_rules[2]["bypass_actors"][0]["actor_type"] = "Integration"
-        self.rejected()
+    def test_explicit_user_creation_bypass_is_authorized(self):
+        self.run_release()
+        self.assertTrue((self.report / "release.json").exists())
 
-    def test_non_admin_creation_bypass_rejected(self):
-        self.tag_rules[2]["bypass_actors"][0]["actor_id"] = 4
+    def test_collaborator_hidden_bypass_lists_use_authenticated_capabilities(self):
+        for rule in self.tag_rules.values():
+            del rule["bypass_actors"]
+        with patch("sys.stderr") as stderr:
+            self.run_release()
+        self.assertTrue((self.report / "release.json").exists())
+        self.assertIn("global bypass list", "".join(str(c.args) for c in stderr.write.call_args_list))
+
+    def test_missing_or_disallowed_creation_capability_fails_before_writes(self):
+        for capability in (None, "never", "pull_requests_only", "exempt", "unexpected"):
+            with self.subTest(capability=capability):
+                self.tag_rules[2]["current_user_can_bypass"] = capability
+                self.rejected()
+                self.assertFalse(any(body for _, body in self.calls))
+
+    def test_hidden_immutable_lists_do_not_authorize_unknown_or_bypassed_permissions(self):
+        del self.tag_rules[1]["bypass_actors"]
+        for capability in (None, "always", "pull_requests_only", "exempt", "unexpected"):
+            with self.subTest(capability=capability):
+                self.tag_rules[1]["current_user_can_bypass"] = capability
+                self.rejected()
+                self.assertFalse(any(body for _, body in self.calls))
+
+    def test_combined_creation_update_bypass_fails_before_writes(self):
+        self.tag_rules[2]["rules"].append({"type": "update"})
         self.rejected()
+        self.assertFalse(any(body for _, body in self.calls))
+
+    def test_missing_inactive_wrong_namespace_or_excluded_rule_fails_closed(self):
+        for edit in (lambda: self.tag_rules.pop(1),
+                     lambda: self.tag_rules[1].update(enforcement="disabled"),
+                     lambda: self.tag_rules[1]["rules"].pop(),
+                     lambda: self.tag_rules[1]["conditions"]["ref_name"].update(include=["refs/tags/other/**/*"]),
+                     lambda: self.tag_rules[1]["conditions"]["ref_name"].update(exclude=["refs/tags/bgs-image/tgf-42.2"])):
+            with self.subTest(edit=edit):
+                saved = copy.deepcopy(self.tag_rules)
+                edit()
+                self.rejected()
+                self.assertFalse(any(body for _, body in self.calls))
+                self.tag_rules = saved
 
     def test_existing_tag_is_never_updated_even_for_same_source(self):
         self.collision = True

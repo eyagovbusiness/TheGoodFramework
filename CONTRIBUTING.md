@@ -115,14 +115,22 @@ rules below can be read and verified.
    `refs/tags/bgs-image/**/*`, no exclusions, restrict updates and deletions,
    **no bypass actors**, including administrators and the PAT owner.
 3. Separate active **tag creation** ruleset: same exact include, no exclusions,
-   restrict creation; only repository administrators (RepositoryRole ID 5) may
-   bypass creation. Reuse the existing `PAT_TOKEN` secret from TGF's successful
+   restrict creation; explicitly authorize the release identity `alex-bgs` to
+   bypass creation (Always allow). Reuse the existing `PAT_TOKEN` secret from TGF's successful
    Common-notification workflow; no new App, App secrets or environment is required.
-   Its identity must be a TGF administrator allowed to create these tags, with
+   Its identity must be allowed to create these tags, with
    contents write and PR read access. The workflow supplies it only to tag creation
    and notification, never the build/scanner. Dispatch success establishes existing
    Common access, not proof of TGF tag-write authorization; the first release must
    demonstrate that operation. Failed authorization never triggers adoption.
+
+GitHub hides `bypass_actors` from identities without ruleset-write permission.
+The release script verifies the authenticated PAT's `current_user_can_bypass`:
+`always` for creation, `never` for every matching update/deletion ruleset. It
+rejects visible non-empty immutability bypass lists. When the list is hidden,
+it reports that limitation rather than claiming the global list is empty; the
+owner must verify the empty global list in settings. Collaborator access suffices
+for releases when explicitly authorized; administrative access is not required.
 
 These rules require actual administrator setup before the new pipeline can finish.
 Do not add update/deletion bypass to work around a failure. Record settings readback,

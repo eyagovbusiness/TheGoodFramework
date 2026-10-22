@@ -74,10 +74,12 @@ def authorize_source(call, sha):
 
 def authorize_tags(call):
     # Deliberately require the exact namespace condition: broad/glob-negated rule
-    # inference is unsafe. Creation is limited to the documented release actor;
-    # update/deletion must have a separate ruleset with NO bypass actors.
+    # inference is unsafe. GitHub hides bypass_actors from callers without ruleset
+    # write access; current_user_can_bypass still describes this authenticated PAT.
+    # Never mistake an omitted actor list for an empty one.
     immutable = False
     controlled_creation = False
+    hidden_immutability_actors = False
     for summary in call("rulesets?per_page=100"):
         if summary.get("target") != "tag" or summary.get("enforcement") != "active":
             continue
@@ -86,13 +88,28 @@ def authorize_tags(call):
         if refs.get("include") != ["refs/tags/bgs-image/**/*"] or refs.get("exclude"):
             continue
         kinds = {entry["type"] for entry in rule["rules"]}
-        bypass = rule.get("bypass_actors", [])
-        immutable |= {"update", "deletion"} <= kinds and not bypass
-        controlled_creation |= "creation" in kinds and bool(bypass) and all(
-            actor["actor_type"] == "RepositoryRole" and actor["bypass_mode"] == "always"
-            and actor["actor_id"] == 5 for actor in bypass)  # GitHub's repository admin role
+        capability = rule.get("current_user_can_bypass")
+        if {"update", "deletion"} & kinds:
+            if capability != "never":
+                raise ReleaseError("release credential must not bypass image tag update/deletion rules")
+            if "bypass_actors" in rule and rule["bypass_actors"] != []:
+                raise ReleaseError("image tag immutability rules must have no bypass actors")
+            if {"update", "deletion"} <= kinds:
+                immutable = True
+                hidden_immutability_actors |= "bypass_actors" not in rule
+        if "creation" in kinds:
+            if capability != "always":
+                raise ReleaseError("release credential is not allowed to bypass image tag creation rules")
+            # A creation bypass must not also exempt this PAT from immutable rules.
+            if {"update", "deletion"} & kinds:
+                raise ReleaseError("tag creation and immutability bypass rules must be separate")
+            controlled_creation = True
     if not immutable or not controlled_creation:
-        raise ReleaseError("image tags require active no-bypass immutability and admin-only creation rulesets")
+        raise ReleaseError("image tags require immutable update/deletion rules and an authorized release-actor creation bypass")
+    if hidden_immutability_actors:
+        print("Verified: this release credential cannot bypass tag updates/deletion. "
+              "GitHub hides the global bypass list; its empty-list policy requires owner settings verification.",
+              file=sys.stderr)
 
 
 def release(report_dir, call=api):
