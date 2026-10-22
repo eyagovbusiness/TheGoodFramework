@@ -5,6 +5,11 @@ ARG BUILD_CONFIGURATION=Release
 ARG ALPINE_BASE_IMAGE=omicsflowinternal.azurecr.io/base-images/alpine@sha256:49abdfc2e7a87740ce36c1d9e02b31866b14233ce2ffb15875c8412f76f2e177
 
 FROM ${ALPINE_BASE_IMAGE} AS base
+# Patch CVE-2026-107891 until the canonical Alpine base includes musl 1.2.6-r3.
+USER root
+RUN apk upgrade --no-cache musl musl-utils
+USER biognosys
+
 # BUILD IMAGE
 FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 WORKDIR /src
