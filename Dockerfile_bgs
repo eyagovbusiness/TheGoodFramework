@@ -2,7 +2,7 @@ ARG BUILD_CONFIGURATION=Release
 # Canonical Alpine base image: the single authoritative pin, updated only by review.
 # An override supplied via the ALPINE_BASE_IMAGE build argument is validated by
 # scripts/validate_bgs_alpine_base_image.sh before any build.
-ARG ALPINE_BASE_IMAGE=omicsflowinternal.azurecr.io/base-images/alpine@sha256:b361ecc8979de2e23d93ec7200c6ea3511590f51129fdbcf10f39e799e7be658
+ARG ALPINE_BASE_IMAGE=omicsflowinternal.azurecr.io/base-images/alpine@sha256:2ff1d74b96992215d93a7c6f95d5a5816f416fb425b0689b95f03f5d32488a9b
 
 FROM ${ALPINE_BASE_IMAGE} AS base
 # BUILD IMAGE
