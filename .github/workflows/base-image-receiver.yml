@@ -1,0 +1,63 @@
+name: Verified base image receiver
+
+on:
+  repository_dispatch:
+    types: [base-image-published-v1]
+  schedule:
+    - cron: '13 4 * * *'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Verify evidence and target layouts without creating proposals
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: verified-base-image-receiver
+  cancel-in-progress: false
+
+jobs:
+  receive:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run && 'true' || 'false' }}
+    steps:
+      # Only main's reviewed code runs. Target Dockerfiles are API-read blobs, never executed.
+      - name: Check out trusted receiver
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Validate notification without credentials
+        id: validate
+        run: python3 -B scripts/base_image_receiver.py validate-event
+      - name: Verify source publication, registry and target layouts
+        id: plan
+        if: steps.validate.outputs.paused != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_SOURCE_TOKEN: ${{ secrets.BASE_IMAGE_SOURCE_READ_TOKEN }}
+          REGISTRY_PULL_USERNAME: ${{ secrets.BASE_IMAGE_PULL_USERNAME }}
+          REGISTRY_PULL_PASSWORD: ${{ secrets.BASE_IMAGE_PULL_PASSWORD }}
+        run: python3 -B scripts/base_image_receiver.py plan
+      # Separate repository-scoped App identity; no source/registry secret reaches this step.
+      - name: Mint proposal-only App token after read-only verification
+        id: proposal-token
+        if: steps.plan.outputs.has_proposals == 'true'
+        uses: actions/create-github-app-token@d72941d797fd3113feb6b93fd0dec494b13a2547
+        with:
+          app-id: ${{ secrets.BASE_IMAGE_PROPOSAL_APP_ID }}
+          private-key: ${{ secrets.BASE_IMAGE_PROPOSAL_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Create reviewed digest proposals
+        if: steps.plan.outputs.has_proposals == 'true'
+        env:
+          GH_TOKEN: ${{ steps.proposal-token.outputs.token }}
+        run: python3 -B scripts/base_image_receiver.py propose

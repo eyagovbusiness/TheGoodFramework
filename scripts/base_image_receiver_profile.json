@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "botOwner": "BOT",
+  "repository": "eyagovbusiness/TheGoodFramework",
+  "family": "alpine",
+  "registry": "omicsflowinternal.azurecr.io",
+  "public": true,
+  "paused": false,
+  "suppressed_digests": [],
+  "targets": [
+    {
+      "branch": "main",
+      "paused": false,
+      "bootstrap": [{"digest": "sha256:b361ecc8979de2e23d93ec7200c6ea3511590f51129fdbcf10f39e799e7be658", "published_before": "2026-10-27T00:00:00Z"}],
+      "files": ["Dockerfile_bgs"],
+      "layout": {"kind": "arg-default", "arg": "ALPINE_BASE_IMAGE", "stage": "base"}
+    }
+  ]
+}

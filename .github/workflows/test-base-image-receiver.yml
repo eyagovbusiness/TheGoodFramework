@@ -1,0 +1,34 @@
+name: Test base image receiver
+on:
+  pull_request:
+    paths:
+      - scripts/base_image_receiver.py
+      - scripts/base_image_receiver_profile.json
+      - tests/test_base_image_receiver*.py
+      - .github/workflows/*base-image-receiver.yml
+      - '**/Dockerfile*'
+      - Dockerfile*
+  push:
+    branches: [main]
+    paths:
+      - scripts/base_image_receiver.py
+      - scripts/base_image_receiver_profile.json
+      - tests/test_base_image_receiver*.py
+      - .github/workflows/*base-image-receiver.yml
+      - '**/Dockerfile*'
+      - Dockerfile*
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Offline engine and integration contracts
+        run: python3 -B -m unittest discover -s tests -p 'test_base_image_receiver*.py' -v

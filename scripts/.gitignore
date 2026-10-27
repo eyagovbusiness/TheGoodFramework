@@ -1,0 +1,2 @@
+# Local Python imports of the receiver; no source or evidence files are ignored.
+__pycache__/
