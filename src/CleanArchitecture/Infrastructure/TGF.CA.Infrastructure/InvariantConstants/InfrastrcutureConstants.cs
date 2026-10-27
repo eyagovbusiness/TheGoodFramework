@@ -16,5 +16,9 @@ public struct InfrastrcutureConstants {
         public const string ObjectStorage = "ObjectStorage";
 
     }
-}
 
+    public readonly struct HealthCheckTags {
+        public const string Live = "live";
+        public const string Ready = "ready";
+    }
+}

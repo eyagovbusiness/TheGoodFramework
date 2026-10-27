@@ -2,8 +2,7 @@
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 
-namespace TGF.CA.Infrastructure.DB.MySQL
-{
+namespace TGF.CA.Infrastructure.DB.MySQL {
     /// <summary>
     /// Provides a factory for creating instances of DbContext during design time.
     /// This is used primarily for Entity Framework migrations and other design-time operations.
@@ -14,8 +13,7 @@ namespace TGF.CA.Infrastructure.DB.MySQL
     /// Production or Staging connection strings will never be used for design-time operations. 
     /// </remarks>
     public abstract class MySQLDesignTimeDbContextFactory<TDbContext> : IDesignTimeDbContextFactory<TDbContext>
-        where TDbContext : Microsoft.EntityFrameworkCore.DbContext
-    {
+        where TDbContext : Microsoft.EntityFrameworkCore.DbContext {
 
         /// <summary>
         /// Abstract method that derived classes must implement to provide the MySQL version
@@ -28,8 +26,7 @@ namespace TGF.CA.Infrastructure.DB.MySQL
         /// </summary>
         /// <param name="args">Arguments provided at design time.</param>
         /// <returns>A new instance of <typeparamref name="TDbContext"/>.</returns>
-        public TDbContext CreateDbContext(string[] args)
-        {
+        public TDbContext CreateDbContext(string[] args) {
             IConfigurationRoot lConfiguration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.Design.json")

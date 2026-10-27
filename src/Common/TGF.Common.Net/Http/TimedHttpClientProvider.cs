@@ -1,5 +1,4 @@
-﻿namespace TGF.Common.Net.Http
-{
+﻿namespace TGF.Common.Net.Http {
     /// <summary>
     /// Composition class of <see cref="IHttpClientFactory"/> that wraps the factory 
     /// providing a single method(<see cref="GetHttpClient"/>) to get a new single instance of <see cref="HttpClient"/> 
@@ -13,8 +12,7 @@
     /// <param name="aHttpClientFactory"></param>
     /// <param name="aReplacementInterval"><see cref="TimeSpan"/> representing the interval of time this class will use to replace the HttpClient returned from <see cref="GetHttpClient"/></param>
     /// <param name="aBaseAddress">If this parameter is provided, it will be used to define <see cref="HttpClient.BaseAddress"/> <see cref="Uri"/> address used by the returned <see cref="HttpClient"/> instance.</param>
-    public class TimedHttpClientProvider(IHttpClientFactory aHttpClientFactory, TimeSpan aReplacementInterval, string aBaseAddress = default!, TimeSpan aTimeOut = default)
-    {
+    public class TimedHttpClientProvider(IHttpClientFactory aHttpClientFactory, TimeSpan aReplacementInterval, string aBaseAddress = default!, TimeSpan aTimeOut = default) {
         private readonly IHttpClientFactory _httpClientFactory = aHttpClientFactory;
         private readonly TimeSpan _replacementInterval = aReplacementInterval;
         private readonly string _baseAddress = aBaseAddress;
@@ -27,10 +25,8 @@
         /// </summary>
         /// <returns>An instance of <see cref="HttpClient"/> that is replaced by a new one every specified replacement interval.</returns>
         /// <exception cref="NullReferenceException">Throws null reference exception if the method was not able to get a valid HttpClient to return.</exception>
-        public HttpClient GetHttpClient()
-        {
-            if (DateTimeOffset.Now - mLastReplacementTime >= _replacementInterval || mHttpClient == null)
-            {
+        public HttpClient GetHttpClient() {
+            if (DateTimeOffset.Now - mLastReplacementTime >= _replacementInterval || mHttpClient == null) {
                 ReplaceHttpClient();
                 mLastReplacementTime = DateTimeOffset.Now;
             }
@@ -43,15 +39,13 @@
         /// Set the timeout for the HttpClients provided.
         /// </summary>
         /// <param name="aTimeOut"></param>
-        public void SetTimeout(TimeSpan aTimeOut)
-        {
+        public void SetTimeout(TimeSpan aTimeOut) {
             mTimeout = aTimeOut;
             if (mHttpClient != null)
                 mHttpClient.Timeout = mTimeout;
         }
 
-        private void ReplaceHttpClient()
-        {
+        private void ReplaceHttpClient() {
             // Dispose the current HttpClient if exist
             mHttpClient?.Dispose();
 

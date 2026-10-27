@@ -1,12 +1,9 @@
-﻿namespace TGF.CA.Domain.Primitives
-{
+﻿namespace TGF.CA.Domain.Primitives {
     /// <summary>
     /// Represents the base class all value objects derive from.
     /// </summary>
-    public abstract class ValueObject : IEquatable<ValueObject>
-    {
-        public static bool operator ==(ValueObject aFirstObject, ValueObject aSecondObject)
-        {
+    public abstract class ValueObject : IEquatable<ValueObject> {
+        public static bool operator ==(ValueObject aFirstObject, ValueObject aSecondObject) {
             if (aFirstObject is null && aSecondObject is null)
                 return true;
 
@@ -20,8 +17,7 @@
 
         public bool Equals(ValueObject? aOtherObject) => aOtherObject is not null && GetAtomicValues().SequenceEqual(aOtherObject.GetAtomicValues());
 
-        public override bool Equals(object? aObject)
-        {
+        public override bool Equals(object? aObject) {
             if (aObject == null)
                 return false;
 
@@ -35,8 +31,7 @@
         }
 
         /// <inheritdoc />
-        public override int GetHashCode()
-        {
+        public override int GetHashCode() {
             HashCode lHashCode = default;
 
             foreach (object lObject in GetAtomicValues())

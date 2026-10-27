@@ -7,6 +7,7 @@ using TGF.CA.Infrastructure.Comm.RabbitMQ.Connection;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Consumer;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Publisher;
 using TGF.CA.Infrastructure.Comm.RabbitMQ.Settings;
+using TGF.CA.Infrastructure.InvariantConstants;
 using TGF.CA.Infrastructure.Secrets;
 
 namespace TGF.CA.Infrastructure.Comm.RabbitMQ;
@@ -26,7 +27,7 @@ public static class RabbitMQ_DI {
 
         serviceCollection
         .AddHealthChecks()
-        .AddCheck<CustomRabbitMQHealthCheck>(healthCheckName);
+        .AddCheck<CustomRabbitMQHealthCheck>(healthCheckName, tags: [InfrastrcutureConstants.HealthCheckTags.Ready]);
     }
 
     /// <summary>
@@ -50,6 +51,12 @@ public static class RabbitMQ_DI {
     internal static void AddRabbitMqConsumer<TMessage>(this IServiceCollection aServiceCollection)
         where TMessage : IMessage {
         aServiceCollection.AddConsumer<TMessage>();
+        aServiceCollection.AddSingleton<IMessageConsumer<TMessage>, RabbitMQMessageConsumer<TMessage>>();
+    }
+
+    internal static void AddRabbitMqConsumer<TMessage>(this IServiceCollection aServiceCollection, Func<IServiceProvider, CancellationToken, Task<bool>> aActivationGate)
+        where TMessage : IMessage {
+        aServiceCollection.AddConsumer<TMessage>(aActivationGate);
         aServiceCollection.AddSingleton<IMessageConsumer<TMessage>, RabbitMQMessageConsumer<TMessage>>();
     }
 

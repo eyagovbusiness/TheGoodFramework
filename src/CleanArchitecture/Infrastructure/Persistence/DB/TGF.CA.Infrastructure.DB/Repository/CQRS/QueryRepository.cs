@@ -8,8 +8,7 @@ using TGF.CA.Infrastructure.DB.Repository.CQRS.Base;
 using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS
-{
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS {
     /// <summary>
     /// A base class for a CQRS read only repository with native error handling logic for Query operations using ROP.
     /// </summary>
@@ -19,8 +18,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS
     : QueryRepositoryBase<TRepository, TDbContext, T>(aContext, aLogger, specificationEvaluator), IQueryRepository<T>
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext, IReadOnlyDbContext
     where TRepository : class
-    where T : class
-    {
+    where T : class {
 
         public QueryRepository(TDbContext aContext, ILogger<TRepository> aLogger)
             : this(aContext, aLogger, SpecificationEvaluator.Default) {

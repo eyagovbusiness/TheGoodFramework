@@ -8,8 +8,7 @@ using TGF.Common.ROP.HttpResult;
 using TGF.Common.ROP.HttpResult.RailwaySwitches;
 using TGF.Common.ROP.Result;
 
-namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
-{
+namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base {
 
     /// <summary>
     /// Base class for quiery repositories with the TryQuery result abstractions.
@@ -20,8 +19,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
     ISpecificationEvaluator specificationEvaluator)
     where TDbContext : Microsoft.EntityFrameworkCore.DbContext
     where TRepository : class
-    where T : class
-    {
+    where T : class {
 
         protected readonly TDbContext _context = aContext;
         protected readonly ILogger<TRepository> _logger = aLogger;
@@ -34,7 +32,7 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
         }
 
         // Check if context implements IReadOnlyDbContext and return the appropriate IQueryable<T>
-        protected IQueryable<T> Queryable 
+        protected IQueryable<T> Queryable
         => _context is IReadOnlyDbContext readOnlyDbContext
             ? readOnlyDbContext.Query<T>()
             : _context.Set<T>().AsQueryable();
@@ -79,10 +77,10 @@ namespace TGF.CA.Infrastructure.DB.Repository.CQRS.Base
         }
 
         private IHttpResult<TResult> GetQueryExceptionResult<TResult>(Exception exception) {
-            const string errorMessageTemplate = "An error occurred trying to execute a DB query in {TRepository} for entity {EntityName}: {ExceptionMessage}";
-            _logger.LogError(exception, errorMessageTemplate, nameof(TRepository), nameof(TResult), exception.Message);
+            const string errorMessageTemplate = "An error occurred trying to execute a DB query in {TRepository} for entity {EntityName}. Exception type: {ExceptionType}";
+            _logger.LogError(errorMessageTemplate, nameof(TRepository), nameof(TResult), exception.GetType().Name);
 
-            var errorMessage = $"An error occurred trying to execute a DB query in {nameof(TRepository)} for entity {nameof(TResult)}: {exception.Message}";
+            var errorMessage = $"An error occurred trying to execute a DB query in {nameof(TRepository)} for entity {nameof(TResult)}.";
             return Result.Failure<TResult>(CommonErrors.UnhandledException.New(errorMessage));
         }
 

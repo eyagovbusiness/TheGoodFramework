@@ -27,6 +27,13 @@ namespace TGF.CA.Infrastructure.Secrets.SecretsFiles {
                 ?? throw new NullReferenceException($"[ERROR]: Deserialization of secret '{key}' returned null.");
         }
 
+        public async Task<T> GetSecretFromConfigAsync<T>(string key, CancellationToken cancellationToken)
+            where T : class, new() {
+            var secretJson = (await File.ReadAllTextAsync(GetSecretFilePath(key), cancellationToken)).Trim();
+            return JsonConvert.DeserializeObject<T>(secretJson)
+                ?? throw new NullReferenceException($"[ERROR]: Deserialization of secret '{key}' returned null.");
+        }
+
         public async Task<string> GetSecretValueFromKey(string secretFileName, string key) {
             var lines = await File.ReadAllLinesAsync(GetSecretFilePath(secretFileName));
             foreach (var line in lines) {

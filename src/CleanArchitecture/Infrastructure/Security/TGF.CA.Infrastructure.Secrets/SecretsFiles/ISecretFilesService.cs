@@ -52,5 +52,12 @@ namespace TGF.CA.Infrastructure.Secrets.SecretsFiles {
         /// <param name="key">The key to look up.</param>  
         /// <returns>The value for the specified key.</returns>  
         Task<string> GetSecretValueFromKey(string secretFileName, string key);
+
+        /// <summary>
+        /// Cancellable variant of <see cref="GetSecretFromConfigAsync{T}(string)"/> for startup paths that must observe shutdown while reading the file.
+        /// The default implementation keeps the previous (uncancellable) behavior for every other implementer.
+        /// </summary>
+        Task<T> GetSecretFromConfigAsync<T>(string key, CancellationToken cancellationToken) where T : class, new()
+            => GetSecretFromConfigAsync<T>(key);
     }
 }

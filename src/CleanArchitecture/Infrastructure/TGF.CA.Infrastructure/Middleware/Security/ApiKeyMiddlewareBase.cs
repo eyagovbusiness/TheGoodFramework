@@ -2,13 +2,11 @@
 using System.Net;
 using TGF.CA.Application;
 
-namespace TGF.CA.Infrastructure.Middleware.Security
-{
+namespace TGF.CA.Infrastructure.Middleware.Security {
     /// <summary>
     /// Represents the base middleware for API key verification. This service verifies every request with a URL containing the "/private/" segment also has a header with the right API key of the targeted microservice API.
     /// </summary>
-    public abstract class ApiKeyMiddlewareBase
-    {
+    public abstract class ApiKeyMiddlewareBase {
         private readonly string PrivatePathSegment = "/private/";
         private readonly RequestDelegate _next;
         private readonly ISecretsManager _secretsManager;
@@ -31,8 +29,7 @@ namespace TGF.CA.Infrastructure.Middleware.Security
         /// <param name="next">The next middleware in the pipeline.</param>
         /// <param name="secretsManager">The secrets manager to retrieve the API key.</param>
         /// <exception cref="ArgumentNullException">Thrown when serviceName is null or empty.</exception>
-        public ApiKeyMiddlewareBase(string serviceName, RequestDelegate next, ISecretsManager secretsManager)
-        {
+        public ApiKeyMiddlewareBase(string serviceName, RequestDelegate next, ISecretsManager secretsManager) {
             if (string.IsNullOrEmpty(serviceName))
                 throw new ArgumentNullException(nameof(serviceName));
 
@@ -47,18 +44,15 @@ namespace TGF.CA.Infrastructure.Middleware.Security
         /// </summary>
         /// <param name="context">The current HTTP context.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task InvokeAsync(HttpContext context)
-        {
-            if (context.Request.Path.Value?.Contains(PrivatePathSegment, StringComparison.OrdinalIgnoreCase) == true)
-            {
+        public async Task InvokeAsync(HttpContext context) {
+            if (context.Request.Path.Value?.Contains(PrivatePathSegment, StringComparison.OrdinalIgnoreCase) == true) {
                 var lServiceAPIKeyValue = await _serviceAPIKey.Value;
                 if (string.IsNullOrEmpty(lServiceAPIKeyValue))
                     throw new InvalidOperationException($"The API key could not be retrieved for the {_serviceName} service.");
 
                 if (!context.Request.Headers.TryGetValue(ServiceAPIKeyName, out var apiKeyHeaderValue)
                     || string.IsNullOrEmpty(apiKeyHeaderValue)
-                    || apiKeyHeaderValue != lServiceAPIKeyValue)
-                {
+                    || apiKeyHeaderValue != lServiceAPIKeyValue) {
                     context.Response.StatusCode = (int)HttpStatusCode.Forbidden;
                     await context.Response.WriteAsync("Invalid service's API Key.");
                     return;

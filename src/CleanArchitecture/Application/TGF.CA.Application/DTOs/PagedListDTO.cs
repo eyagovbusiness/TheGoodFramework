@@ -4,8 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TGF.CA.Application.DTOs
-{
+namespace TGF.CA.Application.DTOs {
     /// <summary>
     /// Genetric DTO for paginated lists.
     /// </summary>
