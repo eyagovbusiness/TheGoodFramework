@@ -11,7 +11,7 @@
     {
       "branch": "main",
       "paused": false,
-      "bootstrap": [{"digest": "sha256:b361ecc8979de2e23d93ec7200c6ea3511590f51129fdbcf10f39e799e7be658", "published_before": "2026-10-27T00:00:00Z"}],
+      "bootstrap": [{"digest": "sha256:2ff1d74b96992215d93a7c6f95d5a5816f416fb425b0689b95f03f5d32488a9b", "published_before": "2026-10-27T00:00:00Z"}],
       "files": ["Dockerfile_bgs"],
       "layout": {"kind": "arg-default", "arg": "ALPINE_BASE_IMAGE", "stage": "base"}
     }
