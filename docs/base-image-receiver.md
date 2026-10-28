@@ -65,6 +65,15 @@ is sent only to a same-host HTTPS bearer realm requesting `repository:<image>:pu
 
 ## Credentials and administrative ownership
 
+TGF reuses its established `PAT_TOKEN` and `REG_USERNAME` / `REG_PASSWORD` identities, exactly
+as its existing canonical release workflow does. Dedicated source/pull credentials override
+these when configured. The PAT must read private BaseImages Actions evidence and create PRs
+in TGF; these are independent access checks. Registry access requests pull tokens, although
+the existing credential may have broader grants. This explicitly replaces the unprovisioned
+proposal-App requirement for this cross-owner receiver. Source/registry verification still
+precedes create-only proposals; the engine, main guard and public evidence rules are unchanged.
+No secrets are copied, printed or rotated. Rollback restores the prior receiver workflow.
+
 Provision through the responsible repository/organization administrators after review; never put
 values in source, summaries or PRs. The workflow references dedicated credentials, not publisher
 push credentials. Actual installation permissions and effective registry scopes must be checked
