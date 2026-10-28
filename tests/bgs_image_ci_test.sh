@@ -349,7 +349,17 @@ main_workflow="$workflows/L1_main.yml"
 notify_step="$(sed -n '/- name: Notify OF.Common/,$p' "$main_workflow")"
 [[ -n "$notify_step" ]] || fail "main must have a notify step"
 [[ "$(grep -c '^      - name:' <<<"$notify_step")" == 1 ]] || fail "the notify step must be the last step"
-[[ "$(grep -rho 'secrets.PAT_TOKEN' "$repo_root/.github" | wc -l)" == 2 ]] || fail "PAT_TOKEN is scoped to tag creation and notification"
+[[ "$(grep -o 'secrets.PAT_TOKEN' "$main_workflow" | wc -l)" == 2 ]] || fail "publisher PAT_TOKEN is scoped to tag creation and notification"
+# The reviewed base-image receiver independently reuses the established PAT. Keep an exact
+# allowlist so expanding receiver access does not relax the publisher/build secret boundary.
+receiver_workflow="$workflows/base-image-receiver.yml"
+[[ "$(grep -o 'secrets.PAT_TOKEN' "$receiver_workflow" | wc -l)" == 2 ]] || fail "receiver PAT_TOKEN is scoped to source verification and proposals"
+while IFS= read -r credential_file; do
+    case "$credential_file" in
+        "$main_workflow"|"$receiver_workflow") ;;
+        *) fail "unexpected PAT_TOKEN consumer: $credential_file" ;;
+    esac
+done < <(grep -rl 'secrets.PAT_TOKEN' "$repo_root/.github")
 # shellcheck disable=SC2016 # a literal workflow expression
 grep -qF 'GH_TOKEN: ${{ secrets.PAT_TOKEN }}' <<<"$notify_step" || fail "notification must reuse PAT_TOKEN as GH_TOKEN"
 # shellcheck disable=SC2016 # a literal workflow expression
