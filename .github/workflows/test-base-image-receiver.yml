@@ -23,6 +23,43 @@ permissions:
   contents: read
 
 jobs:
+  tgf-access-probe:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Verify existing TGF identities without writes
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+          REGISTRY_PULL_USERNAME: ${{ secrets.REG_USERNAME }}
+          REGISTRY_PULL_PASSWORD: ${{ secrets.REG_PASSWORD }}
+        run: |
+          set -euo pipefail
+          test -n "$GH_TOKEN"
+          test "$(gh api repos/eyagovbusiness/TheGoodFramework --jq .permissions.push)" = true
+          python3 -B - <<'PY'
+          import os, sys
+          from pathlib import Path
+          sys.path.insert(0, 'scripts')
+          import base_image_receiver as r
+          profile = r.load_profile(Path('scripts/base_image_receiver_profile.json'))
+          source = r.GitHubApi(os.environ['GH_TOKEN'])
+          family = r.FAMILIES[profile['family']]
+          publication = r.find_publication(source, family, profile['registry'], [])
+          registry = r.RegistryClient(profile['registry'], os.environ['REGISTRY_PULL_USERNAME'], os.environ['REGISTRY_PULL_PASSWORD'])
+          r.verify_registry_image(registry, family, publication)
+          for target in profile['targets']:
+              decision = r.analyze_target(source, profile['repository'], profile, family, target, publication, source)
+              print('Target', decision['branch'], decision['status'])
+              if decision['status'] == 'error':
+                  raise SystemExit(decision['detail'])
+          print('PASS: existing PAT source/target access, publication, registry and proposal plan verified; no writes.')
+          PY
   contracts:
     runs-on: ubuntu-latest
     timeout-minutes: 10
