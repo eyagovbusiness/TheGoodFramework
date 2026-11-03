@@ -14,6 +14,8 @@ namespace TGF.CA.Infrastructure.Licensing.Slascone.Contracts;
 /// tasks that complete when the corresponding operation with the licensing service has finished. Thread safety and
 /// error handling depend on the specific implementation.</remarks>
 public interface ILicensingService {
+    /// <summary>Reads license information and compliance together. Implementations must publish a consistent snapshot.</summary>
+    LicensingSnapshot Snapshot { get; }
 
     /// <summary>
     /// Gets a map of limitation IDs to their corresponding names.

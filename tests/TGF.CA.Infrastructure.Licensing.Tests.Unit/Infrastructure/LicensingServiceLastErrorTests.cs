@@ -91,7 +91,7 @@ public class LicensingServiceLastErrorTests {
         Assert.All(logger.AllObservableText(), text => Assert.DoesNotContain(SecretText, text));
     }
 
-    private static LicensingService CreateSut(ILogger<LicensingService> logger, Task<ISlasconeClientV2> clientTask) {
+    private static LicensingService CreateSut(ILogger<LicensingService> logger, Task<ISlasconeClientV2> clientTask, ISecretFilesService? secretFilesOverride = null) {
         var clientFactory = new Mock<ISlasconeClientFactory>();
         clientFactory.Setup(factory => factory.GetClientAsync()).Returns(clientTask);
 
@@ -100,12 +100,299 @@ public class LicensingServiceLastErrorTests {
 
         return new LicensingService(
             clientFactory.Object,
-            secretFiles.Object,
+            secretFilesOverride ?? secretFiles.Object,
             new NoOpLicensePrinter(),
             new FixedDeviceInfoService(),
             Options.Create(new SlasconeOptions { ApiBaseUrl = "https://slascone.invalid", IsvId = Guid.Empty, ProductId = Guid.Empty }),
             logger,
             new ConfigurationBuilder().Build());
+    }
+
+    [Fact]
+    public async Task ActivateLicenseAsync_PublishesAcceptedSnapshot() {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = CreateProvisioningSut();
+        var license = LicenseSnapshot();
+        provisioning.Setup(client => client.ActivateLicenseAsync(It.IsAny<ActivateClientDto>()))
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = license });
+        provisioning.Setup(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>()))
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = LicenseSnapshot() });
+        await sut.AddHeartbeatAsync();
+        Assert.Equal(LicenseHeartbeatStatus.Success, sut.HeartbeatStatus);
+
+        await sut.ActivateLicenseAsync();
+
+        Assert.Same(license, sut.LicenseInfo);
+        Assert.Equal(LicenseActivationStatus.Activated, sut.ActivationStatus);
+        Assert.Equal(LicenseHeartbeatStatus.None, sut.HeartbeatStatus);
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.ComplianceStatus);
+    }
+
+    [Fact]
+    public async Task ActivateLicenseAsync_RejectsWrongLicense() {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = CreateProvisioningSut();
+        var license = LicenseSnapshot();
+        license.License_key = "wrong-license";
+        provisioning.Setup(client => client.ActivateLicenseAsync(It.IsAny<ActivateClientDto>()))
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = license });
+
+        await sut.ActivateLicenseAsync();
+
+        Assert.Null(sut.LicenseInfo);
+        Assert.Equal(LicenseActivationStatus.ActivationFailed, sut.ActivationStatus);
+    }
+
+    [Fact]
+    public async Task AddHeartbeatAsync_RejectsWrongLicense_AndClearsPriorSnapshot() {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = CreateProvisioningSut();
+        var accepted = LicenseSnapshot();
+        var rejected = LicenseSnapshot();
+        rejected.License_key = "wrong-license";
+        provisioning.SetupSequence(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>()))
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = accepted })
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = rejected });
+
+        await sut.AddHeartbeatAsync();
+        Assert.Same(accepted, sut.LicenseInfo);
+        await sut.AddHeartbeatAsync();
+
+        Assert.Null(sut.LicenseInfo);
+        Assert.Equal(LicenseHeartbeatStatus.Failed, sut.HeartbeatStatus);
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.ComplianceStatus);
+    }
+
+    [Fact]
+    public async Task AddHeartbeatAsync_RefreshesSnapshot_AndFailureCannotRemainCompliant() {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = CreateProvisioningSut();
+        var first = LicenseSnapshot();
+        var next = LicenseSnapshot();
+        provisioning.SetupSequence(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>()))
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = first })
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = next })
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 403 });
+
+        await sut.AddHeartbeatAsync();
+        Assert.Same(first, sut.LicenseInfo);
+        await sut.AddHeartbeatAsync();
+        Assert.Same(next, sut.LicenseInfo);
+        await sut.AddHeartbeatAsync();
+        Assert.Same(next, sut.LicenseInfo);
+        Assert.Equal(LicenseHeartbeatStatus.Failed, sut.HeartbeatStatus);
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.ComplianceStatus);
+    }
+
+    [Fact]
+    public async Task UnassignLicenseAsync_ClearsPublishedLicenseAndStatuses() {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = CreateProvisioningSut();
+        provisioning.Setup(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>()))
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = LicenseSnapshot() });
+        provisioning.Setup(client => client.UnassignLicenseAsync(It.IsAny<UnassignDto>()))
+            .ReturnsAsync(new ApiResponse<string> { StatusCode = 200, Result = "OK" });
+        await sut.AddHeartbeatAsync();
+        await sut.UnassignLicenseAsync();
+
+        Assert.Null(sut.LicenseInfo);
+        Assert.Null(sut.SessionInfo);
+        Assert.Empty(sut.LimitationMap);
+        Assert.Equal(LicenseActivationStatus.Unassigned, sut.ActivationStatus);
+        Assert.Equal(LicenseHeartbeatStatus.None, sut.HeartbeatStatus);
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.ComplianceStatus);
+    }
+
+    private static LicenseInfoDto LicenseSnapshot() => new() {
+        License_key = "11111111-2222-3333-4444-555555555555",
+        Token_key = Guid.NewGuid(),
+        Is_license_valid = true,
+        Features = [],
+    };
+
+    [Fact]
+    public async Task CloseSessionAsync_ClearsSessionAndCompliance_ButRetainsLicense() {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = await CreateCompliantSutAsync();
+        var before = sut.Snapshot;
+        provisioning.Setup(client => client.CloseSessionAsync(It.IsAny<SessionRequestDto>()))
+            .ReturnsAsync(new ApiResponse<string> { StatusCode = 200, Result = "OK" });
+
+        await sut.CloseSessionAsync();
+
+        Assert.Null(sut.SessionInfo);
+        Assert.Equal(LicenseSessionStatus.Closed, sut.LastOpenSessionAttemptStatus);
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.Snapshot.ComplianceStatus);
+        Assert.Same(before.LicenseInfo, sut.Snapshot.LicenseInfo);
+        Assert.Equal(LicenseComplianceStatus.Compliant, before.ComplianceStatus);
+    }
+
+    [Fact]
+    public async Task ActivationInFlight_PublishesNonCompliantSnapshot_UntilFreshHeartbeatAndSession() {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = await CreateCompliantSutAsync();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var response = new TaskCompletionSource<ApiResponse<LicenseInfoDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        provisioning.Setup(client => client.ActivateLicenseAsync(It.IsAny<ActivateClientDto>()))
+            .Callback(() => entered.TrySetResult()).Returns(response.Task);
+        var activation = sut.ActivateLicenseAsync();
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        try {
+            for (var index = 0; index < 100; index++) {
+                Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.Snapshot.ComplianceStatus);
+                Assert.Null(sut.SessionInfo);
+            }
+        }
+        finally {
+            response.TrySetResult(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = LicenseSnapshot() });
+            await activation;
+        }
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.Snapshot.ComplianceStatus);
+        await sut.AddHeartbeatAsync();
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.Snapshot.ComplianceStatus);
+        await sut.OpenSessionAsync();
+        Assert.Equal(LicenseComplianceStatus.Compliant, sut.Snapshot.ComplianceStatus);
+    }
+
+    [Fact]
+    public async Task CloseAndHeartbeat_AreSerialized_AndHeartbeatCannotRestoreClosedSession() {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = await CreateCompliantSutAsync();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var response = new TaskCompletionSource<ApiResponse<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        provisioning.Setup(client => client.CloseSessionAsync(It.IsAny<SessionRequestDto>()))
+            .Callback(() => entered.TrySetResult()).Returns(response.Task);
+        provisioning.Invocations.Clear();
+        var closing = sut.CloseSessionAsync();
+        await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        var heartbeat = sut.AddHeartbeatAsync();
+        try {
+            Assert.False(heartbeat.IsCompleted);
+            provisioning.Verify(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>()), Times.Never);
+        }
+        finally {
+            response.TrySetResult(new ApiResponse<string> { StatusCode = 200, Result = "OK" });
+            await Task.WhenAll(closing, heartbeat);
+        }
+        Assert.Null(sut.SessionInfo);
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.Snapshot.ComplianceStatus);
+    }
+
+    [Fact]
+    public async Task UnknownClientHeartbeat_ClearsSessionAndRequestsReactivation() {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = await CreateCompliantSutAsync();
+        provisioning.Setup(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>()))
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> {
+                StatusCode = 400, Error = new ErrorResultObjects { Id = (int)SlasconeApiErrorCode.UNKNOWN_CLIENT },
+            });
+
+        await sut.AddHeartbeatAsync();
+
+        Assert.Null(sut.LicenseInfo);
+        Assert.Null(sut.SessionInfo);
+        Assert.Equal(LicenseActivationStatus.Unassigned, sut.ActivationStatus);
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.Snapshot.ComplianceStatus);
+    }
+
+    private static async Task<(LicensingService Sut, Mock<ISlasconeProvisioningClientV2> Provisioning)> CreateCompliantSutAsync() {
+        var (sut, provisioning) = CreateProvisioningSut();
+        provisioning.Setup(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>()))
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = LicenseSnapshot() });
+        provisioning.Setup(client => client.OpenSessionAsync(It.IsAny<SessionRequestDto>()))
+            .ReturnsAsync(new ApiResponse<SessionStatusDto> { StatusCode = 200, Result = new SessionStatusDto {
+                Is_session_valid = true, Session_created_date = DateTimeOffset.UtcNow, Session_valid_until = DateTimeOffset.UtcNow.AddHours(1),
+            } });
+        await sut.AddHeartbeatAsync();
+        await sut.OpenSessionAsync();
+        Assert.Equal(LicenseComplianceStatus.Compliant, sut.Snapshot.ComplianceStatus);
+        return (sut, provisioning);
+    }
+
+    [Theory]
+    [InlineData(true, 60, true)]
+    [InlineData(false, 60, false)]
+    [InlineData(true, -60, false)]
+    [InlineData(false, -60, false)]
+    public async Task Compliance_RequiresBothSessionValidityAndFutureExpiration(bool isValid, int expirationMinutes, bool isCompliant) {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = CreateProvisioningSut();
+        provisioning.Setup(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>()))
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = LicenseSnapshot() });
+        provisioning.Setup(client => client.OpenSessionAsync(It.IsAny<SessionRequestDto>()))
+            .ReturnsAsync(new ApiResponse<SessionStatusDto> {
+                StatusCode = 200,
+                Result = new SessionStatusDto {
+                    Is_session_valid = isValid,
+                    Session_valid_until = DateTimeOffset.UtcNow.AddMinutes(expirationMinutes),
+                },
+            });
+
+        await sut.AddHeartbeatAsync();
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.ComplianceStatus);
+        await sut.OpenSessionAsync();
+
+        Assert.Equal(isCompliant ? LicenseComplianceStatus.Compliant : LicenseComplianceStatus.NonCompliant, sut.ComplianceStatus);
+    }
+
+    private static (LicensingService Sut, Mock<ISlasconeProvisioningClientV2> Provisioning) CreateProvisioningSut(ISecretFilesService? secretFiles = null) {
+        var provisioning = new Mock<ISlasconeProvisioningClientV2>();
+        var client = new Mock<ISlasconeClientV2>();
+        client.SetupGet(value => value.Provisioning).Returns(provisioning.Object);
+        return (CreateSut(new CapturingLogger<LicensingService>(), Task.FromResult(client.Object), secretFiles), provisioning);
+    }
+
+    [Fact]
+    public async Task HeartbeatForNewConfiguredLicense_DoesNotReusePreviousLicenseSession() {
+        using var environment = SoftwareVersionScope.Set();
+        var configuredKey = LicenseSnapshot().License_key;
+        var secrets = new Mock<ISecretFilesService>();
+        secrets.Setup(service => service.GetSecretFromConfigAsync(It.IsAny<string>())).ReturnsAsync(() => configuredKey);
+        var (sut, provisioning) = CreateProvisioningSut(secrets.Object);
+        provisioning.Setup(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>()))
+            .ReturnsAsync(() => new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = new LicenseInfoDto {
+                License_key = configuredKey, Is_license_valid = true,
+            } });
+        provisioning.Setup(client => client.OpenSessionAsync(It.IsAny<SessionRequestDto>()))
+            .ReturnsAsync(new ApiResponse<SessionStatusDto> { StatusCode = 200, Result = new SessionStatusDto {
+                Is_session_valid = true, Session_valid_until = DateTimeOffset.UtcNow.AddHours(1),
+            } });
+        await sut.AddHeartbeatAsync();
+        await sut.OpenSessionAsync();
+        Assert.Equal(LicenseComplianceStatus.Compliant, sut.Snapshot.ComplianceStatus);
+
+        configuredKey = Guid.NewGuid().ToString();
+        await sut.AddHeartbeatAsync();
+
+        Assert.Equal(configuredKey, sut.Snapshot.LicenseInfo!.License_key);
+        Assert.Null(sut.SessionInfo);
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.Snapshot.ComplianceStatus);
+        await sut.OpenSessionAsync();
+        Assert.Equal(LicenseComplianceStatus.Compliant, sut.Snapshot.ComplianceStatus);
+    }
+
+    [Fact]
+    public async Task LicenseChangeDuringSessionRequest_DiscardsResponseAndRequiresReactivation() {
+        using var environment = SoftwareVersionScope.Set();
+        var configuredKey = LicenseSnapshot().License_key;
+        var secrets = new Mock<ISecretFilesService>();
+        secrets.Setup(service => service.GetSecretFromConfigAsync(It.IsAny<string>())).ReturnsAsync(() => configuredKey);
+        var (sut, provisioning) = CreateProvisioningSut(secrets.Object);
+        provisioning.Setup(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>()))
+            .ReturnsAsync(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = LicenseSnapshot() });
+        provisioning.Setup(client => client.OpenSessionAsync(It.IsAny<SessionRequestDto>()))
+            .Callback(() => configuredKey = Guid.NewGuid().ToString())
+            .ReturnsAsync(new ApiResponse<SessionStatusDto> { StatusCode = 200, Result = new SessionStatusDto {
+                Is_session_valid = true, Session_valid_until = DateTimeOffset.UtcNow.AddHours(1),
+            } });
+        await sut.AddHeartbeatAsync();
+
+        await sut.OpenSessionAsync();
+
+        Assert.Null(sut.Snapshot.LicenseInfo);
+        Assert.Null(sut.SessionInfo);
+        Assert.Equal(LicenseActivationStatus.ActivationFailed, sut.ActivationStatus);
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.Snapshot.ComplianceStatus);
     }
 
     private sealed class SoftwareVersionScope : IDisposable {

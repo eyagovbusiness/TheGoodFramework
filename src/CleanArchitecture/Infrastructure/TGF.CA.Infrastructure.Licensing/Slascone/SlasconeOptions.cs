@@ -20,9 +20,11 @@ public sealed record SlasconeOptions {
 /// Configuration options related to the startup licensing process.
 /// </summary>
 public sealed record StartupOptions {
+    /// <summary>Maximum healthy-loop delay between license refreshes, in seconds.</summary>
+    [JsonPropertyName("LicenseRefreshIntervalSeconds")]
+    public int LicenseRefreshIntervalSeconds { get; init; } = 3600;
     [JsonPropertyName("InitialBackoffSeconds")]
     public int InitialBackoffSeconds { get; init; } = 2;
     [JsonPropertyName("MaxBackoffSeconds")]
     public int MaxBackoffSeconds { get; init; } = 30;
 }
-
