@@ -64,8 +64,29 @@ internal sealed class LicensingService(
     public Task ActivateLicenseAsync() => SerializeAsync(ActivateLicenseCoreAsync);
     public Task AddHeartbeatAsync() => SerializeAsync(AddHeartbeatCoreAsync);
     public Task OpenSessionAsync() => SerializeAsync(OpenSessionCoreAsync);
-    public Task CloseSessionAsync(CancellationToken cancellationToken = default)
-        => SerializeAsync(() => CloseSessionCoreAsync(cancellationToken), cancellationToken);
+    public async Task CloseSessionAsync(CancellationToken cancellationToken = default) {
+        var closing = SerializeAsync(() => CloseSessionCoreAsync(cancellationToken), cancellationToken);
+        try {
+            await closing.WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+            // The SDK cannot cancel an in-flight close. Keep the semaphore until its outcome is reconciled.
+            _ = ObserveCloseCompletionAsync(closing);
+            throw;
+        }
+    }
+
+    private async Task ObserveCloseCompletionAsync(Task closing) {
+        try {
+            await closing;
+        }
+        catch (OperationCanceledException) {
+            logger.LogWarning("[LICENSE] Session close cleanup was cancelled.");
+        }
+        catch (Exception ex) {
+            logger.LogError("[LICENSE] Session close cleanup failed after caller cancellation. Exception type: {ExceptionType}", ex.GetType().Name);
+        }
+    }
     public Task UnassignLicenseAsync() => SerializeAsync(UnassignLicenseCoreAsync);
 
     private async Task SerializeAsync(Func<Task> operation, CancellationToken cancellationToken = default) {
@@ -382,6 +403,8 @@ internal sealed class LicensingService(
             };
 
             var slasconeClient = await SlasconeClient.Value.WaitAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            Publish(_state with { Session = null });
             var result = await SlasconeErrorHandlingHelper.Execute(slasconeClient.Provisioning.CloseSessionAsync, sessionDto, cancellationToken: cancellationToken);
 
             if (null == result.data) {

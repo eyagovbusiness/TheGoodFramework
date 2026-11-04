@@ -46,7 +46,7 @@ internal static class SlasconeErrorHandlingHelper {
     /// <param name="func">SLASCONE API endpoint call</param>
     /// <param name="argument">Input argument</param>
     /// <param name="callerMemberName">Caller member name for error message if necessary</param>
-    /// <param name="cancellationToken">Bounds SDK waits and prevents retries after cancellation. The SDK request itself cannot be cancelled.</param>
+    /// <param name="cancellationToken">Cancels retry waits and prevents new requests. In-flight SDK requests must finish before this task completes.</param>
     /// <returns></returns>
     internal static async Task<(TOut data, ErrorType errorType, ErrorResultObjects error, string message)> Execute<TIn, TOut>(
         Func<TIn, Task<ApiResponse<TOut>>> func,
@@ -63,7 +63,7 @@ internal static class SlasconeErrorHandlingHelper {
             while (0 <= retryCountdown) {
                 // Call the SLASCONE API endpoint
                 cancellationToken.ThrowIfCancellationRequested();
-                result = await func.Invoke(argument).WaitAsync(cancellationToken).ConfigureAwait(false);
+                result = await func.Invoke(argument).ConfigureAwait(false);
 
                 if ((int)HttpStatusCode.OK == result.StatusCode) {
                     // Success

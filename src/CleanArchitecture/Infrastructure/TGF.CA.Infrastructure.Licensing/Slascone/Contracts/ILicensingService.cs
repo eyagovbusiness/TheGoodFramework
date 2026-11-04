@@ -127,7 +127,8 @@ public interface ILicensingService {
     /// Closes the most recently opened session with the SLASCONE service.
     /// Releases a floating license token for use by other clients.
     /// </summary>
-    /// <param name="cancellationToken">Bounds semaphore, secret, client and provider waits during shutdown.</param>
+    /// <remarks>Cancellation bounds the caller's wait. An in-flight SDK close continues serialized, with the session non-compliant until its outcome is reconciled.</remarks>
+    /// <param name="cancellationToken">Bounds the caller's wait and prevents new provider requests after cancellation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
     Task CloseSessionAsync(CancellationToken cancellationToken = default);
 

@@ -97,7 +97,7 @@ public class LicensingStartupSessionValidityTests {
         var licensing = new Mock<ILicensingService>();
         var now = DateTimeOffset.UtcNow;
         var session = new SessionStatusDto {
-            Is_session_valid = true, Session_created_date = now.AddMinutes(-10), Session_valid_until = now.AddSeconds(30),
+            Is_session_valid = true, Session_created_date = now.AddMinutes(-10), Session_valid_until = now.AddSeconds(1),
         };
         licensing.SetupGet(service => service.ActivationStatus).Returns(LicenseActivationStatus.Activated);
         licensing.SetupGet(service => service.HeartbeatStatus).Returns(LicenseHeartbeatStatus.Success);
@@ -173,6 +173,46 @@ public class LicensingStartupSessionValidityTests {
         var delays = logger.Entries.Where(entry => entry.Message.Contains("Session renewal is still due"))
             .SelectMany(entry => entry.StructuredState.Where(value => value.StartsWith("Delay="))).ToArray();
         Assert.Equal(new[] { "Delay=00:00:01", "Delay=00:00:02", "Delay=00:00:01" }, delays);
+    }
+
+    [Fact]
+    public async Task NonExtendingRenewals_WithoutCreationDate_UseIncreasingRetriesInsteadOfMovingRenewalTarget() {
+        var licensing = new Mock<ILicensingService>();
+        var now = DateTimeOffset.UtcNow;
+        var session = new SessionStatusDto {
+            Is_session_valid = true, Session_created_date = now.AddSeconds(-1000), Session_valid_until = now.AddSeconds(100),
+        };
+        licensing.SetupGet(service => service.ActivationStatus).Returns(LicenseActivationStatus.Activated);
+        licensing.SetupGet(service => service.HeartbeatStatus).Returns(LicenseHeartbeatStatus.Success);
+        licensing.SetupGet(service => service.LicenseInfo).Returns(new LicenseInfoDto { Is_license_valid = true });
+        licensing.SetupGet(service => service.SessionInfo).Returns(() => session);
+        var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+        licensing.Setup(service => service.OpenSessionAsync()).Callback(() => {
+            session.Session_created_date = null;
+            if (++calls == 3) {
+                session = new SessionStatusDto {
+                    Is_session_valid = true, Session_created_date = now, Session_valid_until = now.AddHours(1),
+                };
+                completed.TrySetResult();
+            }
+        }).Returns(Task.CompletedTask);
+        var logger = new CapturingLogger<LicensingStartupHostedService>();
+        using var hosted = new LicensingStartupHostedService(licensing.Object, Options.Create(new SlasconeOptions {
+            ApiBaseUrl = "https://slascone.invalid", IsvId = Guid.Empty, ProductId = Guid.Empty,
+            StartupOptions = new StartupOptions { InitialBackoffSeconds = 1, MaxBackoffSeconds = 4 },
+        }), logger);
+        await hosted.StartAsync(CancellationToken.None);
+        try {
+            await completed.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+        finally {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await hosted.StopAsync(timeout.Token);
+        }
+        var delays = logger.Entries.Where(entry => entry.Message.Contains("Session renewal is still due"))
+            .SelectMany(entry => entry.StructuredState.Where(value => value.StartsWith("Delay="))).ToArray();
+        Assert.Equal(new[] { "Delay=00:00:01", "Delay=00:00:02" }, delays);
     }
 
     [Fact]

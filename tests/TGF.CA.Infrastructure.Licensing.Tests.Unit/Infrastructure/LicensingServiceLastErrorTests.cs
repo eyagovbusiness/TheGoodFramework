@@ -317,6 +317,63 @@ public class LicensingServiceLastErrorTests {
     }
 
     [Fact]
+    public async Task CancelledClose_KeepsSessionNonCompliant_AndSerializesReopenUntilLateSuccess() {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = await CreateCompliantSutAsync();
+        var response = new TaskCompletionSource<ApiResponse<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        provisioning.Setup(client => client.CloseSessionAsync(It.IsAny<SessionRequestDto>())).Returns(response.Task);
+        provisioning.Invocations.Clear();
+        using var cancellation = new CancellationTokenSource();
+        var closing = sut.CloseSessionAsync(cancellation.Token);
+        Assert.Null(sut.SessionInfo);
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.Snapshot.ComplianceStatus);
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => closing.WaitAsync(TimeSpan.FromSeconds(5)));
+        var heartbeat = sut.AddHeartbeatAsync();
+        var reopening = sut.OpenSessionAsync();
+        try {
+            Assert.False(heartbeat.IsCompleted);
+            Assert.False(reopening.IsCompleted);
+            provisioning.Verify(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>()), Times.Never);
+            provisioning.Verify(client => client.OpenSessionAsync(It.IsAny<SessionRequestDto>()), Times.Never);
+            Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.Snapshot.ComplianceStatus);
+        }
+        finally {
+            response.TrySetResult(new ApiResponse<string> { StatusCode = 200, Result = "OK" });
+            await Task.WhenAll(heartbeat, reopening).WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        Assert.Equal(LicenseSessionStatus.Opened, sut.LastOpenSessionAttemptStatus);
+        Assert.Equal(LicenseComplianceStatus.Compliant, sut.Snapshot.ComplianceStatus);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CancelledClose_LateFailureRemainsNonCompliant_AndReleasesSemaphore(bool throws) {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = await CreateCompliantSutAsync();
+        var response = new TaskCompletionSource<ApiResponse<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        provisioning.Setup(client => client.CloseSessionAsync(It.IsAny<SessionRequestDto>())).Returns(response.Task);
+        using var cancellation = new CancellationTokenSource();
+        var closing = sut.CloseSessionAsync(cancellation.Token);
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => closing.WaitAsync(TimeSpan.FromSeconds(5)));
+        var heartbeat = sut.AddHeartbeatAsync();
+        Assert.False(heartbeat.IsCompleted);
+        if (throws) {
+            response.SetException(new HttpRequestException(SecretText));
+        } else {
+            response.SetResult(new ApiResponse<string> {
+                StatusCode = 409, Error = new ErrorResultObjects { Id = (int)SlasconeApiErrorCode.UNKNOWN_CLIENT },
+            });
+        }
+        await heartbeat.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Null(sut.SessionInfo);
+        Assert.Equal(LicenseSessionStatus.CloseFailed, sut.LastOpenSessionAttemptStatus);
+        Assert.Equal(LicenseComplianceStatus.NonCompliant, sut.Snapshot.ComplianceStatus);
+    }
+
+    [Fact]
     public async Task CloseAndHeartbeat_AreSerialized_AndHeartbeatCannotRestoreClosedSession() {
         using var environment = SoftwareVersionScope.Set();
         var (sut, provisioning) = await CreateCompliantSutAsync();

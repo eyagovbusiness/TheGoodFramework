@@ -156,7 +156,10 @@ internal sealed class LicensingStartupHostedService(
                 }
 
                 var refreshInterval = TimeSpan.FromSeconds(slasconeOptions.Value.StartupOptions.LicenseRefreshIntervalSeconds);
-                var (renewAt, delay) = CalculateRenewalTiming(session, DateTimeOffset.UtcNow, refreshInterval);
+                var nowBeforeDelay = DateTimeOffset.UtcNow;
+                var (renewAt, delay) = renewalAttempt > 0
+                    ? (nowBeforeDelay, TimeSpan.Zero)
+                    : CalculateRenewalTiming(session, nowBeforeDelay, refreshInterval);
                 await DelaySafe(delay, cancellationToken);
 
                 if (DateTimeOffset.UtcNow >= renewAt) {
@@ -169,11 +172,12 @@ internal sealed class LicensingStartupHostedService(
                     var renewedSession = licensingService.SessionInfo;
                     var now = DateTimeOffset.UtcNow;
                     if (renewedSession is not null && LicenseSessionValidity.IsValid(renewedSession, now)) {
-                        if (renewedSession.Session_valid_until > renewalExpiration) {
+                        var expirationAdvanced = renewedSession.Session_valid_until > renewalExpiration;
+                        if (expirationAdvanced) {
                             renewalExpiration = renewedSession.Session_valid_until;
                             renewalAttempt = 0;
                         }
-                        if (CalculateRenewalTiming(renewedSession, now, refreshInterval).renewAt <= now) {
+                        if (!expirationAdvanced || CalculateRenewalTiming(renewedSession, now, refreshInterval).renewAt <= now) {
                             var retryDelay = CalculateRenewalRetryDelay(renewedSession, now, renewalAttempt, slasconeOptions.Value.StartupOptions);
                             renewalAttempt = Math.Min(renewalAttempt + 1, 31);
                             logger.LogWarning("[LICENSE] Session renewal is still due. Retrying after {Delay}.", retryDelay);
