@@ -46,11 +46,13 @@ internal static class SlasconeErrorHandlingHelper {
     /// <param name="func">SLASCONE API endpoint call</param>
     /// <param name="argument">Input argument</param>
     /// <param name="callerMemberName">Caller member name for error message if necessary</param>
+    /// <param name="cancellationToken">Cancels retry waits and prevents new requests. In-flight SDK requests must finish before this task completes.</param>
     /// <returns></returns>
     internal static async Task<(TOut data, ErrorType errorType, ErrorResultObjects error, string message)> Execute<TIn, TOut>(
         Func<TIn, Task<ApiResponse<TOut>>> func,
         TIn argument,
-        [CallerMemberName] string callerMemberName = "")
+        [CallerMemberName] string callerMemberName = "",
+        CancellationToken cancellationToken = default)
         where TOut : class {
         string errorMessage = null!;
         ApiResponse<TOut> result = null!;
@@ -60,6 +62,7 @@ internal static class SlasconeErrorHandlingHelper {
 
             while (0 <= retryCountdown) {
                 // Call the SLASCONE API endpoint
+                cancellationToken.ThrowIfCancellationRequested();
                 result = await func.Invoke(argument).ConfigureAwait(false);
 
                 if ((int)HttpStatusCode.OK == result.StatusCode) {
@@ -77,11 +80,14 @@ internal static class SlasconeErrorHandlingHelper {
                 // Transient error: Wait 15 seconds and try again
                 --retryCountdown;
                 if (0 <= retryCountdown) {
-                    await Task.Delay(RetryWaitTime).ConfigureAwait(false);
+                    await Task.Delay(RetryWaitTime, cancellationToken).ConfigureAwait(false);
                 }
             }
 
             errorMessage = $"{callerMemberName} received an error after {MaxRetryCount} retries:  {result.StatusCode} (Id: {result.Message})";
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+            throw;
         }
         catch (Exception ex) {
             errorMessage = $"{callerMemberName} threw an exception: {ex.Message}";
@@ -90,4 +96,3 @@ internal static class SlasconeErrorHandlingHelper {
         return (result.Result, ErrorType.Network, result.Error, errorMessage);
     }
 }
-
