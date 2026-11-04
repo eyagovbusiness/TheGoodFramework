@@ -64,12 +64,14 @@ internal sealed class LicensingService(
     public Task ActivateLicenseAsync() => SerializeAsync(ActivateLicenseCoreAsync);
     public Task AddHeartbeatAsync() => SerializeAsync(AddHeartbeatCoreAsync);
     public Task OpenSessionAsync() => SerializeAsync(OpenSessionCoreAsync);
-    public Task CloseSessionAsync() => SerializeAsync(CloseSessionCoreAsync);
+    public Task CloseSessionAsync(CancellationToken cancellationToken = default)
+        => SerializeAsync(() => CloseSessionCoreAsync(cancellationToken), cancellationToken);
     public Task UnassignLicenseAsync() => SerializeAsync(UnassignLicenseCoreAsync);
 
-    private async Task SerializeAsync(Func<Task> operation) {
-        await _operations.WaitAsync();
+    private async Task SerializeAsync(Func<Task> operation, CancellationToken cancellationToken = default) {
+        await _operations.WaitAsync(cancellationToken);
         try {
+            cancellationToken.ThrowIfCancellationRequested();
             await operation();
         }
         finally {
@@ -364,8 +366,8 @@ internal sealed class LicensingService(
         }
     }
 
-    private async Task CloseSessionCoreAsync() {
-        var licensekey = LicenseInfo?.License_key ?? await GetLicenseKeyFromSecretFile();
+    private async Task CloseSessionCoreAsync(CancellationToken cancellationToken) {
+        var licensekey = LicenseInfo?.License_key ?? await GetLicenseKeyFromSecretFile().WaitAsync(cancellationToken);
         if (string.IsNullOrEmpty(licensekey)) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
             logger.LogError("[LICENSE] You have to add a license heartbeat first.");
@@ -379,8 +381,8 @@ internal sealed class LicensingService(
                 Session_id = _sessionId
             };
 
-            var slasconeClient = await SlasconeClient.Value;
-            var result = await SlasconeErrorHandlingHelper.Execute(slasconeClient.Provisioning.CloseSessionAsync, sessionDto);
+            var slasconeClient = await SlasconeClient.Value.WaitAsync(cancellationToken);
+            var result = await SlasconeErrorHandlingHelper.Execute(slasconeClient.Provisioning.CloseSessionAsync, sessionDto, cancellationToken: cancellationToken);
 
             if (null == result.data) {
                 ReportError(result);
@@ -391,6 +393,11 @@ internal sealed class LicensingService(
             Publish(_state with { Session = null, SessionStatus = LicenseSessionStatus.Closed });
             ClearLastError();
             logger.LogInformation("[LICENSE] Session closed successfully {SessionId}", _sessionId);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+            LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
+            logger.LogWarning("[LICENSE] Closing session was cancelled.");
+            throw;
         }
         catch (Exception ex) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;

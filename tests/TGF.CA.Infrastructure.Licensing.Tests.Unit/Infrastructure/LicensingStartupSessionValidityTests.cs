@@ -9,6 +9,7 @@ using TGF.CA.Infrastructure.Licensing;
 using TGF.CA.Infrastructure.Licensing.Slascone;
 using TGF.CA.Infrastructure.Licensing.Slascone.Contracts;
 using TGF.CA.Infrastructure.Licensing.Slascone.Services;
+using TGF.CA.Infrastructure.Licensing.Tests.Unit.TestSupport;
 
 namespace TGF.CA.Infrastructure.Licensing.Tests.Unit.Infrastructure;
 
@@ -44,6 +45,137 @@ public class LicensingStartupSessionValidityTests {
     }
 
     [Fact]
+    public async Task StopAsync_PassesShutdownBudgetToClose_WhenMaintenanceOutlastsIt() {
+        var licensing = new Mock<ILicensingService>();
+        licensing.SetupGet(service => service.HeartbeatStatus).Returns(LicenseHeartbeatStatus.Success);
+        licensing.SetupGet(service => service.ActivationStatus).Returns(LicenseActivationStatus.Activated);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var response = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+        licensing.Setup(service => service.AddHeartbeatAsync()).Returns(() => {
+            if (++calls == 1) return Task.CompletedTask;
+            entered.TrySetResult();
+            return response.Task;
+        });
+        using var cancellation = new CancellationTokenSource();
+        licensing.Setup(service => service.CloseSessionAsync(cancellation.Token))
+            .Returns((CancellationToken token) => Task.Delay(Timeout.InfiniteTimeSpan, token));
+        using var hosted = CreateHosted(licensing.Object);
+        await hosted.StartAsync(CancellationToken.None);
+        try {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            cancellation.CancelAfter(TimeSpan.FromMilliseconds(50));
+            var error = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => hosted.StopAsync(cancellation.Token).WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Equal(cancellation.Token, error.CancellationToken);
+            Assert.Equal("Closing the license session was cancelled.", error.Message);
+            Assert.Null(error.InnerException);
+            licensing.Verify(service => service.CloseSessionAsync(cancellation.Token), Times.Once);
+        }
+        finally {
+            response.TrySetResult();
+            await hosted.ExecuteTask!.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+    }
+
+    [Theory]
+    [InlineData(0, 100, 2)]
+    [InlineData(1, 100, 4)]
+    [InlineData(4, 100, 30)]
+    [InlineData(31, 100, 30)]
+    [InlineData(4, 3, 3)]
+    [InlineData(4, 0, 0)]
+    [InlineData(4, -1, 0)]
+    public void RenewalRetryDelay_GrowsToMaximumButNeverPastExpiration(int attempt, int remainingSeconds, int expectedSeconds) {
+        var now = DateTimeOffset.UtcNow;
+        var session = new SessionStatusDto { Session_valid_until = now.AddSeconds(remainingSeconds) };
+        var delay = LicensingStartupHostedService.CalculateRenewalRetryDelay(session, now, attempt, new StartupOptions());
+        Assert.Equal(TimeSpan.FromSeconds(expectedSeconds), delay);
+    }
+
+    [Fact]
+    public async Task SuccessfulRenewal_DoesNotApplyRetryBackoffOrExceedHealthyRefreshInterval() {
+        var licensing = new Mock<ILicensingService>();
+        var now = DateTimeOffset.UtcNow;
+        var session = new SessionStatusDto {
+            Is_session_valid = true, Session_created_date = now.AddMinutes(-10), Session_valid_until = now.AddSeconds(30),
+        };
+        licensing.SetupGet(service => service.ActivationStatus).Returns(LicenseActivationStatus.Activated);
+        licensing.SetupGet(service => service.HeartbeatStatus).Returns(LicenseHeartbeatStatus.Success);
+        licensing.SetupGet(service => service.LicenseInfo).Returns(new LicenseInfoDto { Is_license_valid = true });
+        licensing.SetupGet(service => service.SessionInfo).Returns(() => session);
+        var refreshed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var renewed = false;
+        licensing.Setup(service => service.AddHeartbeatAsync()).Callback(() => {
+            if (renewed) refreshed.TrySetResult();
+        }).Returns(Task.CompletedTask);
+        licensing.Setup(service => service.OpenSessionAsync()).Callback(() => {
+            var created = DateTimeOffset.UtcNow;
+            session = new SessionStatusDto {
+                Is_session_valid = true, Session_created_date = created, Session_valid_until = created.AddSeconds(5),
+            };
+            renewed = true;
+        }).Returns(Task.CompletedTask);
+        var logger = new CapturingLogger<LicensingStartupHostedService>();
+        using var hosted = new LicensingStartupHostedService(licensing.Object, Options.Create(new SlasconeOptions {
+            ApiBaseUrl = "https://slascone.invalid", IsvId = Guid.Empty, ProductId = Guid.Empty,
+            StartupOptions = new StartupOptions { LicenseRefreshIntervalSeconds = 1, InitialBackoffSeconds = 30 },
+        }), logger);
+        await hosted.StartAsync(CancellationToken.None);
+        try {
+            await refreshed.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        }
+        finally {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await hosted.StopAsync(timeout.Token);
+        }
+        Assert.DoesNotContain(logger.Entries, entry => entry.Message.Contains("Session renewal is still due"));
+    }
+
+    [Theory]
+    [InlineData(LicenseSessionStatus.Opened, false)]
+    [InlineData(LicenseSessionStatus.OpenFailed, false)]
+    [InlineData(LicenseSessionStatus.OpenFailed, true)]
+    public async Task NonExtendingRenewals_BackOffExponentially_AndResetOnlyWhenExpirationAdvances(LicenseSessionStatus status, bool throws) {
+        var licensing = new Mock<ILicensingService>();
+        var now = DateTimeOffset.UtcNow;
+        var session = new SessionStatusDto {
+            Is_session_valid = true, Session_created_date = now.AddSeconds(-1000), Session_valid_until = now.AddSeconds(100),
+        };
+        licensing.SetupGet(service => service.ActivationStatus).Returns(LicenseActivationStatus.Activated);
+        licensing.SetupGet(service => service.HeartbeatStatus).Returns(LicenseHeartbeatStatus.Success);
+        licensing.SetupGet(service => service.LicenseInfo).Returns(new LicenseInfoDto { Is_license_valid = true });
+        licensing.SetupGet(service => service.SessionInfo).Returns(() => session);
+        licensing.SetupGet(service => service.LastOpenSessionAttemptStatus).Returns(status);
+        var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+        licensing.Setup(service => service.OpenSessionAsync()).Callback(() => {
+            if (++calls == 3) session.Session_valid_until = now.AddSeconds(200);
+            if (calls == 4) {
+                session = new SessionStatusDto {
+                    Is_session_valid = true, Session_created_date = now, Session_valid_until = now.AddHours(1),
+                };
+                completed.TrySetResult();
+            }
+        }).Returns(() => throws && calls <= 2 ? Task.FromException(new HttpRequestException("Renewal failed")) : Task.CompletedTask);
+        var logger = new CapturingLogger<LicensingStartupHostedService>();
+        using var hosted = new LicensingStartupHostedService(licensing.Object, Options.Create(new SlasconeOptions {
+            ApiBaseUrl = "https://slascone.invalid", IsvId = Guid.Empty, ProductId = Guid.Empty,
+            StartupOptions = new StartupOptions { InitialBackoffSeconds = 1, MaxBackoffSeconds = 4 },
+        }), logger);
+        await hosted.StartAsync(CancellationToken.None);
+        try {
+            await completed.Task.WaitAsync(TimeSpan.FromSeconds(10));
+        }
+        finally {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await hosted.StopAsync(timeout.Token);
+        }
+        var delays = logger.Entries.Where(entry => entry.Message.Contains("Session renewal is still due"))
+            .SelectMany(entry => entry.StructuredState.Where(value => value.StartsWith("Delay="))).ToArray();
+        Assert.Equal(new[] { "Delay=00:00:01", "Delay=00:00:02", "Delay=00:00:01" }, delays);
+    }
+
+    [Fact]
     public async Task Maintenance_ReactivatesAfterAssignmentIsLost_WithoutRestart() {
         var licensing = new Mock<ILicensingService>();
         var heartbeat = LicenseHeartbeatStatus.Success;
@@ -69,7 +201,7 @@ public class LicensingStartupSessionValidityTests {
             license = new LicenseInfoDto { Is_license_valid = true };
         }).Returns(Task.CompletedTask);
         licensing.Setup(service => service.OpenSessionAsync()).Callback(() => opened.TrySetResult()).Returns(Task.CompletedTask);
-        licensing.Setup(service => service.CloseSessionAsync()).Returns(Task.CompletedTask);
+        licensing.Setup(service => service.CloseSessionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         licensing.SetupGet(service => service.LastOpenSessionAttemptStatus).Returns(LicenseSessionStatus.Closed);
         using var hosted = CreateHosted(licensing.Object);
         await hosted.StartAsync(CancellationToken.None);
@@ -98,7 +230,7 @@ public class LicensingStartupSessionValidityTests {
         licensing.Setup(service => service.AddHeartbeatAsync()).Callback(() => {
             if (Interlocked.Increment(ref calls) >= 3) refreshed.TrySetResult();
         }).Returns(Task.CompletedTask);
-        licensing.Setup(service => service.CloseSessionAsync()).Returns(Task.CompletedTask);
+        licensing.Setup(service => service.CloseSessionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         licensing.SetupGet(service => service.LastOpenSessionAttemptStatus).Returns(LicenseSessionStatus.Closed);
         using var hosted = CreateHosted(licensing.Object, refreshSeconds: 1);
         await hosted.StartAsync(CancellationToken.None);
@@ -130,7 +262,7 @@ public class LicensingStartupSessionValidityTests {
         using var hosted = new LicensingStartupHostedService(licensing.Object, Options.Create(new SlasconeOptions {
             ApiBaseUrl = "https://slascone.invalid", IsvId = Guid.Empty, ProductId = Guid.Empty,
         }), NullLogger<LicensingStartupHostedService>.Instance);
-        licensing.Setup(service => service.CloseSessionAsync()).Callback(() => Assert.True(hosted.ExecuteTask!.IsCompleted)).Returns(Task.CompletedTask);
+        licensing.Setup(service => service.CloseSessionAsync(It.IsAny<CancellationToken>())).Callback(() => Assert.True(hosted.ExecuteTask!.IsCompleted)).Returns(Task.CompletedTask);
         await hosted.StartAsync(CancellationToken.None);
         try {
             await maintaining.Task.WaitAsync(TimeSpan.FromSeconds(10));
@@ -140,7 +272,7 @@ public class LicensingStartupSessionValidityTests {
             await hosted.StopAsync(timeout.Token);
         }
         Assert.True(hosted.ExecuteTask!.IsCompleted);
-        licensing.Verify(service => service.CloseSessionAsync(), Times.Once);
+        licensing.Verify(service => service.CloseSessionAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     private static LicensingStartupHostedService CreateHosted(ILicensingService licensing, int refreshSeconds = 3600)
@@ -170,7 +302,7 @@ public class LicensingStartupSessionValidityTests {
             });
             opened.TrySetResult();
         }).Returns(Task.CompletedTask);
-        licensing.Setup(service => service.CloseSessionAsync()).Returns(Task.CompletedTask);
+        licensing.Setup(service => service.CloseSessionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
         licensing.SetupGet(service => service.LastOpenSessionAttemptStatus).Returns(LicenseSessionStatus.Closed);
         using var hosted = new LicensingStartupHostedService(
             licensing.Object, Options.Create(new SlasconeOptions {

@@ -255,6 +255,68 @@ public class LicensingServiceLastErrorTests {
     }
 
     [Fact]
+    public async Task CloseSessionAsync_CanCancelWhileWaitingForAnotherOperation() {
+        using var environment = SoftwareVersionScope.Set();
+        var (sut, provisioning) = await CreateCompliantSutAsync();
+        var response = new TaskCompletionSource<ApiResponse<LicenseInfoDto>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        provisioning.Setup(client => client.AddHeartbeatAsync(It.IsAny<AddHeartbeatDto>())).Returns(response.Task);
+        var heartbeat = sut.AddHeartbeatAsync();
+        using var cancellation = new CancellationTokenSource();
+        var closing = sut.CloseSessionAsync(cancellation.Token);
+        try {
+            Assert.False(closing.IsCompleted);
+            cancellation.Cancel();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => closing.WaitAsync(TimeSpan.FromSeconds(5)));
+            provisioning.Verify(client => client.CloseSessionAsync(It.IsAny<SessionRequestDto>()), Times.Never);
+            Assert.False(heartbeat.IsCompleted);
+        }
+        finally {
+            response.TrySetResult(new ApiResponse<LicenseInfoDto> { StatusCode = 200, Result = LicenseSnapshot() });
+            await heartbeat;
+        }
+    }
+
+    [Theory]
+    [InlineData("secret")]
+    [InlineData("client")]
+    [InlineData("provider")]
+    [InlineData("retry")]
+    public async Task CloseSessionAsync_CanCancelEveryExternalWait(string wait) {
+        using var environment = SoftwareVersionScope.Set();
+        var secret = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var client = new TaskCompletionSource<ISlasconeClientV2>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var response = new TaskCompletionSource<ApiResponse<string>>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var secrets = new Mock<ISecretFilesService>();
+        secrets.Setup(service => service.GetSecretFromConfigAsync(It.IsAny<string>()))
+            .Returns(wait == "secret" ? secret.Task : Task.FromResult(LicenseSnapshot().License_key));
+        var provisioning = new Mock<ISlasconeProvisioningClientV2>();
+        provisioning.Setup(value => value.CloseSessionAsync(It.IsAny<SessionRequestDto>()))
+            .Returns(wait == "retry"
+                ? Task.FromResult(new ApiResponse<string> { StatusCode = 500 })
+                : response.Task);
+        var sdk = new Mock<ISlasconeClientV2>();
+        sdk.SetupGet(value => value.Provisioning).Returns(provisioning.Object);
+        var sut = CreateSut(new CapturingLogger<LicensingService>(),
+            wait == "client" ? client.Task : Task.FromResult(sdk.Object), secrets.Object);
+        using var cancellation = new CancellationTokenSource();
+        var closing = sut.CloseSessionAsync(cancellation.Token);
+        try {
+            Assert.False(closing.IsCompleted);
+            cancellation.Cancel();
+            var error = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => closing.WaitAsync(TimeSpan.FromSeconds(5)));
+            Assert.Equal(cancellation.Token, error.CancellationToken);
+            Assert.NotEqual(LicenseSessionStatus.Closed, sut.LastOpenSessionAttemptStatus);
+        }
+        finally {
+            secret.TrySetResult(LicenseSnapshot().License_key);
+            client.TrySetResult(sdk.Object);
+            response.TrySetResult(new ApiResponse<string> { StatusCode = 200, Result = "OK" });
+        }
+        provisioning.Verify(value => value.CloseSessionAsync(It.IsAny<SessionRequestDto>()),
+            wait is "provider" or "retry" ? Times.Once() : Times.Never());
+    }
+
+    [Fact]
     public async Task CloseAndHeartbeat_AreSerialized_AndHeartbeatCannotRestoreClosedSession() {
         using var environment = SoftwareVersionScope.Set();
         var (sut, provisioning) = await CreateCompliantSutAsync();

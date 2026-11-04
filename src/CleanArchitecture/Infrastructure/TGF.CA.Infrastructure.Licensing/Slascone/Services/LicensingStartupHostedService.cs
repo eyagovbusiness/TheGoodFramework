@@ -66,7 +66,7 @@ internal sealed class LicensingStartupHostedService(
 
     private async Task CloseSessionOnShutdownAsync(CancellationToken cancellationToken) {
         try {
-            await licensingService.CloseSessionAsync();
+            await licensingService.CloseSessionAsync(cancellationToken);
         }
         catch (OperationCanceledException ex) {
             // Cancellation stays cancellation, but the original message/inner/Data never leave this boundary.
@@ -120,6 +120,8 @@ internal sealed class LicensingStartupHostedService(
     /// <summary>Manages floating license sessions: sends periodic heartbeats, renews sessions before expiry,and attempts to reopen sessions when lost. </summary>
     private async Task EnsureFloatingLicenseSeatAsync(CancellationToken cancellationToken) {
         var attempt = 0;
+        var renewalAttempt = 0;
+        DateTimeOffset? renewalExpiration = null;
         while (!cancellationToken.IsCancellationRequested) {
             try {
                 await licensingService.AddHeartbeatAsync();
@@ -148,15 +150,36 @@ internal sealed class LicensingStartupHostedService(
                 }
 
                 attempt = 0; // reset after success
+                if (renewalExpiration is null || session.Session_valid_until > renewalExpiration) {
+                    renewalExpiration = session.Session_valid_until;
+                    renewalAttempt = 0;
+                }
 
                 var refreshInterval = TimeSpan.FromSeconds(slasconeOptions.Value.StartupOptions.LicenseRefreshIntervalSeconds);
                 var (renewAt, delay) = CalculateRenewalTiming(session, DateTimeOffset.UtcNow, refreshInterval);
                 await DelaySafe(delay, cancellationToken);
 
                 if (DateTimeOffset.UtcNow >= renewAt) {
-                    await RenewSessionAsync();
-                    // A server can return the unchanged session. Avoid a tight loop once its renewal point has passed.
-                    await BackoffDelayAsync(0, cancellationToken);
+                    try {
+                        await RenewSessionAsync();
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException) {
+                        logger.LogWarning("[LICENSE] Session renewal failed. Exception type: {ExceptionType}", ex.GetType().Name);
+                    }
+                    var renewedSession = licensingService.SessionInfo;
+                    var now = DateTimeOffset.UtcNow;
+                    if (renewedSession is not null && LicenseSessionValidity.IsValid(renewedSession, now)) {
+                        if (renewedSession.Session_valid_until > renewalExpiration) {
+                            renewalExpiration = renewedSession.Session_valid_until;
+                            renewalAttempt = 0;
+                        }
+                        if (CalculateRenewalTiming(renewedSession, now, refreshInterval).renewAt <= now) {
+                            var retryDelay = CalculateRenewalRetryDelay(renewedSession, now, renewalAttempt, slasconeOptions.Value.StartupOptions);
+                            renewalAttempt = Math.Min(renewalAttempt + 1, 31);
+                            logger.LogWarning("[LICENSE] Session renewal is still due. Retrying after {Delay}.", retryDelay);
+                            await DelaySafe(retryDelay, cancellationToken);
+                        }
+                    }
                 }
             }
             catch (TaskCanceledException) {
@@ -177,8 +200,15 @@ internal sealed class LicensingStartupHostedService(
     private bool IsSessionValid() => LicenseSessionValidity.IsValid(licensingService.SessionInfo, DateTimeOffset.UtcNow);
 
     private static TimeSpan Backoff(int attempt, int initialSeconds, int maxSecconds) {
-        var BackoffSeconds = Math.Min(maxSecconds, Math.Max(1, (int)Math.Pow(2, attempt) * Math.Max(1, initialSeconds)));
+        var BackoffSeconds = Math.Min(maxSecconds, Math.Max(1, Math.Pow(2, attempt) * Math.Max(1, initialSeconds)));
         return TimeSpan.FromSeconds(BackoffSeconds);
+    }
+
+    internal static TimeSpan CalculateRenewalRetryDelay(SessionStatusDto session, DateTimeOffset now, int attempt, StartupOptions options) {
+        var remaining = (session.Session_valid_until ?? now) - now;
+        if (remaining <= TimeSpan.Zero) return TimeSpan.Zero;
+        var backoff = Backoff(attempt, options.InitialBackoffSeconds, options.MaxBackoffSeconds);
+        return backoff < remaining ? backoff : remaining;
     }
 
     private async Task BackoffDelayAsync(int attempt, CancellationToken cancellationToken) {

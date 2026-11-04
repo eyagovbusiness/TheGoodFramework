@@ -127,8 +127,9 @@ public interface ILicensingService {
     /// Closes the most recently opened session with the SLASCONE service.
     /// Releases a floating license token for use by other clients.
     /// </summary>
+    /// <param name="cancellationToken">Bounds semaphore, secret, client and provider waits during shutdown.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task CloseSessionAsync();
+    Task CloseSessionAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Looks up licenses associated with the given license key.
