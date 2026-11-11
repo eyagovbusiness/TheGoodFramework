@@ -98,13 +98,26 @@ for invalid in "" "registry.example/base-images/wrong@sha256:$digest" "registry.
     [[ ! -s "$mock_bin/docker.log" ]] || fail "docker ran despite invalid ref"
 done
 
-# BGS images are built locally under the canonical name and can never be pushed by hand.
+# Canonical BGS images are built locally and cannot be pushed by hand.
 deploy "@unset" --bgs
 grep -qF -- "-t destination.example/base-images/the_good_framework:latest" "$mock_bin/docker.log" || fail "BGS build must use the canonical local tag"
 deploy "@unset" --bgs
 if deploy "@unset" --bgs --registry-push; then fail "--bgs --registry-push must be rejected"; fi
 [[ ! -s "$mock_bin/docker.log" ]] || fail "docker ran for a rejected BGS push"
 if deploy "@unset" tgf-1.1 --registry-push --bgs; then fail "--bgs --registry-push with a tag must be rejected"; fi
+
+# Explicit development builds may publish only a named development tag.
+OMICSFLOW_ENVIRONMENT=development deploy "@unset" dev-teams-projects --bgs --development --registry-push
+grep -qF -- "-t destination.example/base-images/development/the_good_framework:dev-teams-projects" "$mock_bin/docker.log" || fail "development build must use the development repository"
+grep -qxF -- "push destination.example/base-images/development/the_good_framework:dev-teams-projects" "$mock_bin/docker.log" || fail "development push must use only the requested tag"
+[[ "$(grep -c '^push ' "$mock_bin/docker.log")" == 1 ]] || fail "development build must push exactly one tag"
+grep -qF -- "--build-arg ALPINE_BASE_IMAGE=$committed_default" "$mock_bin/docker.log" || fail "development build must validate the base image"
+for args in "--development" "--bgs --development" "latest --bgs --development"; do
+    if OMICSFLOW_ENVIRONMENT=development deploy "@unset" $args --registry-push; then fail "invalid development arguments must fail: $args"; fi
+    [[ ! -s "$mock_bin/docker.log" ]] || fail "docker ran for rejected development arguments"
+done
+if OMICSFLOW_ENVIRONMENT=production deploy "@unset" dev-teams-projects --bgs --development --registry-push; then fail "development mode must reject production"; fi
+[[ ! -s "$mock_bin/docker.log" ]] || fail "docker ran for rejected production environment"
 
 # Non-BGS builds do not use or require the base image variable.
 deploy "invalid"
