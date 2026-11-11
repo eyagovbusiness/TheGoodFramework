@@ -25,6 +25,9 @@ namespace TGF.CA.Presentation.Swagger {
         /// <item>
         /// <description>Exclude private endpoints.</description>
         /// </item>
+        /// <item>
+        /// <description>Inline enum schemas so nullable enum properties retain their type and nullability.</description>
+        /// </item>
         /// </list>
         /// </summary>
         /// <param name="aXmlCommentFileList">List of <see cref="string"/> with the full paths of the documentation files containing the endpoint summaries.</param>
@@ -37,9 +40,17 @@ namespace TGF.CA.Presentation.Swagger {
             .ConfigureEndpointDescriptions(aXmlCommentFileList)
             .ConfigureBehindProxy(aBaseSwaggerPath)
             .RenameSchemas()
+            .ConfigureEnumSchemas()
             .ConfigureExcludingPrivateEndpoints();
 
         #region Private
+
+        private static SwaggerGenOptions ConfigureEnumSchemas(this SwaggerGenOptions aOptions)
+        {
+            // OpenAPI 3.0 ignores nullable next to $ref; inline enums retain property-level nullability.
+            aOptions.UseInlineDefinitionsForEnums();
+            return aOptions;
+        }
 
         /// <summary>
         /// Configure swagger options to integrate authentication UI to test endpoints that require Authorization and/or Authentication.
