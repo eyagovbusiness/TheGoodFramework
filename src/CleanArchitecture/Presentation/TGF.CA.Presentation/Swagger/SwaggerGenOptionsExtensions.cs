@@ -45,8 +45,7 @@ namespace TGF.CA.Presentation.Swagger {
 
         #region Private
 
-        private static SwaggerGenOptions ConfigureEnumSchemas(this SwaggerGenOptions aOptions)
-        {
+        private static SwaggerGenOptions ConfigureEnumSchemas(this SwaggerGenOptions aOptions) {
             // OpenAPI 3.0 ignores nullable next to $ref; inline enums retain property-level nullability.
             aOptions.UseInlineDefinitionsForEnums();
             return aOptions;
