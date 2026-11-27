@@ -122,9 +122,14 @@ internal sealed class LicensingStartupHostedService(
         var attempt = 0;
         var renewalAttempt = 0;
         DateTimeOffset? renewalExpiration = null;
+        DateTimeOffset? cachedRenewalTarget = null; // Preserve renewal target across refreshes when Session_created_date is absent
         while (!cancellationToken.IsCancellationRequested) {
             try {
                 await licensingService.AddHeartbeatAsync();
+
+                if (cancellationToken.IsCancellationRequested) {
+                    break; // Exit immediately if shutdown budget exhausted during heartbeat
+                }
 
                 if (licensingService.ActivationStatus is not LicenseActivationStatus.Activated) {
                     await EnsureActivationAsync(cancellationToken);
@@ -147,6 +152,7 @@ internal sealed class LicensingStartupHostedService(
                     await TryOpenSessionAsync(cancellationToken);
                     renewalAttempt = 0;
                     renewalExpiration = null;
+                    cachedRenewalTarget = null;
                     await BackoffDelayAsync(attempt++, cancellationToken);
                     continue;
                 }
@@ -155,13 +161,20 @@ internal sealed class LicensingStartupHostedService(
                 if (renewalExpiration is null || session.Session_valid_until > renewalExpiration) {
                     renewalExpiration = session.Session_valid_until;
                     renewalAttempt = 0;
+                    cachedRenewalTarget = null; // Reset cached target when session expiration advances
                 }
 
                 var refreshInterval = TimeSpan.FromSeconds(slasconeOptions.Value.StartupOptions.LicenseRefreshIntervalSeconds);
                 var nowBeforeDelay = DateTimeOffset.UtcNow;
                 var (renewAt, delay) = renewalAttempt > 0
                     ? (nowBeforeDelay, TimeSpan.Zero)
-                    : CalculateRenewalTiming(session, nowBeforeDelay, refreshInterval);
+                    : CalculateRenewalTiming(session, nowBeforeDelay, refreshInterval, cachedRenewalTarget);
+                
+                // Cache the renewal target to avoid recalculating with fresh 'now' when Session_created_date is absent
+                if (cachedRenewalTarget is null) {
+                    cachedRenewalTarget = renewAt;
+                }
+                
                 await DelaySafe(delay, cancellationToken);
 
                 if (DateTimeOffset.UtcNow >= renewAt) {
@@ -180,7 +193,7 @@ internal sealed class LicensingStartupHostedService(
                             renewalAttempt = 0;
                         }
                         // Apply retry backoff when expiration did not advance OR when it advanced but renewal is still immediately due.
-                        if (!expirationAdvanced || CalculateRenewalTiming(renewedSession, now, refreshInterval).renewAt <= now) {
+                        if (!expirationAdvanced || CalculateRenewalTiming(renewedSession, now, refreshInterval, cachedRenewalTarget).renewAt <= now) {
                             await ApplyRenewalRetry(renewedSession, now, cancellationToken);
                         }
                     } else {
@@ -248,8 +261,15 @@ internal sealed class LicensingStartupHostedService(
     }
 
     /// <summary>Calculates renewal timing and delay.</summary>
-    internal static (DateTimeOffset renewAt, TimeSpan delay) CalculateRenewalTiming(SessionStatusDto session, DateTimeOffset now, TimeSpan refreshInterval) {
+    internal static (DateTimeOffset renewAt, TimeSpan delay) CalculateRenewalTiming(SessionStatusDto session, DateTimeOffset now, TimeSpan refreshInterval, DateTimeOffset? cachedRenewalTarget = null) {
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(refreshInterval, TimeSpan.Zero);
+        
+        // Use cached renewal target if available to avoid recalculating with fresh 'now' when Session_created_date is absent
+        if (cachedRenewalTarget.HasValue) {
+            var delay = cachedRenewalTarget.Value - now;
+            return (cachedRenewalTarget.Value, delay < TimeSpan.Zero ? TimeSpan.Zero : delay < refreshInterval ? delay : refreshInterval);
+        }
+        
         var validUntil = session.Session_valid_until ?? now;
         var createdAt = session.Session_created_date ?? now;
         var totalDuration = validUntil - createdAt;
