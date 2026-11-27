@@ -145,6 +145,8 @@ internal sealed class LicensingStartupHostedService(
                 var session = licensingService.SessionInfo;
                 if (session is null || !LicenseSessionValidity.IsValid(session, DateTimeOffset.UtcNow)) {
                     await TryOpenSessionAsync(cancellationToken);
+                    renewalAttempt = 0;
+                    renewalExpiration = null;
                     await BackoffDelayAsync(attempt++, cancellationToken);
                     continue;
                 }
