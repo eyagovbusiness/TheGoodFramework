@@ -27,7 +27,7 @@ namespace TGF.CA.Infrastructure.Licensing.Slascone.Services;
 /// </description></item>
 /// </list>
 /// </remarks>
-internal sealed class LicenseRecoveryCoordinator(ILogger<LicenseRecoveryCoordinator> logger) {
+public sealed class LicenseRecoveryCoordinator(ILogger<LicenseRecoveryCoordinator> logger) {
 
     /// <summary>
     /// Represents recovery guidance for a license activation failure.
@@ -165,7 +165,7 @@ internal sealed class LicenseRecoveryCoordinator(ILogger<LicenseRecoveryCoordina
     /// <returns>Detailed recovery guidance.</returns>
     public RecoveryGuidance LogAndGetRecoveryGuidance(LicenseActivationFailureReason reason) {
         var guidance = GetRecoveryGuidance(reason);
-        
+
         logger.Log(
             guidance.LogLevel,
             "[LICENSE] Activation failed: {Reason}. User message: {UserMessage} Diagnostic: {DiagnosticMessage}",

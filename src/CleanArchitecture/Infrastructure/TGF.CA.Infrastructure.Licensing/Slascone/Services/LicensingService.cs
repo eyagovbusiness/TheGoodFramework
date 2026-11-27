@@ -667,9 +667,9 @@ internal sealed class LicensingService(
     private static LicenseActivationFailureReason MapApiErrorToFailureReason(SlasconeErrorHandlingHelper.ErrorType errorType, int errorId) {
         return errorType switch {
             SlasconeErrorHandlingHelper.ErrorType.Network => LicenseActivationFailureReason.TransientNetworkError,
-            
+
             SlasconeErrorHandlingHelper.ErrorType.Functional => MapApiSpecificError(errorId),
-            
+
             _ => LicenseActivationFailureReason.Unknown
         };
     }
