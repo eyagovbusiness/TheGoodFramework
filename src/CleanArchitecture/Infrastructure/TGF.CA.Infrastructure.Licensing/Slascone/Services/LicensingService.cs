@@ -221,6 +221,7 @@ internal sealed class LicensingService(
             ActivationStatus = LicenseActivationStatus.ActivationFailed;
             SetActivationFailureReason(LicenseActivationFailureReason.TransientNetworkError);
             ReportException(ex);
+            logger.LogError("[LICENSE] Activation failed. Exception type: {ExceptionType}", ex.GetType().Name);
         }
     }
 

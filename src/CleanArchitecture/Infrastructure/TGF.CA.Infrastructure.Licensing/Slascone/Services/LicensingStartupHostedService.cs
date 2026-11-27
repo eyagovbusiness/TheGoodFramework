@@ -191,14 +191,17 @@ internal sealed class LicensingStartupHostedService(
                         if (expirationAdvanced) {
                             renewalExpiration = renewedSession.Session_valid_until;
                             renewalAttempt = 0;
+                            cachedRenewalTarget = null; // Reset cached target when expiration advances
                         }
                         // Apply retry backoff when expiration did not advance OR when it advanced but renewal is still immediately due.
                         if (!expirationAdvanced || CalculateRenewalTiming(renewedSession, now, refreshInterval, cachedRenewalTarget).renewAt <= now) {
                             renewalAttempt = await ApplyRenewalRetry(renewedSession, now, renewalAttempt, cancellationToken);
+                            continue;
                         }
                     } else {
                         // Session invalid or renewal failed: apply retry backoff and loop will retry on next iteration
                         renewalAttempt = await ApplyRenewalRetry(session, now, renewalAttempt, cancellationToken);
+                        continue;
                     }
                 }
             }
