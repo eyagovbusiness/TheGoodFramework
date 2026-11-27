@@ -153,7 +153,12 @@ internal sealed class LicensingStartupHostedService(
                     renewalAttempt = 0;
                     renewalExpiration = null;
                     cachedRenewalTarget = null;
-                    await BackoffDelayAsync(attempt++, cancellationToken);
+                    // If reopen succeeded, don't apply backoff; otherwise apply it and retry
+                    if (IsSessionValid()) {
+                        attempt = 0;
+                    } else {
+                        await BackoffDelayAsync(attempt++, cancellationToken);
+                    }
                     continue;
                 }
 

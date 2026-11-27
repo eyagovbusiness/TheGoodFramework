@@ -243,8 +243,8 @@ internal sealed class LicensingService(
                 if (result.error is { Id: (int)SlasconeApiErrorCode.UNKNOWN_CLIENT }) {
                     // A common error when the license is not activated yet for the current device.
                     // A typical handling could be to ask the user for a license key and call ActivateLicenseAsync.
-                    SetActivationFailureReason(LicenseActivationFailureReason.ServerDeviceMismatch);
                     ClearLicenseState();
+                    SetActivationFailureReason(LicenseActivationFailureReason.ServerDeviceMismatch);
                 } else {
                     var failureReason = MapApiErrorToFailureReason(result.errorType, result.error?.Id ?? 0);
                     SetActivationFailureReason(failureReason);
@@ -256,8 +256,8 @@ internal sealed class LicensingService(
             var licenseInfoDto = result.data;
 
             if (await GetLicenseKeyFromSecretFile() != licenseInfoDto.License_key) {
-                SetActivationFailureReason(LicenseActivationFailureReason.LicenseKeyMismatch);
                 ClearLicenseState();
+                SetActivationFailureReason(LicenseActivationFailureReason.LicenseKeyMismatch);
                 ActivationStatus = LicenseActivationStatus.ActivationFailed;
                 HeartbeatStatus = LicenseHeartbeatStatus.Failed;
                 return;

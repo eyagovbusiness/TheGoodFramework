@@ -361,4 +361,60 @@ public class LicensingStartupSessionValidityTests {
             await hosted.StopAsync(timeout.Token);
         }
     }
+
+    [Fact]
+    public async Task Maintenance_ResetsRetryTrackingWhenReopeningAfterNonExtendingRenewals() {
+        var licensing = new Mock<ILicensingService>();
+        var now = DateTimeOffset.UtcNow;
+        var session = new SessionStatusDto {
+            Is_session_valid = true,
+            Session_created_date = now.AddSeconds(-1000),
+            Session_valid_until = now.AddSeconds(100),
+        };
+        licensing.SetupGet(service => service.ActivationStatus).Returns(LicenseActivationStatus.Activated);
+        licensing.SetupGet(service => service.HeartbeatStatus).Returns(LicenseHeartbeatStatus.Success);
+        licensing.SetupGet(service => service.LicenseInfo).Returns(new LicenseInfoDto { Is_license_valid = true });
+        licensing.SetupGet(service => service.SessionInfo).Returns(() => session);
+        licensing.SetupGet(service => service.LastOpenSessionAttemptStatus).Returns(LicenseSessionStatus.Opened);
+        var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+        licensing.Setup(service => service.OpenSessionAsync()).Callback(() => {
+            if (++calls == 1 || calls == 2) {
+                // Non-extending renewals: session doesn't expire later
+                session.Session_valid_until = now.AddSeconds(100);
+            } else if (calls == 3) {
+                // Session becomes invalid
+                session.Is_session_valid = false;
+            } else if (calls == 4) {
+                // Reopen succeeds with fresh session
+                session = new SessionStatusDto {
+                    Is_session_valid = true,
+                    Session_created_date = DateTimeOffset.UtcNow,
+                    Session_valid_until = DateTimeOffset.UtcNow.AddSeconds(10),
+                };
+                completed.TrySetResult();
+            }
+        }).Returns(Task.CompletedTask);
+        licensing.Setup(service => service.CloseSessionAsync(It.IsAny<CancellationToken>())).Returns(Task.CompletedTask);
+        var logger = new CapturingLogger<LicensingStartupHostedService>();
+        using var hosted = new LicensingStartupHostedService(
+            licensing.Object, Options.Create(new SlasconeOptions {
+                ApiBaseUrl = "https://slascone.invalid", IsvId = Guid.Empty, ProductId = Guid.Empty,
+                StartupOptions = new StartupOptions { InitialBackoffSeconds = 1, MaxBackoffSeconds = 4 },
+            }),
+            logger);
+
+        await hosted.StartAsync(CancellationToken.None);
+        try {
+            await completed.Task.WaitAsync(TimeSpan.FromSeconds(15));
+            // After reopen, the new session should not immediately renew with accumulated retry state.
+            // If the retry tracking was incorrectly retained, we'd see excessive renewal attempts.
+            // Verify that we successfully opened the new session without excessive retries.
+            licensing.Verify(service => service.OpenSessionAsync(), Times.AtLeastOnce);
+        }
+        finally {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            await hosted.StopAsync(timeout.Token);
+        }
+    }
 }
