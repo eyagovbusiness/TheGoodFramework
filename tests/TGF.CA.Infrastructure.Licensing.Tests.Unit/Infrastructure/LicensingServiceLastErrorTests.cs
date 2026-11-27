@@ -98,6 +98,9 @@ public class LicensingServiceLastErrorTests {
         var secretFiles = new Mock<ISecretFilesService>();
         secretFiles.Setup(service => service.GetSecretFromConfigAsync(It.IsAny<string>())).ReturnsAsync("11111111-2222-3333-4444-555555555555");
 
+        var recoveryCoordinator = new LicenseRecoveryCoordinator(
+            new Mock<ILogger<LicenseRecoveryCoordinator>>().Object);
+
         return new LicensingService(
             clientFactory.Object,
             secretFilesOverride ?? secretFiles.Object,
@@ -105,7 +108,8 @@ public class LicensingServiceLastErrorTests {
             new FixedDeviceInfoService(),
             Options.Create(new SlasconeOptions { ApiBaseUrl = "https://slascone.invalid", IsvId = Guid.Empty, ProductId = Guid.Empty }),
             logger,
-            new ConfigurationBuilder().Build());
+            new ConfigurationBuilder().Build(),
+            recoveryCoordinator);
     }
 
     [Fact]
