@@ -178,8 +178,9 @@ internal sealed class LicensingStartupHostedService(
                         if (expirationAdvanced) {
                             renewalExpiration = renewedSession.Session_valid_until;
                             renewalAttempt = 0;
-                        }
-                        if (!expirationAdvanced || CalculateRenewalTiming(renewedSession, now, refreshInterval).renewAt <= now) {
+                        } else {
+                            // Expiration did not advance: apply retry backoff to prevent hammering the provider.
+                            // This handles both failed renewals and successful renewals that returned an unchanged session.
                             var retryDelay = CalculateRenewalRetryDelay(renewedSession, now, renewalAttempt, slasconeOptions.Value.StartupOptions);
                             renewalAttempt = Math.Min(renewalAttempt + 1, 31);
                             logger.LogWarning("[LICENSE] Session renewal is still due. Retrying after {Delay}.", retryDelay);
