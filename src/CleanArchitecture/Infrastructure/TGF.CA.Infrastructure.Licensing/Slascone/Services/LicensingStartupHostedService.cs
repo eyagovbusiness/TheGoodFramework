@@ -181,17 +181,11 @@ internal sealed class LicensingStartupHostedService(
                         }
                         // Apply retry backoff when expiration did not advance OR when it advanced but renewal is still immediately due.
                         if (!expirationAdvanced || CalculateRenewalTiming(renewedSession, now, refreshInterval).renewAt <= now) {
-                            var retryDelay = CalculateRenewalRetryDelay(renewedSession, now, renewalAttempt, slasconeOptions.Value.StartupOptions);
-                            renewalAttempt = Math.Min(renewalAttempt + 1, 31);
-                            logger.LogWarning("[LICENSE] Session renewal is still due. Retrying after {Delay}.", retryDelay);
-                            await DelaySafe(retryDelay, cancellationToken);
+                            await ApplyRenewalRetry(renewedSession, now, cancellationToken);
                         }
                     } else {
                         // Session invalid or renewal failed: apply retry backoff and loop will retry on next iteration
-                        var retryDelay = CalculateRenewalRetryDelay(session, now, renewalAttempt, slasconeOptions.Value.StartupOptions);
-                        renewalAttempt = Math.Min(renewalAttempt + 1, 31);
-                        logger.LogWarning("[LICENSE] Session renewal is still due. Retrying after {Delay}.", retryDelay);
-                        await DelaySafe(retryDelay, cancellationToken);
+                        await ApplyRenewalRetry(session, now, cancellationToken);
                     }
                 }
             }
@@ -222,6 +216,13 @@ internal sealed class LicensingStartupHostedService(
         if (remaining <= TimeSpan.Zero) return TimeSpan.Zero;
         var backoff = Backoff(attempt, options.InitialBackoffSeconds, options.MaxBackoffSeconds);
         return backoff < remaining ? backoff : remaining;
+    }
+
+    private async Task ApplyRenewalRetry(SessionStatusDto session, DateTimeOffset now, CancellationToken cancellationToken) {
+        var retryDelay = CalculateRenewalRetryDelay(session, now, renewalAttempt, slasconeOptions.Value.StartupOptions);
+        renewalAttempt = Math.Min(renewalAttempt + 1, 31);
+        logger.LogWarning("[LICENSE] Session renewal is still due. Retrying after {Delay}.", retryDelay);
+        await DelaySafe(retryDelay, cancellationToken);
     }
 
     private async Task BackoffDelayAsync(int attempt, CancellationToken cancellationToken) {
