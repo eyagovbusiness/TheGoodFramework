@@ -113,7 +113,8 @@ grep -qxF -- "push destination.example/base-images/development/the_good_framewor
 [[ "$(grep -c '^push ' "$mock_bin/docker.log")" == 1 ]] || fail "development build must push exactly one tag"
 grep -qF -- "--build-arg ALPINE_BASE_IMAGE=$committed_default" "$mock_bin/docker.log" || fail "development build must validate the base image"
 for args in "--development" "--bgs --development" "latest --bgs --development"; do
-    if OMICSFLOW_ENVIRONMENT=development deploy "@unset" "$args" --registry-push; then fail "invalid development arguments must fail: $args"; fi
+    # shellcheck disable=SC2086 # word splitting intended to test argument combinations
+    if OMICSFLOW_ENVIRONMENT=development deploy "@unset" $args --registry-push; then fail "invalid development arguments must fail: $args"; fi
     [[ ! -s "$mock_bin/docker.log" ]] || fail "docker ran for rejected development arguments"
 done
 if OMICSFLOW_ENVIRONMENT=production deploy "@unset" dev-teams-projects --bgs --development --registry-push; then fail "development mode must reject production"; fi
