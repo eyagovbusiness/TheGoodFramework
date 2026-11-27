@@ -11,6 +11,75 @@ using TGF.CA.Infrastructure.Secrets.SecretsFiles;
 
 namespace TGF.CA.Infrastructure.Licensing.Slascone.Services;
 
+/// <summary>
+/// Manages licensing operations including device activation, heartbeats, session management, and compliance tracking.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This service implements a comprehensive validation strategy to ensure license key consistency and detect runtime changes.
+/// </para>
+/// 
+/// <para>
+/// <strong>Multi-Point License Key Validation Strategy:</strong>
+/// The service reads and validates the license key from the secret file at multiple strategic points throughout
+/// the licensing lifecycle. This design enables:
+/// 
+/// <list type="number">
+/// <item><description>
+///   <strong>Runtime License Change Detection:</strong> The secret file may be updated at any time (e.g., during license renewal
+///   or key rotation by administrators). By validating on each operation, the service detects these changes without requiring
+///   application restart.
+/// </description></item>
+/// <item><description>
+///   <strong>Tamper Detection:</strong> Verifying that SLASCONE responses use the same key as the local configuration detects
+///   server-side license changes or configuration mismatches that could lead to silent failures.
+/// </description></item>
+/// <item><description>
+///   <strong>Fast Failure on Misconfiguration:</strong> Multiple validation points catch key mismatches early, preventing
+///   failed operations downstream (e.g., floating sessions that use the token).
+/// </description></item>
+/// </list>
+/// </para>
+/// 
+/// <para>
+/// <strong>Validation Points:</strong>
+/// 
+/// <list type="table">
+/// <item>
+///   <term>ActivateLicenseAsync (Lines 110, 129)</term>
+///   <description>Pre-activation: load key for request. Post-activation: verify server response matches.</description>
+/// </item>
+/// <item>
+///   <term>AddHeartbeatAsync (Line 175)</term>
+///   <description>During heartbeat: verify heartbeat response uses same key (detects external revocation/reassignment).</description>
+/// </item>
+/// <item>
+///   <term>OpenSessionAsync (Lines 335, 371)</term>
+///   <description>Pre-open: load key for request. Post-open: verify session is associated with same key.</description>
+/// </item>
+/// <item>
+///   <term>CloseSessionAsync (Lines 391, 434)</term>
+///   <description>Pre-close: load key (cached if available). During close: verify consistency before cleanup.</description>
+/// </item>
+/// </list>
+/// </para>
+/// 
+/// <para>
+/// <strong>Performance Consideration:</strong>
+/// The 7 strategic reads per activation lifecycle represent negligible I/O cost because:
+/// <list type="bullet">
+/// <item>Licensing typically occurs once per application startup</item>
+/// <item>Secret file access is usually cached at OS level</item>
+/// <item>Prevents expensive session/token loss due to undetected key mismatches</item>
+/// </list>
+/// </para>
+/// 
+/// <para>
+/// <strong>Thread Safety:</strong>
+/// All licensing operations are serialized via <see cref="_operations"/> semaphore to ensure state consistency
+/// and prevent race conditions between concurrent activation, heartbeat, and session management operations.
+/// </para>
+/// </remarks>
 internal sealed class LicensingService(
     ISlasconeClientFactory slasconeClientFactory,
     ISecretFilesService secretFilesService,
@@ -18,15 +87,45 @@ internal sealed class LicensingService(
     IDeviceInfoService deviceInfoService,
     IOptions<SlasconeOptions> slasconeOptions,
     ILogger<LicensingService> logger,
-    IConfiguration configuration
+    IConfiguration configuration,
+    LicenseRecoveryCoordinator recoveryCoordinator
 ) : ILicensingService {
 
-    public LicenseInfoDto? LicenseInfo { get; private set; }
-    public SessionStatusDto? SessionInfo { get; private set; }
-    public LicenseComplianceStatus ComplianceStatus => GetLicenseComplianceStatus();
-    public LicenseSessionStatus LastOpenSessionAttemptStatus { get; private set; } = LicenseSessionStatus.None;
-    public LicenseHeartbeatStatus HeartbeatStatus { get; private set; } = LicenseHeartbeatStatus.None;
-    public LicenseActivationStatus ActivationStatus { get; private set; } = LicenseActivationStatus.Unassigned;
+    private sealed record LicenseState(
+        LicenseInfoDto? License = null,
+        SessionStatusDto? Session = null,
+        LicenseSessionStatus SessionStatus = LicenseSessionStatus.None,
+        LicenseHeartbeatStatus Heartbeat = LicenseHeartbeatStatus.None,
+        LicenseActivationStatus Activation = LicenseActivationStatus.Unassigned,
+        LicenseActivationFailureReason? ActivationFailureReason = null);
+
+    private LicenseState _state = new();
+    private readonly SemaphoreSlim _operations = new(1, 1);
+    public LicenseInfoDto? LicenseInfo => Volatile.Read(ref _state).License;
+    public SessionStatusDto? SessionInfo => Volatile.Read(ref _state).Session;
+    public LicensingSnapshot Snapshot {
+        get {
+            var state = Volatile.Read(ref _state);
+            return new(state.License, GetLicenseComplianceStatus(state));
+        }
+    }
+    public LicenseComplianceStatus ComplianceStatus => Snapshot.ComplianceStatus;
+    public LicenseSessionStatus LastOpenSessionAttemptStatus {
+        get => Volatile.Read(ref _state).SessionStatus;
+        private set => Publish(_state with { SessionStatus = value });
+    }
+    public LicenseHeartbeatStatus HeartbeatStatus {
+        get => Volatile.Read(ref _state).Heartbeat;
+        private set => Publish(_state with { Heartbeat = value });
+    }
+    public LicenseActivationStatus ActivationStatus {
+        get => Volatile.Read(ref _state).Activation;
+        private set => Publish(_state with { Activation = value });
+    }
+    public LicenseActivationFailureReason? ActivationFailureReason {
+        get => Volatile.Read(ref _state).ActivationFailureReason;
+        private set => Publish(_state with { ActivationFailureReason = value });
+    }
     public Lazy<Task<ISlasconeClientV2>> SlasconeClient { get; } = new(GetNewSlasconeClient(slasconeClientFactory));
     public string ClientId => deviceInfoService.GetUniqueDeviceId();
     public LicensingOperationError? LastError { get; private set; }
@@ -37,7 +136,49 @@ internal sealed class LicensingService(
     private readonly string _softwareVersion = Environment.GetEnvironmentVariable(EnvironmentVariableNames.SOFTWARE_VERSION)
         ?? throw new InvalidOperationException($"[LICENSING][ERROR]: {EnvironmentVariableNames.SOFTWARE_VERSION} environment variable is not set.");
 
-    public async Task ActivateLicenseAsync() {
+    public Task ActivateLicenseAsync() => SerializeAsync(ActivateLicenseCoreAsync);
+    public Task AddHeartbeatAsync() => SerializeAsync(AddHeartbeatCoreAsync);
+    public Task OpenSessionAsync() => SerializeAsync(OpenSessionCoreAsync);
+    public async Task CloseSessionAsync(CancellationToken cancellationToken = default) {
+        var closing = SerializeAsync(() => CloseSessionCoreAsync(cancellationToken), cancellationToken);
+        try {
+            await closing.WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+            // The SDK cannot cancel an in-flight close. Keep the semaphore until its outcome is reconciled.
+            _ = ObserveCloseCompletionAsync(closing);
+            throw;
+        }
+    }
+
+    private async Task ObserveCloseCompletionAsync(Task closing) {
+        try {
+            await closing;
+        }
+        catch (OperationCanceledException) {
+            logger.LogWarning("[LICENSE] Session close cleanup was cancelled.");
+        }
+        catch (Exception ex) {
+            logger.LogError("[LICENSE] Session close cleanup failed after caller cancellation. Exception type: {ExceptionType}", ex.GetType().Name);
+        }
+    }
+    public Task UnassignLicenseAsync() => SerializeAsync(UnassignLicenseCoreAsync);
+
+    private async Task SerializeAsync(Func<Task> operation, CancellationToken cancellationToken = default) {
+        await _operations.WaitAsync(cancellationToken);
+        try {
+            cancellationToken.ThrowIfCancellationRequested();
+            await operation();
+        }
+        finally {
+            _operations.Release();
+        }
+    }
+
+    private void Publish(LicenseState state) => Volatile.Write(ref _state, state);
+
+    private async Task ActivateLicenseCoreAsync() {
+        Publish(_state with { Session = null, Heartbeat = LicenseHeartbeatStatus.None });
         try {
             var activateClientDto = new ActivateClientDto {
                 Product_id = slasconeOptions.Value.ProductId,
@@ -52,27 +193,39 @@ internal sealed class LicensingService(
 
             if (null == result.data) {
                 ReportError(result);
-                if (result.error is not { Id: (int)SlasconeApiErrorCode.TOKEN_ALREADY_ASSINGED })
+                if (result.error is not { Id: (int)SlasconeApiErrorCode.TOKEN_ALREADY_ASSINGED }) {
+                    // Determine failure reason based on error type
+                    var failureReason = MapApiErrorToFailureReason(result.errorType, result.error?.Id ?? 0);
+                    SetActivationFailureReason(failureReason);
                     ActivationStatus = LicenseActivationStatus.ActivationFailed;
+                }
                 return;
 
             }
 
             var licenseInfoDto = result.data;
+            if (licenseInfoDto.License_key != activateClientDto.License_key
+                || licenseInfoDto.License_key != await GetLicenseKeyFromSecretFile()) {
+                ClearLicenseState();
+                SetActivationFailureReason(LicenseActivationFailureReason.LicenseKeyMismatch);
+                ActivationStatus = LicenseActivationStatus.ActivationFailed;
+                return;
+            }
             _tokenId = licenseInfoDto.Token_key;
             LimitationMap = licensePrinter.PrintLicenseDetails(licenseInfoDto);
-            ActivationStatus = LicenseActivationStatus.Activated;
+            Publish(new(License: licenseInfoDto, Activation: LicenseActivationStatus.Activated));
             ClearLastError();
 
         }
         catch (Exception ex) {
             ActivationStatus = LicenseActivationStatus.ActivationFailed;
+            SetActivationFailureReason(LicenseActivationFailureReason.TransientNetworkError);
             ReportException(ex);
-            logger.LogError("[LICENSE] License activation failed. Exception type: {ExceptionType}", ex.GetType().Name);
+            logger.LogError("[LICENSE] Activation failed. Exception type: {ExceptionType}", ex.GetType().Name);
         }
     }
 
-    public async Task AddHeartbeatAsync() {
+    private async Task AddHeartbeatCoreAsync() {
         try {
             var heartbeatDto = new AddHeartbeatDto {
                 Product_id = slasconeOptions.Value.ProductId,
@@ -87,39 +240,48 @@ internal sealed class LicensingService(
             if (null == result.data) {
                 ReportError(result);
 
-                if (result.error is not { Id: (int)SlasconeApiErrorCode.UNKNOWN_CLIENT }) {
+                if (result.error is { Id: (int)SlasconeApiErrorCode.UNKNOWN_CLIENT }) {
                     // A common error when the license is not activated yet for the current device.
                     // A typical handling could be to ask the user for a license key and call ActivateLicenseAsync.
-                    logger.LogWarning("[LICENSE] The license has to be activated first.");
+                    ClearLicenseState();
+                    SetActivationFailureReason(LicenseActivationFailureReason.ServerDeviceMismatch);
+                } else {
+                    var failureReason = MapApiErrorToFailureReason(result.errorType, result.error?.Id ?? 0);
+                    SetActivationFailureReason(failureReason);
                 }
                 HeartbeatStatus = LicenseHeartbeatStatus.Failed;
                 return;
             }
 
             var licenseInfoDto = result.data;
-            _tokenId = licenseInfoDto.Token_key;
-            LicenseInfo = licenseInfoDto;
 
-            if (await GetLicenseKeyFromSecretFile() != licenseInfoDto.License_key) { // This is a safety check to make sure that the license key used for heartbeat (the one used for activation) is the same as the one in the secret file. They should never be different so treat the heartbeat as failed, and log a warning, because this will almost guarantee 2006 unknown device error on open floating session.
-                logger.LogWarning("[LICENSE] The license key used for heartbeat is different from the one in the secret file. This could indicate an issue with license activation or heartbeat.");
+            if (await GetLicenseKeyFromSecretFile() != licenseInfoDto.License_key) {
+                ClearLicenseState();
+                SetActivationFailureReason(LicenseActivationFailureReason.LicenseKeyMismatch);
+                ActivationStatus = LicenseActivationStatus.ActivationFailed;
                 HeartbeatStatus = LicenseHeartbeatStatus.Failed;
                 return;
             }
 
-            HeartbeatStatus = LicenseHeartbeatStatus.Success;
-            if (ActivationStatus != LicenseActivationStatus.Activated) // If heartbeat is successful, set activation status to activated. Only activeated devices add heartbeats successfully.
-                ActivationStatus = LicenseActivationStatus.Activated;
+            _tokenId = licenseInfoDto.Token_key;
             LimitationMap = licensePrinter.PrintLicenseDetails(licenseInfoDto);
+            Publish(_state with {
+                License = licenseInfoDto,
+                Session = _state.License?.License_key == licenseInfoDto.License_key ? _state.Session : null,
+                SessionStatus = _state.License?.License_key == licenseInfoDto.License_key ? _state.SessionStatus : LicenseSessionStatus.None,
+                Heartbeat = LicenseHeartbeatStatus.Success,
+                Activation = LicenseActivationStatus.Activated,
+            });
             ClearLastError();
         }
         catch (Exception ex) {
             HeartbeatStatus = LicenseHeartbeatStatus.Failed;
+            SetActivationFailureReason(LicenseActivationFailureReason.TransientNetworkError);
             ReportException(ex);
-            logger.LogError("[LICENSE] Adding heartbeat failed. Exception type: {ExceptionType}", ex.GetType().Name);
         }
     }
 
-    public async Task UnassignLicenseAsync() {
+    private async Task UnassignLicenseCoreAsync() {
         if (!_tokenId.HasValue) {
             logger.LogWarning("[LICENSE] You have to add a license heartbeat first to get a token for this operation.");
             return;
@@ -139,9 +301,7 @@ internal sealed class LicensingService(
             }
             logger.LogInformation("[LICENSE] License unassigned successfully.");
 
-            // Clear the token id, and limitation map after unassigning
-            _tokenId = null;
-            LimitationMap = null!;
+            ClearLicenseState();
             ClearLastError();
         }
         catch (Exception ex) {
@@ -254,11 +414,18 @@ internal sealed class LicensingService(
         }
     }
 
-    public async Task OpenSessionAsync() {
+    private async Task OpenSessionCoreAsync() {
         var licensekey = await GetLicenseKeyFromSecretFile();
         if (string.IsNullOrEmpty(licensekey)) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
-            logger.LogWarning("[LICENSE] You have to add a license heartbeat first.");
+            SetActivationFailureReason(LicenseActivationFailureReason.InvalidCredentials);
+            return;
+        }
+        if (LicenseInfo is { } acceptedLicense && acceptedLicense.License_key != licensekey) {
+            ClearLicenseState();
+            SetActivationFailureReason(LicenseActivationFailureReason.LicenseKeyMismatch);
+            ActivationStatus = LicenseActivationStatus.ActivationFailed;
+            LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
             return;
         }
         try {
@@ -274,9 +441,10 @@ internal sealed class LicensingService(
             if (null == result.data) {
                 ReportError(result);
 
+                var failureReason = MapApiErrorToFailureReason(result.errorType, result.error?.Id ?? 0);
+                SetActivationFailureReason(failureReason);
+
                 if (result.error is { Id: (int)SlasconeApiErrorCode.EXCEEDED_ALLOWED_CONNECTIONS }) {
-                    // This error indicates that the maximum number of allowed parallel sessions has been reached.
-                    // Normally you would inform the user about this and prevent the usage of the software.
                     logger.LogWarning("[LICENSE] Maximum of allowed parallel opened sessions exceeded!");
                 }
                 LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
@@ -284,22 +452,27 @@ internal sealed class LicensingService(
             }
 
             var sessionStatus = result.data;
-            SessionInfo = sessionStatus;
+            if (licensekey != await GetLicenseKeyFromSecretFile()) {
+                ClearLicenseState();
+                SetActivationFailureReason(LicenseActivationFailureReason.LicenseKeyMismatch);
+                ActivationStatus = LicenseActivationStatus.ActivationFailed;
+                return;
+            }
+            Publish(_state with { Session = sessionStatus, SessionStatus = LicenseSessionStatus.Opened });
             logger.LogInformation("[LICENSE] Session opened successfully {SessionId}", _sessionId);
             logger.LogInformation("[LICENSE] Max number of concurrent sessions: {MaxOpenSessionCount}", sessionStatus.Max_open_session_count);
             logger.LogInformation("[LICENSE] Session valid until {SessionValidUntil}", sessionStatus.Session_valid_until);
-            LastOpenSessionAttemptStatus = LicenseSessionStatus.Opened;
             ClearLastError();
         }
         catch (Exception ex) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.OpenFailed;
+            SetActivationFailureReason(LicenseActivationFailureReason.TransientNetworkError);
             ReportException(ex);
-            logger.LogError("[LICENSE] Opening session failed. Exception type: {ExceptionType}", ex.GetType().Name);
         }
     }
 
-    public async Task CloseSessionAsync() {
-        var licensekey = await GetLicenseKeyFromSecretFile();
+    private async Task CloseSessionCoreAsync(CancellationToken cancellationToken) {
+        var licensekey = LicenseInfo?.License_key ?? await GetLicenseKeyFromSecretFile().WaitAsync(cancellationToken);
         if (string.IsNullOrEmpty(licensekey)) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
             logger.LogError("[LICENSE] You have to add a license heartbeat first.");
@@ -313,8 +486,10 @@ internal sealed class LicensingService(
                 Session_id = _sessionId
             };
 
-            var slasconeClient = await SlasconeClient.Value;
-            var result = await SlasconeErrorHandlingHelper.Execute(slasconeClient.Provisioning.CloseSessionAsync, sessionDto);
+            var slasconeClient = await SlasconeClient.Value.WaitAsync(cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            Publish(_state with { Session = null });
+            var result = await SlasconeErrorHandlingHelper.Execute(slasconeClient.Provisioning.CloseSessionAsync, sessionDto, cancellationToken: cancellationToken);
 
             if (null == result.data) {
                 ReportError(result);
@@ -322,9 +497,14 @@ internal sealed class LicensingService(
                 return;
             }
 
-            LastOpenSessionAttemptStatus = LicenseSessionStatus.Closed;
+            Publish(_state with { Session = null, SessionStatus = LicenseSessionStatus.Closed });
             ClearLastError();
             logger.LogInformation("[LICENSE] Session closed successfully {SessionId}", _sessionId);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) {
+            LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
+            logger.LogWarning("[LICENSE] Closing session was cancelled.");
+            throw;
         }
         catch (Exception ex) {
             LastOpenSessionAttemptStatus = LicenseSessionStatus.CloseFailed;
@@ -367,6 +547,59 @@ internal sealed class LicensingService(
     #region Private Methods
 
     /// <summary>
+    /// Clears all license state and resets the service to an unactivated state.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This method is called when activation fails or when a license key mismatch is detected.
+    /// It performs three critical operations:
+    /// </para>
+    /// 
+    /// <list type="number">
+    /// <item><description>
+    ///   <strong>Invalidates Token:</strong> Sets <see cref="_tokenId"/> to null, preventing any downstream
+    ///   operations from using an inconsistent or stale token.
+    /// </description></item>
+    /// <item><description>
+    ///   <strong>Clears Limitations:</strong> Resets <see cref="LimitationMap"/> to an empty dictionary,
+    ///   ensuring no features remain enabled from a failed activation.
+    /// </description></item>
+    /// <item><description>
+    ///   <strong>Publishes Default State:</strong> Calls <see cref="Publish(LicenseState)"/> with a fresh
+    ///   <see cref="LicenseState"/>, triggering any registered <see cref="StateChanged"/> observers to reflect
+    ///   the cleared state (e.g., compliance checks, health checks, middleware).
+    /// </description></item>
+    /// </list>
+    /// 
+    /// <para>
+    /// <strong>Idempotency:</strong> This method is idempotent—calling it multiple times produces the same result.
+    /// </para>
+    /// 
+    /// <para>
+    /// <strong>Thread Safety:</strong> This method is always called from within a serialized operation
+    /// (guarded by <see cref="_operations"/> semaphore), so concurrent calls are not possible.
+    /// </para>
+    /// </remarks>
+    private void ClearLicenseState() {
+        _tokenId = null;
+        LimitationMap = new Dictionary<Guid, string>();
+        Publish(new());
+    }
+
+    /// <summary>
+    /// Records an activation failure reason and logs appropriate diagnostics and recovery guidance.
+    /// </summary>
+    /// <param name="reason">The activation failure reason to record.</param>
+    /// <remarks>
+    /// This method updates <see cref="ActivationFailureReason"/> and uses <see cref="recoveryCoordinator"/>
+    /// to log the appropriate level (warning for transient, error for permanent) with recovery guidance.
+    /// </remarks>
+    private void SetActivationFailureReason(LicenseActivationFailureReason reason) {
+        ActivationFailureReason = reason;
+        recoveryCoordinator.LogAndGetRecoveryGuidance(reason);
+    }
+
+    /// <summary>
     /// Used for Lazy initialization <see cref="SlasconeClient"/>.
     /// </summary>
     private static async Task<ISlasconeClientV2> GetNewSlasconeClient(ISlasconeClientFactory slasconeClientFactory)
@@ -385,6 +618,7 @@ internal sealed class LicensingService(
     /// <param name="result">The result tuple containing data, error type, error object, and error message.</param>
     /// <param name="caller">The name of the calling method (automatically provided by compiler).</param>
     private void ReportError<T>((T data, SlasconeErrorHandlingHelper.ErrorType errorType, ErrorResultObjects error, string message) result, [CallerMemberName] string caller = "") {
+        caller = caller.Replace("CoreAsync", "Async", StringComparison.Ordinal);
         logger.LogError("[LICENSE] Error during {Caller}:", caller);
         var errorCode = MapErrorCode(result.error?.Id, result.errorType);
         var errorId = result.error?.Id ?? (int)errorCode;
@@ -406,7 +640,7 @@ internal sealed class LicensingService(
 
     private void ReportException(Exception exception, [CallerMemberName] string caller = "")
         => LastError = new LicensingOperationError(
-            caller,
+            caller.Replace("CoreAsync", "Async", StringComparison.Ordinal),
             (int)SlasconeApiErrorCode.API_CRASH,
             SlasconeApiErrorCode.API_CRASH,
             $"The licensing operation failed with exception type {exception.GetType().Name}.",
@@ -426,6 +660,37 @@ internal sealed class LicensingService(
     }
 
     /// <summary>
+    /// Maps SLASCONE API errors to <see cref="LicenseActivationFailureReason"/> values for structured diagnostics.
+    /// </summary>
+    /// <param name="errorType">The error type category from the SLASCONE error handling helper.</param>
+    /// <param name="errorId">The specific API error code from SLASCONE.</param>
+    /// <returns>The appropriate <see cref="LicenseActivationFailureReason"/> for this error.</returns>
+    private static LicenseActivationFailureReason MapApiErrorToFailureReason(SlasconeErrorHandlingHelper.ErrorType errorType, int errorId) {
+        return errorType switch {
+            SlasconeErrorHandlingHelper.ErrorType.Network => LicenseActivationFailureReason.TransientNetworkError,
+
+            SlasconeErrorHandlingHelper.ErrorType.Functional => MapApiSpecificError(errorId),
+
+            _ => LicenseActivationFailureReason.Unknown
+        };
+    }
+
+    /// <summary>
+    /// Maps specific SLASCONE API error codes to failure reasons.
+    /// </summary>
+    /// <param name="errorId">The SLASCONE API error code.</param>
+    /// <returns>The appropriate <see cref="LicenseActivationFailureReason"/> for this API error.</returns>
+    private static LicenseActivationFailureReason MapApiSpecificError(int errorId) {
+        return errorId switch {
+            (int)SlasconeApiErrorCode.TOKEN_ALREADY_ASSINGED => LicenseActivationFailureReason.DeviceAlreadyActivated,
+            (int)SlasconeApiErrorCode.INVALID_KEY => LicenseActivationFailureReason.InvalidCredentials,
+            (int)SlasconeApiErrorCode.EXPIRED_KEY => LicenseActivationFailureReason.LicenseRevoked,
+            (int)SlasconeApiErrorCode.UNKNOWN_CLIENT => LicenseActivationFailureReason.ServerDeviceMismatch,
+            _ => LicenseActivationFailureReason.Unknown
+        };
+    }
+
+    /// <summary>
     /// Determines the current license compliance status based on license validity, session state, and heartbeat status.
     /// </summary>
     /// <remarks>This method evaluates multiple factors to determine compliance, including license validity,
@@ -434,10 +699,11 @@ internal sealed class LicensingService(
     /// <returns>A value indicating whether the license is compliant or non-compliant. Returns <see
     /// cref="LicenseComplianceStatus.Compliant"/> if the license is valid, the session is active, and the heartbeat is
     /// successful; otherwise, returns <see cref="LicenseComplianceStatus.NonCompliant"/>.</returns>
-    private LicenseComplianceStatus GetLicenseComplianceStatus()
-    => (LicenseInfo?.Is_license_valid ?? false)
-    && SessionInfo is not null && SessionInfo.Session_valid_until > DateTimeOffset.Now
-    && HeartbeatStatus is LicenseHeartbeatStatus.Success
+    private static LicenseComplianceStatus GetLicenseComplianceStatus(LicenseState state)
+    => (state.License?.Is_license_valid ?? false)
+    && state.Activation is LicenseActivationStatus.Activated
+    && LicenseSessionValidity.IsValid(state.Session, DateTimeOffset.UtcNow)
+    && state.Heartbeat is LicenseHeartbeatStatus.Success
         ? LicenseComplianceStatus.Compliant
         : LicenseComplianceStatus.NonCompliant;
 

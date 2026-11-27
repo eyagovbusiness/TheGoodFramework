@@ -14,6 +14,8 @@ namespace TGF.CA.Infrastructure.Licensing.Slascone.Contracts;
 /// tasks that complete when the corresponding operation with the licensing service has finished. Thread safety and
 /// error handling depend on the specific implementation.</remarks>
 public interface ILicensingService {
+    /// <summary>Reads license information and compliance together. Implementations must publish a consistent snapshot.</summary>
+    LicensingSnapshot Snapshot { get; }
 
     /// <summary>
     /// Gets a map of limitation IDs to their corresponding names.
@@ -125,8 +127,10 @@ public interface ILicensingService {
     /// Closes the most recently opened session with the SLASCONE service.
     /// Releases a floating license token for use by other clients.
     /// </summary>
+    /// <remarks>Cancellation bounds the caller's wait. An in-flight SDK close continues serialized, with the session non-compliant until its outcome is reconciled.</remarks>
+    /// <param name="cancellationToken">Bounds the caller's wait and prevents new provider requests after cancellation.</param>
     /// <returns>A task representing the asynchronous operation.</returns>
-    Task CloseSessionAsync();
+    Task CloseSessionAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Looks up licenses associated with the given license key.

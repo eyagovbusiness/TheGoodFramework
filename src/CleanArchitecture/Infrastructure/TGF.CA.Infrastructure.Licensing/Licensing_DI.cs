@@ -48,9 +48,14 @@ namespace TGF.CA.Infrastructure.Licensing {
 
         #region Private Methods
         private static void RegisterSlasconeLicensingServices(this WebApplicationBuilder webApplicationBuilder) {
-            webApplicationBuilder.Services.Configure<SlasconeOptions>(webApplicationBuilder.Configuration.GetSection(ConfigurationKeys.Licensing.Slascone.Key));
+            webApplicationBuilder.Services.AddOptions<SlasconeOptions>()
+                .Bind(webApplicationBuilder.Configuration.GetSection(ConfigurationKeys.Licensing.Slascone.Key))
+                .Validate(options => options.StartupOptions.LicenseRefreshIntervalSeconds > 0,
+                    "SLASCONE LicenseRefreshIntervalSeconds must be positive.")
+                .ValidateOnStart();
             webApplicationBuilder.Services.AddTransient<ISlasconeClientFactory, SlasconeClientFactory>();
             webApplicationBuilder.Services.AddSingleton<ISlasconeLicensePrinter, SlasconeLicensePrinter>();
+            webApplicationBuilder.Services.AddSingleton<LicenseRecoveryCoordinator>();
             webApplicationBuilder.Services.AddSingleton<ILicensingService, LicensingService>();
             webApplicationBuilder.Services.AddSingleton<IExternalLicenseService, ExternalLicenseService>();
             webApplicationBuilder.Services.AddSingleton<IDeviceInfoService, DeviceInfoService>();

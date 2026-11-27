@@ -1,7 +1,9 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Slascone.Client;
 using TGF.CA.Infrastructure.Licensing.Slascone.Contracts;
+using TGF.CA.Infrastructure.Licensing.Slascone.Helpers;
 
 namespace TGF.CA.Infrastructure.Licensing.Slascone.Services;
 
@@ -20,7 +22,6 @@ internal sealed class LicensingStartupHostedService(
 ) : BackgroundService {
 
     private const double RenewalThreshold = 0.8; // 80% of session duration
-    private static readonly TimeSpan MinimumRenewMargin = TimeSpan.FromSeconds(30);
 
     /// <summary>
     /// Executes the licensing startup process. It first attempts to ensure activation and acquire a license seat. If successful, it enters a loop to keep the license session open by sending periodic heartbeats.
@@ -51,16 +52,10 @@ internal sealed class LicensingStartupHostedService(
     /// Cleans up the license session on application shutdown by attempting to close the session gracefully.
     /// </summary>
     /// <remarks>
-    /// Default registrations (no activation gate) keep the previous stop policy exactly: only the session close runs. With an activation gate the owned
-    /// execution is first cancelled and awaited within the shutdown budget (so a late-opening gate can never activate after stop returned), and the
+    /// The owned execution is first cancelled and awaited within the shutdown budget (so no background renewal races the close), and the
     /// sanitized close policy below runs even if that wait or the close itself fails.
     /// </remarks>
     public override async Task StopAsync(CancellationToken cancellationToken) {
-        if (activationGate is null) {
-            await CloseSessionOnShutdownAsync(cancellationToken);
-            return;
-        }
-
         try {
             await base.StopAsync(cancellationToken);
         }
@@ -71,7 +66,7 @@ internal sealed class LicensingStartupHostedService(
 
     private async Task CloseSessionOnShutdownAsync(CancellationToken cancellationToken) {
         try {
-            await licensingService.CloseSessionAsync();
+            await licensingService.CloseSessionAsync(cancellationToken);
         }
         catch (OperationCanceledException ex) {
             // Cancellation stays cancellation, but the original message/inner/Data never leave this boundary.
@@ -125,9 +120,26 @@ internal sealed class LicensingStartupHostedService(
     /// <summary>Manages floating license sessions: sends periodic heartbeats, renews sessions before expiry,and attempts to reopen sessions when lost. </summary>
     private async Task EnsureFloatingLicenseSeatAsync(CancellationToken cancellationToken) {
         var attempt = 0;
+        var renewalAttempt = 0;
+        DateTimeOffset? renewalExpiration = null;
+        DateTimeOffset? cachedRenewalTarget = null; // Preserve renewal target across refreshes when Session_created_date is absent
         while (!cancellationToken.IsCancellationRequested) {
             try {
                 await licensingService.AddHeartbeatAsync();
+
+                if (cancellationToken.IsCancellationRequested) {
+                    break; // Exit immediately if shutdown budget exhausted during heartbeat
+                }
+
+                if (licensingService.ActivationStatus is not LicenseActivationStatus.Activated) {
+                    await EnsureActivationAsync(cancellationToken);
+                    continue;
+                }
+
+                if (licensingService.HeartbeatStatus is not LicenseHeartbeatStatus.Success) {
+                    await BackoffDelayAsync(attempt++, cancellationToken);
+                    continue;
+                }
 
                 if (!IsLicenseValid()) {
                     logger.LogError("[LICENSE] License invalid. Retrying after backoff.");
@@ -135,19 +147,68 @@ internal sealed class LicensingStartupHostedService(
                     continue;
                 }
 
-                if (!IsSessionValid()) {
+                var session = licensingService.SessionInfo;
+                if (session is null || !LicenseSessionValidity.IsValid(session, DateTimeOffset.UtcNow)) {
                     await TryOpenSessionAsync(cancellationToken);
-                    await BackoffDelayAsync(attempt++, cancellationToken);
+                    renewalAttempt = 0;
+                    renewalExpiration = null;
+                    cachedRenewalTarget = null;
+                    // If reopen succeeded, don't apply backoff; otherwise apply it and retry
+                    if (IsSessionValid()) {
+                        attempt = 0;
+                    } else {
+                        await BackoffDelayAsync(attempt++, cancellationToken);
+                    }
                     continue;
                 }
 
                 attempt = 0; // reset after success
+                if (renewalExpiration is null || session.Session_valid_until > renewalExpiration) {
+                    renewalExpiration = session.Session_valid_until;
+                    renewalAttempt = 0;
+                    cachedRenewalTarget = null; // Reset cached target when session expiration advances
+                }
 
-                var (renewAt, delayUntilRenewal) = CalculateRenewalTiming();
-                await DelaySafe(delayUntilRenewal, cancellationToken);
+                var refreshInterval = TimeSpan.FromSeconds(slasconeOptions.Value.StartupOptions.LicenseRefreshIntervalSeconds);
+                var nowBeforeDelay = DateTimeOffset.UtcNow;
+                var (renewAt, delay) = renewalAttempt > 0
+                    ? (nowBeforeDelay, TimeSpan.Zero)
+                    : CalculateRenewalTiming(session, nowBeforeDelay, refreshInterval, cachedRenewalTarget);
 
-                if (DateTimeOffset.UtcNow >= renewAt)
-                    await RenewSessionAsync();
+                // Cache the renewal target to avoid recalculating with fresh 'now' when Session_created_date is absent
+                if (cachedRenewalTarget is null) {
+                    cachedRenewalTarget = renewAt;
+                }
+
+                await DelaySafe(delay, cancellationToken);
+
+                if (DateTimeOffset.UtcNow >= renewAt) {
+                    try {
+                        await RenewSessionAsync();
+                    }
+                    catch (Exception ex) when (ex is not OperationCanceledException) {
+                        logger.LogWarning("[LICENSE] Session renewal failed. Exception type: {ExceptionType}", ex.GetType().Name);
+                    }
+                    var renewedSession = licensingService.SessionInfo;
+                    var now = DateTimeOffset.UtcNow;
+                    if (renewedSession is not null && LicenseSessionValidity.IsValid(renewedSession, now)) {
+                        var expirationAdvanced = renewedSession.Session_valid_until > renewalExpiration;
+                        if (expirationAdvanced) {
+                            renewalExpiration = renewedSession.Session_valid_until;
+                            renewalAttempt = 0;
+                            cachedRenewalTarget = null; // Reset cached target when expiration advances
+                        }
+                        // Apply retry backoff when expiration did not advance OR when it advanced but renewal is still immediately due.
+                        if (!expirationAdvanced || CalculateRenewalTiming(renewedSession, now, refreshInterval, cachedRenewalTarget).renewAt <= now) {
+                            renewalAttempt = await ApplyRenewalRetry(renewedSession, now, renewalAttempt, cancellationToken);
+                            continue;
+                        }
+                    } else {
+                        // Session invalid or renewal failed: apply retry backoff and loop will retry on next iteration
+                        renewalAttempt = await ApplyRenewalRetry(session, now, renewalAttempt, cancellationToken);
+                        continue;
+                    }
+                }
             }
             catch (TaskCanceledException) {
                 break; // shutting down gracefully
@@ -164,11 +225,26 @@ internal sealed class LicensingStartupHostedService(
     /// <summary>Checks if the license is currently valid.</summary>
     private bool IsLicenseValid() => licensingService.LicenseInfo?.Is_license_valid == true;
     /// <summary>Checks if the session is currently valid.</summary>
-    private bool IsSessionValid() => licensingService.SessionInfo?.Is_session_valid == true;
+    private bool IsSessionValid() => LicenseSessionValidity.IsValid(licensingService.SessionInfo, DateTimeOffset.UtcNow);
 
     private static TimeSpan Backoff(int attempt, int initialSeconds, int maxSecconds) {
-        var BackoffSeconds = Math.Min(maxSecconds, Math.Max(1, (int)Math.Pow(2, attempt) * Math.Max(1, initialSeconds)));
+        var BackoffSeconds = Math.Min(maxSecconds, Math.Max(1, Math.Pow(2, attempt) * Math.Max(1, initialSeconds)));
         return TimeSpan.FromSeconds(BackoffSeconds);
+    }
+
+    internal static TimeSpan CalculateRenewalRetryDelay(SessionStatusDto session, DateTimeOffset now, int attempt, StartupOptions options) {
+        var remaining = (session.Session_valid_until ?? now) - now;
+        if (remaining <= TimeSpan.Zero) return TimeSpan.Zero;
+        var backoff = Backoff(attempt, options.InitialBackoffSeconds, options.MaxBackoffSeconds);
+        return backoff < remaining ? backoff : remaining;
+    }
+
+    private async Task<int> ApplyRenewalRetry(SessionStatusDto session, DateTimeOffset now, int renewalAttempt, CancellationToken cancellationToken) {
+        var retryDelay = CalculateRenewalRetryDelay(session, now, renewalAttempt, slasconeOptions.Value.StartupOptions);
+        renewalAttempt = Math.Min(renewalAttempt + 1, 31);
+        logger.LogWarning("[LICENSE] Session renewal is still due. Retrying after {Delay}.", retryDelay);
+        await DelaySafe(retryDelay, cancellationToken);
+        return renewalAttempt;
     }
 
     private async Task BackoffDelayAsync(int attempt, CancellationToken cancellationToken) {
@@ -194,13 +270,21 @@ internal sealed class LicensingStartupHostedService(
     }
 
     /// <summary>Calculates renewal timing and delay.</summary>
-    private (DateTimeOffset renewAt, TimeSpan delay) CalculateRenewalTiming() {
-        var validUntil = licensingService.SessionInfo?.Session_valid_until ?? DateTimeOffset.UtcNow;
-        var createdAt = licensingService.SessionInfo?.Session_created_date ?? DateTimeOffset.UtcNow;
+    internal static (DateTimeOffset renewAt, TimeSpan delay) CalculateRenewalTiming(SessionStatusDto session, DateTimeOffset now, TimeSpan refreshInterval, DateTimeOffset? cachedRenewalTarget = null) {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(refreshInterval, TimeSpan.Zero);
+
+        // Use cached renewal target if available to avoid recalculating with fresh 'now' when Session_created_date is absent
+        if (cachedRenewalTarget.HasValue) {
+            var cachedDelay = cachedRenewalTarget.Value - now;
+            return (cachedRenewalTarget.Value, cachedDelay < TimeSpan.Zero ? TimeSpan.Zero : cachedDelay < refreshInterval ? cachedDelay : refreshInterval);
+        }
+
+        var validUntil = session.Session_valid_until ?? now;
+        var createdAt = session.Session_created_date ?? now;
         var totalDuration = validUntil - createdAt;
         var renewAt = createdAt + TimeSpan.FromTicks((long)(totalDuration.Ticks * RenewalThreshold));
-        var delay = renewAt - DateTimeOffset.UtcNow;
-        return (renewAt, delay < MinimumRenewMargin ? MinimumRenewMargin : delay);
+        var delay = renewAt - now;
+        return (renewAt, delay < TimeSpan.Zero ? TimeSpan.Zero : delay < refreshInterval ? delay : refreshInterval);
     }
 
     /// <summary>Renews the session by calling OpenSessionAsync again.</summary>
@@ -208,7 +292,7 @@ internal sealed class LicensingStartupHostedService(
         logger.LogInformation("[LICENSE] Renewing session before expiry...");
         await licensingService.OpenSessionAsync();
 
-        if (IsSessionValid()) {
+        if (IsSessionValid() && licensingService.LastOpenSessionAttemptStatus == LicenseSessionStatus.Opened) {
             logger.LogInformation("[LICENSE] Session renewed. New valid until {ValidUntil}.",
                 licensingService.SessionInfo?.Session_valid_until);
         } else {

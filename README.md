@@ -15,7 +15,7 @@ Maintained image consumers are OF.Common (`main` and `dev`), then transitively
 OF.Manager and OF.Orchestrator on their own maintained lines. Application deployment
 environments remain separate from TGF source branches. The former non-BGS
 `Dockerfile` and GuildSwarm `Jenkinsfile` are deprecated, unused historical files;
-the supported delivery route is BGS GitHub Actions only.
+the supported canonical delivery route is BGS GitHub Actions only.
 
 ### Build locally
 
@@ -31,7 +31,23 @@ bash ./local_deploy.sh local-check --no-cache --bgs
 make local-bgs
 ```
 
-Local BGS builds cannot push. Only the guarded main workflow publishes. The old
+Local canonical BGS builds cannot push. Only the guarded main workflow publishes
+the canonical repository. For development-only publication, explicitly select
+`--development` with `--bgs`, the development environment and a non-`latest` tag:
+
+```bash
+az acr login --name acrbiognosysaksemea
+export IMAGE_REGISTRY=acrbiognosysaksemea.azurecr.io
+export OMICSFLOW_ENVIRONMENT=development
+bash ./local_deploy.sh dev-teams-projects --bgs --development --registry-push
+```
+
+This pushes only `base-images/development/the_good_framework:dev-teams-projects`,
+not the canonical repository or `latest`. The reviewed Alpine base digest is
+still validated; `ALPINE_BASE_IMAGE` may select an available registry mirror of
+that immutable base image.
+
+The old
 default non-BGS local/Makefile routes are unsupported; explicitly select `--bgs`
 or `local-bgs`.
 

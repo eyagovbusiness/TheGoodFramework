@@ -6,6 +6,7 @@ cd "$(dirname "$0")"
 ENVIRONMENT="${OMICSFLOW_ENVIRONMENT:-development}"
 NO_CACHE=false
 REGISTRY_PUSH=false
+BGS_DEVELOPMENT=false
 DOCKERFILE=()
 BGS_BUILD_ARGS=()
 TAG="latest"
@@ -20,11 +21,19 @@ while [[ "$#" -gt 0 ]]; do
         --no-cache) NO_CACHE=true ;;
         --registry-push) REGISTRY_PUSH=true ;;
         --bgs) DOCKERFILE=(-f Dockerfile_bgs) ;;
-        --help) echo "Usage: $0 [--no-cache] [--registry-push] [--bgs]"; exit 0 ;;
+        --development) BGS_DEVELOPMENT=true ;;
+        --help) echo "Usage: $0 [tag] [--no-cache] [--registry-push] [--bgs] [--development]"; exit 0 ;;
         *) ;;
     esac
     shift
 done
+
+if [ "$BGS_DEVELOPMENT" = true ]; then
+    if [[ "${DOCKERFILE[*]}" != "-f Dockerfile_bgs" || "$ENVIRONMENT" != "development" || "$TAG" == "latest" ]]; then
+        echo "--development requires --bgs, OMICSFLOW_ENVIRONMENT=development and an explicit non-latest tag." >&2
+        exit 1
+    fi
+fi
 
 if [[ -z "${IMAGE_REGISTRY:-}" ]]; then
     echo "Required environment variable IMAGE_REGISTRY is not set."
@@ -32,7 +41,7 @@ if [[ -z "${IMAGE_REGISTRY:-}" ]]; then
 fi
 
 if [[ "${DOCKERFILE[*]}" == "-f Dockerfile_bgs" ]]; then
-    if [ "$REGISTRY_PUSH" = true ]; then
+    if [[ "$REGISTRY_PUSH" = true && "$BGS_DEVELOPMENT" != true ]]; then
         echo "--registry-push is not supported with --bgs; canonical publication is done only by the approved main CI publisher." >&2
         exit 1
     fi
@@ -46,7 +55,7 @@ trap 'rm -f projectfiles.tar' EXIT
 find . \( -name "*.csproj" -o -name "*.sln" -o -name "NuGet.docker.config" \) -print0 | tar -cvf projectfiles.tar --null -T -
 
 IMAGE_TAG="${IMAGE_REGISTRY}/base-images/${ENVIRONMENT}/the_good_framework:${TAG}"
-if [[ ${#DOCKERFILE[@]} -gt 0 ]]; then
+if [[ ${#DOCKERFILE[@]} -gt 0 && "$BGS_DEVELOPMENT" != true ]]; then
     # The BGS image is built locally under its canonical name; only CI publishes it.
     IMAGE_TAG="${IMAGE_REGISTRY}/base-images/the_good_framework:${TAG}"
 fi
