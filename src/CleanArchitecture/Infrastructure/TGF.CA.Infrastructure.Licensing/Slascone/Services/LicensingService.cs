@@ -11,6 +11,75 @@ using TGF.CA.Infrastructure.Secrets.SecretsFiles;
 
 namespace TGF.CA.Infrastructure.Licensing.Slascone.Services;
 
+/// <summary>
+/// Manages licensing operations including device activation, heartbeats, session management, and compliance tracking.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This service implements a comprehensive validation strategy to ensure license key consistency and detect runtime changes.
+/// </para>
+/// 
+/// <para>
+/// <strong>Multi-Point License Key Validation Strategy:</strong>
+/// The service reads and validates the license key from the secret file at multiple strategic points throughout
+/// the licensing lifecycle. This design enables:
+/// 
+/// <list type="number">
+/// <item><description>
+///   <strong>Runtime License Change Detection:</strong> The secret file may be updated at any time (e.g., during license renewal
+///   or key rotation by administrators). By validating on each operation, the service detects these changes without requiring
+///   application restart.
+/// </description></item>
+/// <item><description>
+///   <strong>Tamper Detection:</strong> Verifying that SLASCONE responses use the same key as the local configuration detects
+///   server-side license changes or configuration mismatches that could lead to silent failures.
+/// </description></item>
+/// <item><description>
+///   <strong>Fast Failure on Misconfiguration:</strong> Multiple validation points catch key mismatches early, preventing
+///   failed operations downstream (e.g., floating sessions that use the token).
+/// </description></item>
+/// </list>
+/// </para>
+/// 
+/// <para>
+/// <strong>Validation Points:</strong>
+/// 
+/// <list type="table">
+/// <item>
+///   <term>ActivateLicenseAsync (Lines 110, 129)</term>
+///   <description>Pre-activation: load key for request. Post-activation: verify server response matches.</description>
+/// </item>
+/// <item>
+///   <term>AddHeartbeatAsync (Line 175)</term>
+///   <description>During heartbeat: verify heartbeat response uses same key (detects external revocation/reassignment).</description>
+/// </item>
+/// <item>
+///   <term>OpenSessionAsync (Lines 335, 371)</term>
+///   <description>Pre-open: load key for request. Post-open: verify session is associated with same key.</description>
+/// </item>
+/// <item>
+///   <term>CloseSessionAsync (Lines 391, 434)</term>
+///   <description>Pre-close: load key (cached if available). During close: verify consistency before cleanup.</description>
+/// </item>
+/// </list>
+/// </para>
+/// 
+/// <para>
+/// <strong>Performance Consideration:</strong>
+/// The 7 strategic reads per activation lifecycle represent negligible I/O cost because:
+/// <list type="bullet">
+/// <item>Licensing typically occurs once per application startup</item>
+/// <item>Secret file access is usually cached at OS level</item>
+/// <item>Prevents expensive session/token loss due to undetected key mismatches</item>
+/// </list>
+/// </para>
+/// 
+/// <para>
+/// <strong>Thread Safety:</strong>
+/// All licensing operations are serialized via <see cref="_operations"/> semaphore to ensure state consistency
+/// and prevent race conditions between concurrent activation, heartbeat, and session management operations.
+/// </para>
+/// </remarks>
 internal sealed class LicensingService(
     ISlasconeClientFactory slasconeClientFactory,
     ISecretFilesService secretFilesService,
@@ -462,6 +531,40 @@ internal sealed class LicensingService(
 
     #region Private Methods
 
+    /// <summary>
+    /// Clears all license state and resets the service to an unactivated state.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This method is called when activation fails or when a license key mismatch is detected.
+    /// It performs three critical operations:
+    /// </para>
+    /// 
+    /// <list type="number">
+    /// <item><description>
+    ///   <strong>Invalidates Token:</strong> Sets <see cref="_tokenId"/> to null, preventing any downstream
+    ///   operations from using an inconsistent or stale token.
+    /// </description></item>
+    /// <item><description>
+    ///   <strong>Clears Limitations:</strong> Resets <see cref="LimitationMap"/> to an empty dictionary,
+    ///   ensuring no features remain enabled from a failed activation.
+    /// </description></item>
+    /// <item><description>
+    ///   <strong>Publishes Default State:</strong> Calls <see cref="Publish(LicenseState)"/> with a fresh
+    ///   <see cref="LicenseState"/>, triggering any registered <see cref="StateChanged"/> observers to reflect
+    ///   the cleared state (e.g., compliance checks, health checks, middleware).
+    /// </description></item>
+    /// </list>
+    /// 
+    /// <para>
+    /// <strong>Idempotency:</strong> This method is idempotent—calling it multiple times produces the same result.
+    /// </para>
+    /// 
+    /// <para>
+    /// <strong>Thread Safety:</strong> This method is always called from within a serialized operation
+    /// (guarded by <see cref="_operations"/> semaphore), so concurrent calls are not possible.
+    /// </para>
+    /// </remarks>
     private void ClearLicenseState() {
         _tokenId = null;
         LimitationMap = new Dictionary<Guid, string>();

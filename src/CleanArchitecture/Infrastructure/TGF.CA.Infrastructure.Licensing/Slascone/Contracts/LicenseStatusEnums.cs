@@ -145,6 +145,57 @@ public enum LicenseActivationStatus {
 }
 
 /// <summary>
+/// Represents the reason why a license activation failed, enabling diagnostic logging and recovery guidance.
+/// </summary>
+/// <remarks>
+/// This enum is used to distinguish between transient failures (which may auto-recover with retry)
+/// and permanent failures (which require manual intervention or configuration changes).
+/// </remarks>
+public enum LicenseActivationFailureReason {
+    /// <summary>
+    /// The failure reason is unknown or not yet determined.
+    /// </summary>
+    Unknown = 0,
+
+    /// <summary>
+    /// A transient network error occurred (timeout, connection refused, temporary service unavailability).
+    /// Recovery: Automatic retry with exponential backoff.
+    /// </summary>
+    TransientNetworkError = 1,
+
+    /// <summary>
+    /// The license key in the secret file does not match the one expected by SLASCONE (or used for prior operations).
+    /// Recovery: Update the secret file with the correct license key and restart the application.
+    /// </summary>
+    LicenseKeyMismatch = 2,
+
+    /// <summary>
+    /// The device is already activated with a different license key than the one being attempted now.
+    /// Recovery: Either use the original key or contact support to revoke the previous activation.
+    /// </summary>
+    DeviceAlreadyActivated = 3,
+
+    /// <summary>
+    /// The SLASCONE server and local device state are inconsistent (e.g., device was deactivated server-side).
+    /// Recovery: Restart the application to resync state, or contact support.
+    /// </summary>
+    ServerDeviceMismatch = 4,
+
+    /// <summary>
+    /// The license has been revoked or is no longer valid on the server.
+    /// Recovery: Contact support to reactivate the license.
+    /// </summary>
+    LicenseRevoked = 5,
+
+    /// <summary>
+    /// The supplied license credentials are invalid or incomplete.
+    /// Recovery: Verify the license key format and validity; update the secret file if needed.
+    /// </summary>
+    InvalidCredentials = 6
+}
+
+
+/// <summary>
 /// Represents the compliance state of the license according to SLASCONE.
 /// </summary>
 public enum LicenseComplianceStatus {

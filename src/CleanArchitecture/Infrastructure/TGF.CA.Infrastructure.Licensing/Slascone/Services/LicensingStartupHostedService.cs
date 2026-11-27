@@ -169,12 +169,12 @@ internal sealed class LicensingStartupHostedService(
                 var (renewAt, delay) = renewalAttempt > 0
                     ? (nowBeforeDelay, TimeSpan.Zero)
                     : CalculateRenewalTiming(session, nowBeforeDelay, refreshInterval, cachedRenewalTarget);
-                
+
                 // Cache the renewal target to avoid recalculating with fresh 'now' when Session_created_date is absent
                 if (cachedRenewalTarget is null) {
                     cachedRenewalTarget = renewAt;
                 }
-                
+
                 await DelaySafe(delay, cancellationToken);
 
                 if (DateTimeOffset.UtcNow >= renewAt) {
@@ -264,13 +264,13 @@ internal sealed class LicensingStartupHostedService(
     /// <summary>Calculates renewal timing and delay.</summary>
     internal static (DateTimeOffset renewAt, TimeSpan delay) CalculateRenewalTiming(SessionStatusDto session, DateTimeOffset now, TimeSpan refreshInterval, DateTimeOffset? cachedRenewalTarget = null) {
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(refreshInterval, TimeSpan.Zero);
-        
+
         // Use cached renewal target if available to avoid recalculating with fresh 'now' when Session_created_date is absent
         if (cachedRenewalTarget.HasValue) {
             var cachedDelay = cachedRenewalTarget.Value - now;
             return (cachedRenewalTarget.Value, cachedDelay < TimeSpan.Zero ? TimeSpan.Zero : cachedDelay < refreshInterval ? cachedDelay : refreshInterval);
         }
-        
+
         var validUntil = session.Session_valid_until ?? now;
         var createdAt = session.Session_created_date ?? now;
         var totalDuration = validUntil - createdAt;
