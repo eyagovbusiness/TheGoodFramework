@@ -194,11 +194,11 @@ internal sealed class LicensingStartupHostedService(
                         }
                         // Apply retry backoff when expiration did not advance OR when it advanced but renewal is still immediately due.
                         if (!expirationAdvanced || CalculateRenewalTiming(renewedSession, now, refreshInterval, cachedRenewalTarget).renewAt <= now) {
-                            await ApplyRenewalRetry(renewedSession, now, cancellationToken);
+                            renewalAttempt = await ApplyRenewalRetry(renewedSession, now, renewalAttempt, cancellationToken);
                         }
                     } else {
                         // Session invalid or renewal failed: apply retry backoff and loop will retry on next iteration
-                        await ApplyRenewalRetry(session, now, cancellationToken);
+                        renewalAttempt = await ApplyRenewalRetry(session, now, renewalAttempt, cancellationToken);
                     }
                 }
             }
@@ -231,11 +231,12 @@ internal sealed class LicensingStartupHostedService(
         return backoff < remaining ? backoff : remaining;
     }
 
-    private async Task ApplyRenewalRetry(SessionStatusDto session, DateTimeOffset now, CancellationToken cancellationToken) {
+    private async Task<int> ApplyRenewalRetry(SessionStatusDto session, DateTimeOffset now, int renewalAttempt, CancellationToken cancellationToken) {
         var retryDelay = CalculateRenewalRetryDelay(session, now, renewalAttempt, slasconeOptions.Value.StartupOptions);
         renewalAttempt = Math.Min(renewalAttempt + 1, 31);
         logger.LogWarning("[LICENSE] Session renewal is still due. Retrying after {Delay}.", retryDelay);
         await DelaySafe(retryDelay, cancellationToken);
+        return renewalAttempt;
     }
 
     private async Task BackoffDelayAsync(int attempt, CancellationToken cancellationToken) {
@@ -266,8 +267,8 @@ internal sealed class LicensingStartupHostedService(
         
         // Use cached renewal target if available to avoid recalculating with fresh 'now' when Session_created_date is absent
         if (cachedRenewalTarget.HasValue) {
-            var delay = cachedRenewalTarget.Value - now;
-            return (cachedRenewalTarget.Value, delay < TimeSpan.Zero ? TimeSpan.Zero : delay < refreshInterval ? delay : refreshInterval);
+            var cachedDelay = cachedRenewalTarget.Value - now;
+            return (cachedRenewalTarget.Value, cachedDelay < TimeSpan.Zero ? TimeSpan.Zero : cachedDelay < refreshInterval ? cachedDelay : refreshInterval);
         }
         
         var validUntil = session.Session_valid_until ?? now;
